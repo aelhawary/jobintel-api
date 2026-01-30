@@ -122,19 +122,7 @@ The backend API implements multiple security layers that your frontend must hand
 - **Required:** At least one digit (0-9)
 - **Examples:** `SecurePass123`, `Welcome2024`, `MyPassword1`
 
-### 🚦 Rate Limiting (HTTP 429)
-All authentication endpoints are rate-limited to prevent abuse. Your UI must:
-- Display clear error messages when rate limited
-- Show countdown timers for retry
-- Disable buttons temporarily
-- Cache last request time client-side
-
-**Common Limits:**
-- Login: 20 requests/15 minutes
-- Registration: 10 requests/hour
-- Email actions: 3 requests/hour
-
-### 🔒 Account Lockout
+###  Account Lockout
 After 5 failed login attempts, accounts lock for 15 minutes:
 - **Lockout response** includes `lockoutEnd` and `remainingMinutes`
 - **UI must show** countdown timer and unlock options
@@ -1219,44 +1207,7 @@ const validatePassword = (password: string): string | null => {
 - Clear sensitive data on logout
 - Use HTTPS in production
 
-### 7. Rate Limiting Awareness
-
-The API enforces rate limiting on all authentication endpoints to prevent abuse:
-
-| Endpoint | Limit | Period | What to Do When Limited |
-|----------|-------|--------|-------------------------|
-| `POST /api/auth/login` | 20 requests | 15 min | Show "Too many login attempts. Please try again in X minutes" |
-| `POST /api/auth/register` | 10 requests | 1 hour | Show "Registration limit reached. Please try again later" |
-| `POST /api/auth/verify-email` | 10 requests | 1 hour | Disable verify button, show countdown timer |
-| `POST /api/auth/resend-verification` | 3 requests | 1 hour | Disable resend for 1 hour, show timer |
-| `POST /api/auth/forgot-password` | 3 requests | 1 hour | Show "Please wait before requesting another reset" |
-| `POST /api/auth/verify-reset-otp` | 10 requests | 1 hour | Show remaining attempts |
-| `POST /api/auth/google` | 10 requests | 1 hour | Disable Google sign-in temporarily |
-
-**HTTP 429 Response:**
-```json
-{
-  "message": "API calls quota exceeded! maximum admitted 10 per 1h."
-}
-```
-
-**Handling Rate Limits:**
-```typescript
-try {
-  const response = await authService.login(credentials);
-  // Success
-} catch (error: any) {
-  if (error.response?.status === 429) {
-    const retryAfter = error.response.headers['retry-after'];
-    setError(`Too many attempts. Please try again in ${retryAfter} seconds.`);
-    // Optionally disable the button and show countdown timer
-  } else {
-    setError(error.response?.data?.message || 'Login failed');
-  }
-}
-```
-
-### 8. Account Lockout Handling
+### 7. Account Lockout Handling
 
 After 5 failed login attempts, accounts are locked for 15 minutes:
 
@@ -1504,10 +1455,6 @@ const Login: React.FC = () => {
         setError(errorData.message);
         startCountdown(errorData.lockoutEnd);
       }
-      // Handle rate limiting
-      else if (err.response?.status === 429) {
-        setError('Too many login attempts. Please try again later.');
-      }
       // Handle remaining attempts warning
       else if (errorData?.message?.includes('remaining')) {
         const match = errorData.message.match(/(\d+)\s+attempt/);
@@ -1659,7 +1606,6 @@ const Register: React.FC = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-  const [rateLimited, setRateLimited] = useState(false);
 
   // Real-time password validation
   const validatePassword = (password: string): string[] => {
@@ -1705,13 +1651,8 @@ const Register: React.FC = () => {
     } catch (err: any) {
       const errorData = err.response?.data;
 
-      // Handle rate limiting
-      if (err.response?.status === 429) {
-        setRateLimited(true);
-        setErrors({ general: 'Registration limit reached. Please try again in an hour.' });
-      }
       // Handle validation errors from backend
-      else if (errorData?.errors) {
+      if (errorData?.errors) {
         const backendErrors: Record<string, string> = {};
         Object.keys(errorData.errors).forEach((key) => {
           backendErrors[key.toLowerCase()] = errorData.errors[key][0];
@@ -1735,7 +1676,7 @@ const Register: React.FC = () => {
       <h2>Create Account</h2>
 
       {errors.general && (
-        <div className={`alert ${rateLimited ? 'alert-warning' : 'alert-danger'}`}>
+        <div className="alert alert-danger">
           {errors.general}
         </div>
       )}
@@ -1773,7 +1714,7 @@ const Register: React.FC = () => {
                 value={form.firstName}
                 onChange={(e) => setForm({ ...form, firstName: e.target.value })}
                 required
-                disabled={loading || rateLimited}
+                disabled={loading}
               />
               {errors.firstname && <div className="invalid-feedback">{errors.firstname}</div>}
             </div>
@@ -1787,7 +1728,7 @@ const Register: React.FC = () => {
                 value={form.lastName}
                 onChange={(e) => setForm({ ...form, lastName: e.target.value })}
                 required
-                disabled={loading || rateLimited}
+                disabled={loading}
               />
               {errors.lastname && <div className="invalid-feedback">{errors.lastname}</div>}
             </div>
@@ -1803,7 +1744,7 @@ const Register: React.FC = () => {
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
             required
-            disabled={loading || rateLimited}
+            disabled={loading}
           />
           {errors.email && <div className="invalid-feedback">{errors.email}</div>}
         </div>
@@ -1817,7 +1758,7 @@ const Register: React.FC = () => {
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             required
-            disabled={loading || rateLimited}
+            disabled={loading}
           />
           {errors.password && <div className="invalid-feedback">{errors.password}</div>}
           
@@ -1850,7 +1791,7 @@ const Register: React.FC = () => {
             value={form.confirmPassword}
             onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
             required
-            disabled={loading || rateLimited}
+            disabled={loading}
           />
           {errors.confirmpassword && <div className="invalid-feedback">{errors.confirmpassword}</div>}
         </div>
@@ -1858,7 +1799,7 @@ const Register: React.FC = () => {
         <button
           type="submit"
           className="btn btn-primary btn-block"
-          disabled={loading || rateLimited}
+          disabled={loading}
         >
           {loading ? 'Creating Account...' : 'Create Account'}
         </button>
@@ -1879,66 +1820,6 @@ const Register: React.FC = () => {
 };
 
 export default Register;
-```
-
-### Rate Limit Handler Hook
-
-```typescript
-// src/hooks/useRateLimit.ts
-import { useState, useCallback } from 'react';
-
-interface RateLimitState {
-  isLimited: boolean;
-  retryAfter: number; // seconds
-  message: string;
-}
-
-export const useRateLimit = () => {
-  const [rateLimitState, setRateLimitState] = useState<RateLimitState>({
-    isLimited: false,
-    retryAfter: 0,
-    message: ''
-  });
-
-  const handleRateLimitError = useCallback((error: any) => {
-    if (error.response?.status === 429) {
-      const retryAfter = parseInt(error.response.headers['retry-after'] || '3600');
-      const message = error.response.data?.message || 'Too many requests. Please try again later.';
-      
-      setRateLimitState({
-        isLimited: true,
-        retryAfter,
-        message
-      });
-
-      // Auto-clear after retry period
-      setTimeout(() => {
-        setRateLimitState({
-          isLimited: false,
-          retryAfter: 0,
-          message: ''
-        });
-      }, retryAfter * 1000);
-
-      return true;
-    }
-    return false;
-  }, []);
-
-  const clearRateLimit = useCallback(() => {
-    setRateLimitState({
-      isLimited: false,
-      retryAfter: 0,
-      message: ''
-    });
-  }, []);
-
-  return {
-    rateLimitState,
-    handleRateLimitError,
-    clearRateLimit
-  };
-};
 ```
 
 ### Account Lockout Handler Hook
@@ -2079,7 +1960,6 @@ Use this checklist to ensure complete integration with the backend API:
   - [ ] Client-side password validation (8+ chars, uppercase, lowercase, digit)
   - [ ] Real-time password strength indicator
   - [ ] Handle validation errors from backend
-  - [ ] Handle rate limiting (10 registrations/hour)
   - [ ] Redirect to email verification on success
 
 - [ ] **Email Verification**
@@ -2087,7 +1967,6 @@ Use this checklist to ensure complete integration with the backend API:
   - [ ] Handle 15-minute expiry
   - [ ] Resend verification button (limited to 3/hour)
   - [ ] Show countdown timer for resend
-  - [ ] Handle rate limiting on verify (10 attempts/hour)
   - [ ] Redirect to login after successful verification
 
 - [ ] **User Login**
@@ -2097,7 +1976,6 @@ Use this checklist to ensure complete integration with the backend API:
   - [ ] Handle account lockout (5 attempts = 15min lock)
   - [ ] Display lockout countdown timer
   - [ ] Offer password reset when locked
-  - [ ] Handle rate limiting (20 login/15min)
   - [ ] Store JWT token securely
   - [ ] Redirect to dashboard on success
 
@@ -2113,19 +1991,10 @@ Use this checklist to ensure complete integration with the backend API:
   - [ ] Google Sign-In button
   - [ ] Handle Google ID token
   - [ ] Select account type (JobSeeker/Recruiter)
-  - [ ] Handle rate limiting (10 attempts/hour)
   - [ ] Store JWT token on success
   - [ ] Handle both login and registration flows
 
 ### ✅ Security Implementations
-
-- [ ] **Rate Limiting**
-  - [ ] Detect HTTP 429 responses
-  - [ ] Display "Too many attempts" messages
-  - [ ] Parse `Retry-After` header
-  - [ ] Show countdown timers
-  - [ ] Disable buttons during rate limit
-  - [ ] Client-side request tracking (optional)
 
 - [ ] **Account Lockout**
   - [ ] Detect lockout response (`lockoutEnd`, `remainingMinutes`)
@@ -2155,7 +2024,6 @@ Use this checklist to ensure complete integration with the backend API:
   - [ ] 200: Success responses
   - [ ] 400: Validation errors (show field-specific messages)
   - [ ] 401: Unauthorized (redirect to login, handle lockout)
-  - [ ] 429: Rate limit exceeded (show retry timer)
   - [ ] 500: Server error (generic error message)
 
 - [ ] **Network Errors**
@@ -2218,7 +2086,6 @@ Use this checklist to ensure complete integration with the backend API:
   - [ ] Password reset flow
   - [ ] Google OAuth flow
   - [ ] Token expiry handling
-  - [ ] Rate limit triggers
   - [ ] Network error scenarios
 
 - [ ] **Edge Cases**
@@ -2244,7 +2111,6 @@ Use this checklist to ensure complete integration with the backend API:
 **Key Documentation Files:**
 - [API_REFERENCE.md](API_REFERENCE.md) - Complete endpoint documentation
 - [AUTH_API_INTEGRATION.md](AUTH_API_INTEGRATION.md) - Authentication flow details
-- [RATE_LIMITING_GUIDE.md](RATE_LIMITING_GUIDE.md) - Rate limit configuration
 - [GOOGLE_AUTH_GUIDE.md](GOOGLE_AUTH_GUIDE.md) - Google OAuth setup
 
 **Need Help?**

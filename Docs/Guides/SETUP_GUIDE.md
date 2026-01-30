@@ -289,7 +289,6 @@ Use Swagger UI at `http://localhost:5217/swagger`:
 - [ ] Update ApplicationUrl to production domain
 - [ ] Enable HTTPS redirect
 - [ ] Configure CORS for specific production frontend URLs
-- [ ] Add rate limiting
 - [ ] Review and update connection strings
 
 ### Password Policy

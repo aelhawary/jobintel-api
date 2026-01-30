@@ -1058,14 +1058,13 @@ For invalid input, ASP.NET Core returns validation errors in this format:
 
 ---
 
-## Rate Limits
+## Security Measures
 
-Currently: No rate limiting implemented.
+**Account Lockout:**
+- 5 failed login attempts = 15 minute lockout
+- Password reset clears lockout
 
-**Recommendation for Production:**
-- Limit login attempts (e.g., 5 per 15 minutes)
-- Limit registration attempts per IP
-- Limit password reset requests
+**Note:** Rate limiting is not currently implemented. Account lockout provides sufficient protection for authentication endpoints.
 
 ---
 

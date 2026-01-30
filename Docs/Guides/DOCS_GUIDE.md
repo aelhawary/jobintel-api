@@ -13,7 +13,6 @@
 | [REACT_INTEGRATION_GUIDE.md](REACT_INTEGRATION_GUIDE.md) | Frontend integration with React examples | Frontend Developers |
 | [GOOGLE_AUTH_GUIDE.md](GOOGLE_AUTH_GUIDE.md) | Google OAuth 2.0 implementation | Frontend Developers |
 | [AUTH_API_INTEGRATION.md](AUTH_API_INTEGRATION.md) | Authentication flow details | Frontend & Backend |
-| [RATE_LIMITING_GUIDE.md](RATE_LIMITING_GUIDE.md) | Rate limiting configuration and handling | Frontend & Backend |
 | [SETUP_GUIDE.md](SETUP_GUIDE.md) | Project setup and configuration | Backend Developers |
 | [EMAIL_SETUP_GUIDE.md](EMAIL_SETUP_GUIDE.md) | Email/SMTP configuration | Backend Developers |
 | [database-documentation.md](database-documentation.md) | Database schema and relationships | Backend Developers |
@@ -33,14 +32,13 @@ This comprehensive guide includes:
 - Authentication service implementation
 - Form components (Login, Register, Password Reset)
 - Error handling patterns
-- Rate limiting and account lockout handling
+- Account lockout handling
 - Custom hooks for security features
 - 50+ item integration checklist
 
 **Then read:**
 1. [API_REFERENCE.md](API_REFERENCE.md) - For detailed endpoint specifications
 2. [GOOGLE_AUTH_GUIDE.md](GOOGLE_AUTH_GUIDE.md) - For Google OAuth implementation
-3. [RATE_LIMITING_GUIDE.md](RATE_LIMITING_GUIDE.md) - For handling HTTP 429 responses
 
 ---
 
@@ -86,7 +84,7 @@ Quick overview of:
 The main index file for all documentation. Contains:
 - Quick links to all guides
 - API endpoint summary
-- Frontend integration summary with rate limits
+- Frontend integration summary
 - Project status overview
 
 #### [API_REFERENCE.md](API_REFERENCE.md)
@@ -102,7 +100,7 @@ The most comprehensive frontend guide with:
 - API client setup (Axios)
 - Authentication service class
 - Complete form components
-- Security feature handling (rate limits, lockout)
+- Security feature handling (account lockout)
 - Custom React hooks
 - Token management
 - Full integration checklist
@@ -126,13 +124,6 @@ Detailed authentication flow documentation:
 - Login flow
 - Password reset flow (3 steps)
 - JWT token handling
-
-#### [RATE_LIMITING_GUIDE.md](RATE_LIMITING_GUIDE.md)
-Rate limiting implementation details:
-- Protected endpoints and their limits
-- HTTP 429 response format
-- Frontend handling strategies
-- Testing rate limits
 
 ---
 
@@ -165,7 +156,7 @@ Database schema reference:
 
 #### [CHANGELOG.md](CHANGELOG.md)
 Version history including:
-- v1.1.0 - Google OAuth, Rate Limiting, Account Lockout
+- v1.1.0 - Google OAuth, Account Lockout
 - v1.0.0 - Initial authentication system
 - Breaking changes
 - Migration guides
@@ -186,7 +177,6 @@ Documentation audit report:
 | Integrate with React frontend | [REACT_INTEGRATION_GUIDE.md](REACT_INTEGRATION_GUIDE.md) |
 | Understand API endpoints | [API_REFERENCE.md](API_REFERENCE.md) |
 | Implement Google Sign-In | [GOOGLE_AUTH_GUIDE.md](GOOGLE_AUTH_GUIDE.md) |
-| Handle rate limiting | [RATE_LIMITING_GUIDE.md](RATE_LIMITING_GUIDE.md) |
 | Configure email service | [EMAIL_SETUP_GUIDE.md](EMAIL_SETUP_GUIDE.md) |
 | Understand database schema | [database-documentation.md](database-documentation.md) |
 | See what changed recently | [CHANGELOG.md](CHANGELOG.md) |
@@ -202,7 +192,6 @@ Documentation audit report:
 | Login (Email/Password) | ✅ Complete | [API_REFERENCE.md](API_REFERENCE.md#2-login) |
 | Google OAuth 2.0 | ✅ Complete | [GOOGLE_AUTH_GUIDE.md](GOOGLE_AUTH_GUIDE.md) |
 | Password Reset | ✅ Complete | [API_REFERENCE.md](API_REFERENCE.md#6-forgot-password) |
-| Rate Limiting | ✅ Complete | [RATE_LIMITING_GUIDE.md](RATE_LIMITING_GUIDE.md) |
 | Account Lockout | ✅ Complete | [REACT_INTEGRATION_GUIDE.md](REACT_INTEGRATION_GUIDE.md#account-lockout-handling) |
 | Password Policy | ✅ Complete | [API_REFERENCE.md](API_REFERENCE.md#1-register-user) |
 

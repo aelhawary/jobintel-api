@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RecruitmentPlatformAPI.DTOs;
-using RecruitmentPlatformAPI.Services;
+using RecruitmentPlatformAPI.DTOs.Auth;
+using RecruitmentPlatformAPI.Services.Auth;
 
 namespace RecruitmentPlatformAPI.Controllers
 {

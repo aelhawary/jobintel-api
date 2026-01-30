@@ -53,7 +53,6 @@ JobIntel is a modern recruitment platform designed to connect job seekers with r
 ✅ **Security Features**
 - BCrypt password hashing (work factor 12)
 - JWT token authentication (24-hour expiration)
-- Rate limiting (IP-based)
 - Account lockout protection
 - Email verification required before login
 - CORS configuration
@@ -151,7 +150,6 @@ Backend-2/
 │   ├── AUTH_API_INTEGRATION.md     # Auth endpoints reference
 │   ├── GOOGLE_AUTH_GUIDE.md        # Google OAuth setup
 │   ├── EMAIL_SETUP_GUIDE.md        # Email configuration
-│   ├── RATE_LIMITING_GUIDE.md      # Rate limiting docs
 │   ├── SWAGGER_IMPROVEMENTS.md     # Swagger documentation guide
 │   ├── API_DOCUMENTATION_STANDARDS.md # API standards
 │   ├── ERD_DIAGRAM.md              # Entity Relationship Diagram
@@ -274,7 +272,6 @@ All documentation is located in the `Docs/` folder:
 - **Password Hashing:** BCrypt.Net
 - **Email:** SMTP (Gmail)
 - **API Documentation:** Swagger/OpenAPI
-- **Rate Limiting:** AspNetCoreRateLimit
 
 ### NuGet Packages
 - `Microsoft.EntityFrameworkCore.SqlServer`
@@ -282,7 +279,6 @@ All documentation is located in the `Docs/` folder:
 - `Microsoft.AspNetCore.Authentication.JwtBearer`
 - `BCrypt.Net-Next`
 - `Google.Apis.Auth`
-- `AspNetCoreRateLimit`
 - `Swashbuckle.AspNetCore`
 
 ---
@@ -320,7 +316,6 @@ All documentation is located in the `Docs/` folder:
 - ✅ Email verification required for login
 - ✅ Account lockout after 5 failed login attempts (15 minutes)
 - ✅ Password reset with time-limited OTP
-- ✅ Rate limiting: 100 requests per 5 minutes per IP
 - ✅ CORS configured for localhost (update for production)
 - ✅ Input validation on all endpoints
 - ✅ Enum-based type safety for critical fields
@@ -336,7 +331,7 @@ All documentation is located in the `Docs/` folder:
 - Profile Wizard Step 2: Projects Management
 - Reference data with bilingual support
 - Comprehensive documentation
-- Rate limiting and security features
+- Security features
 
 ### 🚧 In Progress
 - Profile Wizard Step 3: CV Upload

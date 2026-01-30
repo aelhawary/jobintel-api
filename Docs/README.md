@@ -50,8 +50,7 @@
 ### For Frontend Developers (START HERE)
 👉 **[React Integration Guide](Guides/REACT_INTEGRATION_GUIDE.md)** - Complete React/TypeScript integration with examples  
 👉 **[Auth API Integration Guide](API/AUTH_API_INTEGRATION.md)** - Authentication endpoints with request/response examples  
-👉 **[Google OAuth Guide](Guides/GOOGLE_AUTH_GUIDE.md)** - Google Sign-In implementation guide  
-👉 **[Rate Limiting Guide](Guides/RATE_LIMITING_GUIDE.md)** - Rate limiting configuration and handling
+👉 **[Google OAuth Guide](Guides/GOOGLE_AUTH_GUIDE.md)** - Google Sign-In implementation guide
 
 ### For API Documentation & Standards
 👉 **[API Reference](API/API_REFERENCE.md)** - Complete endpoint documentation with validation rules  
@@ -84,7 +83,6 @@ Docs/
 │   ├── SETUP_GUIDE.md                # Project setup instructions
 │   ├── EMAIL_SETUP_GUIDE.md          # Gmail SMTP configuration
 │   ├── GOOGLE_AUTH_GUIDE.md          # Google OAuth setup
-│   ├── RATE_LIMITING_GUIDE.md        # Rate limiting documentation
 │   ├── REACT_INTEGRATION_GUIDE.md    # Frontend integration guide
 │   └── DOCS_GUIDE.md                 # Documentation maintenance
 │
@@ -115,9 +113,9 @@ Docs/
 
 2. **[Guides/REACT_INTEGRATION_GUIDE.md](Guides/REACT_INTEGRATION_GUIDE.md)** - For Frontend Developers
    - Complete React/TypeScript integration guide
-   - Security features (password policy, rate limiting, account lockout)
+   - Security features (password policy, account lockout)
    - Full component examples (Register, Login with lockout handling)
-   - Custom React hooks (useRateLimit, useAccountLockout)
+   - Custom React hooks (useAccountLockout)
    - API service implementation with interceptors
    - Error handling patterns and best practices
 
@@ -140,13 +138,7 @@ Docs/
    - Security best practices
    - Testing and troubleshooting
 
-6. **[Guides/RATE_LIMITING_GUIDE.md](Guides/RATE_LIMITING_GUIDE.md)** - Rate Limiting
-   - Rate limiting configuration
-   - Protected endpoints and limits
-   - HTTP 429 response format
-   - Frontend integration guidance
-
-7. **[Database/ERD_DIAGRAM.md](Database/ERD_DIAGRAM.md)** - Database Schema
+6. **[Database/ERD_DIAGRAM.md](Database/ERD_DIAGRAM.md)** - Database Schema
    - Entity Relationship Diagram
    - 18 tables with relationships
    - Complete schema documentation
@@ -202,23 +194,12 @@ Docs/
 
 #### Security Features Implemented
 1. **Password Policy** - Uppercase, lowercase, digit, 8-100 characters
-2. **Rate Limiting** - All auth endpoints protected (see limits below)
-3. **Account Lockout** - 5 failed attempts = 15 min lockout
-4. **OTP Verification** - 6-digit codes, 15 min expiry
-5. **JWT Authentication** - 24 hour tokens
-6. **Email Enumeration Prevention** - Consistent responses
+2. **Account Lockout** - 5 failed attempts = 15 min lockout
+3. **OTP Verification** - 6-digit codes, 15 min expiry
+4. **JWT Authentication** - 24 hour tokens
+5. **Email Enumeration Prevention** - Consistent responses
 
 #### Critical Implementation Points
-
-**Rate Limits to Handle:**
-```
-POST /api/auth/login           → 20 requests / 15 minutes
-POST /api/auth/register        → 10 requests / 1 hour
-POST /api/auth/verify-email    → 10 requests / 1 hour
-POST /api/auth/resend-verification → 3 requests / 1 hour
-POST /api/auth/forgot-password → 3 requests / 1 hour
-POST /api/auth/google          → 10 requests / 1 hour
-```
 
 **Account Lockout Response:**
 ```json
@@ -227,13 +208,6 @@ POST /api/auth/google          → 10 requests / 1 hour
   "message": "Account is locked...",
   "lockoutEnd": "2025-12-07T15:45:00Z",
   "remainingMinutes": 12
-}
-```
-
-**Rate Limit Response (HTTP 429):**
-```json
-{
-  "message": "API calls quota exceeded! maximum admitted X per Y."
 }
 ```
 
@@ -248,7 +222,6 @@ POST /api/auth/google          → 10 requests / 1 hour
 - ✅ Email verification with resend limiter
 - ✅ Password reset flow (3 steps)
 - ✅ Google OAuth button
-- ✅ Rate limit error messages with retry timers
 - ✅ Account lockout alerts with unlock options
 
 #### Token Management
@@ -281,7 +254,7 @@ See [REACT_INTEGRATION_GUIDE.md](REACT_INTEGRATION_GUIDE.md#frontend-integration
 ## Project Status
 
 ✅ **Authentication System:** Complete (Email/Password + Google OAuth 2.0)  
-✅ **Security Features:** Complete (Rate Limiting + Account Lockout + Password Policy)  
+✅ **Security Features:** Complete (Account Lockout + Password Policy)  
 ✅ **API Documentation:** Complete and up-to-date  
 ✅ **Frontend Integration:** Ready (React examples provided)  
 ✅ **Database:** Schema organized, migrations cleaned  

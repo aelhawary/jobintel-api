@@ -92,7 +92,7 @@ Added `Swashbuckle.AspNetCore.Annotations` package for enhanced Swagger capabili
 | `/api/auth/login` | POST | Complete response types including account lockout |
 | `/api/auth/google` | POST | Standardized documentation |
 | `/api/auth/verify-email` | POST | Clean parameter descriptions |
-| `/api/auth/resend-verification` | POST | Added rate limiting note |
+| `/api/auth/resend-verification` | POST | Standardized documentation |
 | `/api/auth/forgot-password` | POST | Email enumeration protection note |
 | `/api/auth/verify-reset-otp` | POST | Token validity description |
 | `/api/auth/reset-password` | POST | Complete flow documentation |

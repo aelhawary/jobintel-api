@@ -368,8 +368,7 @@ curl -H "Authorization: Bearer <jwt>" http://localhost:5217/api/auth/me
 - Remove null origin support (used for local file:// testing)
 
 **Security Enhancements:**
-- Implement rate limiting on authentication endpoints
-- Add account lockout after failed login attempts
+- Account lockout is already implemented for failed login attempts
 - Enable comprehensive logging and monitoring
 - Set up alerts for suspicious activity
 - Use HTTPS only in production
@@ -378,7 +377,6 @@ curl -H "Authorization: Bearer <jwt>" http://localhost:5217/api/auth/me
 - Never trust frontend tokens - always validate server-side
 - Keep JWT secret keys secure and rotate regularly
 - Monitor authentication attempts and failures
-- Implement IP-based throttling
 
 ---
 

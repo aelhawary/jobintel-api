@@ -4,8 +4,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using RecruitmentPlatformAPI.Configuration;
 using RecruitmentPlatformAPI.Data;
-using RecruitmentPlatformAPI.Services;
-using AspNetCoreRateLimit;
+using RecruitmentPlatformAPI.Services.Auth;
+using RecruitmentPlatformAPI.Services.Profile;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,16 +48,6 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSet
 
 // Configure Email Settings
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
-
-// Configure Rate Limiting
-builder.Services.AddMemoryCache();
-builder.Services.AddHttpContextAccessor();
-builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
-builder.Services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
-builder.Services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
-builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
-builder.Services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
-builder.Services.AddInMemoryRateLimiting();
 
 // Configure Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
@@ -162,9 +152,6 @@ app.UseHttpsRedirection();
 
 // Enable CORS
 app.UseCors("AllowFrontend");
-
-// Enable Rate Limiting
-app.UseIpRateLimiting();
 
 app.UseAuthentication();
 app.UseAuthorization();

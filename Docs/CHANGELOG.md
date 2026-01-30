@@ -416,9 +416,7 @@ public enum AuthProvider
 - ✅ CORS configuration for specific origins
 - ✅ HTTPS support
 - ✅ Case-insensitive email normalization
-- ✅ Rate limiting on 7 auth endpoints (AspNetCoreRateLimit v5.0.0)
 - ✅ Account lockout after 5 failed login attempts (15min lockout)
-- ✅ IP-based request throttling
 
 ### Recommended for Production
 - ⚠️ Stronger JWT secret key (current is for development)

@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using RecruitmentPlatformAPI.Data.Seed;
-using RecruitmentPlatformAPI.Models;
+using RecruitmentPlatformAPI.Models.Identity;
+using RecruitmentPlatformAPI.Models.JobSeeker;
+using RecruitmentPlatformAPI.Models.Reference;
+using RecruitmentPlatformAPI.Models.Assessment;
 
 namespace RecruitmentPlatformAPI.Data
 {

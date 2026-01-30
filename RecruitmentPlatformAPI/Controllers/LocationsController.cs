@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RecruitmentPlatformAPI.Data;
-using RecruitmentPlatformAPI.DTOs;
-using RecruitmentPlatformAPI.Models;
+using RecruitmentPlatformAPI.DTOs.Common;
+using RecruitmentPlatformAPI.Models.Reference;
 
 namespace RecruitmentPlatformAPI.Controllers
 {

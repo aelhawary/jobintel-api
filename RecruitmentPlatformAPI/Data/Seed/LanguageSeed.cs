@@ -1,4 +1,4 @@
-using RecruitmentPlatformAPI.Models;
+using RecruitmentPlatformAPI.Models.Reference;
 
 namespace RecruitmentPlatformAPI.Data.Seed
 {
