@@ -1,8 +1,8 @@
 # API Reference
 
 **Base URL:** `http://localhost:5217`  
-**API Version:** 1.2.0  
-**Last Updated:** December 28, 2025
+**API Version:** 1.3.0  
+**Last Updated:** January 30, 2026
 
 ---
 
@@ -29,6 +29,12 @@
    - [Get Job Titles](#13-get-job-titles)
    - [Get Countries](#14-get-countries)
    - [Get Languages](#15-get-languages)
+7. [CV/Resume Upload Endpoints](#cvresume-upload-endpoints)
+   - [Upload Resume](#16-upload-resume)
+   - [Get Resume Info](#17-get-resume-info)
+   - [Download Resume](#18-download-resume)
+   - [Delete Resume](#19-delete-resume)
+   - [Check Resume Exists](#20-check-resume-exists)
 
 ---
 
@@ -1001,6 +1007,268 @@ Authorization: Bearer {token}
 - Arabic and English prioritized (displayed first)
 - Middle Eastern, European, Asian, and African languages
 - ISO 639-3 codes
+
+---
+
+## CV/Resume Upload Endpoints
+
+Step 3 of the profile wizard allows job seekers to upload their CV/resume.
+
+**Key Features:**
+- PDF files only
+- Maximum file size: 5 MB
+- One CV per user (uploading new CV replaces existing)
+- File validation (MIME type + magic bytes)
+- Soft delete with automatic file cleanup
+
+---
+
+### 16. Upload Resume
+
+**Endpoint:** `POST /api/resume/upload`  
+**Authentication:** Required (JWT token)  
+**Content-Type:** `multipart/form-data`  
+**Description:** Upload a new CV/resume or replace the existing one
+
+#### Headers
+
+```
+Authorization: Bearer {token}
+Content-Type: multipart/form-data
+```
+
+#### Request Body
+
+Form data with file field:
+- `file`: PDF file (max 5MB)
+
+#### cURL Example
+
+```bash
+curl -X POST "http://localhost:5217/api/resume/upload" \
+  -H "Authorization: Bearer {token}" \
+  -F "file=@/path/to/your/cv.pdf"
+```
+
+#### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Resume uploaded successfully",
+  "resume": {
+    "id": 1,
+    "fileName": "John_Doe_CV.pdf",
+    "contentType": "application/pdf",
+    "fileSizeBytes": 524288,
+    "fileSizeDisplay": "512 KB",
+    "downloadUrl": "/api/resume/download",
+    "parseStatus": "Pending",
+    "createdAt": "2026-01-30T12:00:00Z",
+    "updatedAt": "2026-01-30T12:00:00Z"
+  },
+  "currentStep": 3
+}
+```
+
+#### Error Responses
+
+**400 Bad Request - No File:**
+```json
+{
+  "success": false,
+  "message": "No file provided. Please select a PDF file to upload.",
+  "resume": null,
+  "currentStep": 3
+}
+```
+
+**400 Bad Request - File Too Large:**
+```json
+{
+  "success": false,
+  "message": "File size exceeds the maximum allowed size of 5 MB.",
+  "resume": null,
+  "currentStep": 3
+}
+```
+
+**400 Bad Request - Invalid File Type:**
+```json
+{
+  "success": false,
+  "message": "Invalid file type. Allowed types: .pdf",
+  "resume": null,
+  "currentStep": 3
+}
+```
+
+**400 Bad Request - Invalid PDF Content:**
+```json
+{
+  "success": false,
+  "message": "The file does not appear to be a valid PDF document.",
+  "resume": null,
+  "currentStep": 3
+}
+```
+
+**400 Bad Request - Profile Not Found:**
+```json
+{
+  "success": false,
+  "message": "Job seeker profile not found. Please complete Step 1 first.",
+  "resume": null,
+  "currentStep": 3
+}
+```
+
+---
+
+### 17. Get Resume Info
+
+**Endpoint:** `GET /api/resume`  
+**Authentication:** Required (JWT token)  
+**Description:** Get information about the current user's uploaded resume
+
+#### Headers
+
+```
+Authorization: Bearer {token}
+```
+
+#### Success Response (200 OK) - Resume Exists
+
+```json
+{
+  "success": true,
+  "message": "Resume retrieved successfully",
+  "resume": {
+    "id": 1,
+    "fileName": "John_Doe_CV.pdf",
+    "contentType": "application/pdf",
+    "fileSizeBytes": 524288,
+    "fileSizeDisplay": "512 KB",
+    "downloadUrl": "/api/resume/download",
+    "parseStatus": "Pending",
+    "createdAt": "2026-01-30T12:00:00Z",
+    "updatedAt": "2026-01-30T12:00:00Z"
+  },
+  "currentStep": 3
+}
+```
+
+#### Success Response (200 OK) - No Resume
+
+```json
+{
+  "success": true,
+  "message": "No resume uploaded yet.",
+  "resume": null,
+  "currentStep": 3
+}
+```
+
+---
+
+### 18. Download Resume
+
+**Endpoint:** `GET /api/resume/download`  
+**Authentication:** Required (JWT token)  
+**Description:** Download the current user's resume file  
+**Content-Type (Response):** `application/pdf`
+
+#### Headers
+
+```
+Authorization: Bearer {token}
+```
+
+#### Success Response (200 OK)
+
+Returns the PDF file with headers:
+- `Content-Type: application/pdf`
+- `Content-Disposition: attachment; filename="John_Doe_CV.pdf"`
+
+#### Error Responses
+
+**404 Not Found:**
+```json
+{
+  "success": false,
+  "message": "No resume found. Please upload a resume first."
+}
+```
+
+---
+
+### 19. Delete Resume
+
+**Endpoint:** `DELETE /api/resume`  
+**Authentication:** Required (JWT token)  
+**Description:** Delete the current user's resume (soft delete)
+
+#### Headers
+
+```
+Authorization: Bearer {token}
+```
+
+#### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Resume deleted successfully",
+  "resume": null,
+  "currentStep": 3
+}
+```
+
+#### Error Response (400 Bad Request)
+
+```json
+{
+  "success": false,
+  "message": "No resume found to delete.",
+  "resume": null,
+  "currentStep": 3
+}
+```
+
+---
+
+### 20. Check Resume Exists
+
+**Endpoint:** `GET /api/resume/exists`  
+**Authentication:** Required (JWT token)  
+**Description:** Quick check if the user has an uploaded resume (useful for wizard step completion status)
+
+#### Headers
+
+```
+Authorization: Bearer {token}
+```
+
+#### Success Response (200 OK) - Has Resume
+
+```json
+{
+  "success": true,
+  "data": true,
+  "message": "Resume exists"
+}
+```
+
+#### Success Response (200 OK) - No Resume
+
+```json
+{
+  "success": true,
+  "data": false,
+  "message": "No resume uploaded yet"
+}
+```
 
 ---
 

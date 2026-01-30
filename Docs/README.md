@@ -29,6 +29,12 @@
   - Auto-ordering and soft delete
   - Project management
 
+- ✅ **Profile Wizard Step 3:** CV Upload (5 endpoints)
+  - PDF upload with validation (max 5MB)
+  - File content verification (magic bytes)
+  - Download and delete functionality
+  - Soft delete with automatic file cleanup
+
 - ✅ **Profile Wizard Step 6:** Social Links (3 endpoints)
   - Add/update/remove social media links
   - Completely optional (users can skip)
@@ -39,7 +45,8 @@
   - 90 job titles, 65 countries, 50 languages seeded
 
 ### Next Phase
-- 📅 Profile Wizard Steps 3-5 (CV Upload, Work Experience, Education)
+- 📅 Profile Wizard Step 4: Work Experience
+- 📅 Profile Wizard Step 5: Education
 - 📅 Job posting and management
 - 📅 AI-powered recommendations
 

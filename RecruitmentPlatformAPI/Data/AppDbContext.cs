@@ -140,7 +140,7 @@ namespace RecruitmentPlatformAPI.Data
                  .HasDatabaseName("IX_Project_JobSeekerId_IsDeleted");
             });
 
-            // Resume - many-to-one with JobSeeker
+            // Resume - many-to-one with JobSeeker (one active resume per job seeker)
             modelBuilder.Entity<Resume>(b =>
             {
                 b.HasOne(r => r.JobSeeker)
@@ -148,10 +148,15 @@ namespace RecruitmentPlatformAPI.Data
                  .HasForeignKey(r => r.JobSeekerId)
                  .OnDelete(DeleteBehavior.Cascade);
                 
-                // Ensure only one CV per job seeker
+                // Ensure only one active (non-deleted) CV per job seeker using filtered unique index
                 b.HasIndex(r => r.JobSeekerId)
                  .IsUnique()
-                 .HasDatabaseName("IX_Resume_JobSeekerId_Unique");
+                 .HasFilter("[IsDeleted] = 0")
+                 .HasDatabaseName("IX_Resume_JobSeekerId_Active_Unique");
+                
+                // Index for querying non-deleted resumes
+                b.HasIndex(r => new { r.JobSeekerId, r.IsDeleted })
+                 .HasDatabaseName("IX_Resume_JobSeekerId_IsDeleted");
             });
 
             // SocialAccount - one-to-one with JobSeeker

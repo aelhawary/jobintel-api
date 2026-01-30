@@ -49,6 +49,9 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSet
 // Configure Email Settings
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
+// Configure File Storage Settings
+builder.Services.Configure<FileStorageSettings>(builder.Configuration.GetSection("FileStorage"));
+
 // Configure Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
 builder.Services.AddAuthentication(options =>
@@ -101,6 +104,7 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ISocialAccountService, SocialAccountService>();
+builder.Services.AddScoped<IResumeService, ResumeService>();
 
 // Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
