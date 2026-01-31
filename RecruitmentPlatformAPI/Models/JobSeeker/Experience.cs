@@ -12,6 +12,11 @@ namespace RecruitmentPlatformAPI.Models.JobSeeker
         public string JobTitle { get; set; } = string.Empty;
         [Required, MaxLength(100)]
         public string CompanyName { get; set; } = string.Empty;
+        /// <summary>
+        /// Location/City (e.g., "San Francisco, CA")
+        /// </summary>
+        [MaxLength(150)]
+        public string? Location { get; set; }
         [Required]
         public EmploymentType EmploymentType { get; set; } = EmploymentType.FullTime;
         [Required]

@@ -141,6 +141,7 @@ namespace RecruitmentPlatformAPI.Services.Profile
                 jobSeeker.FirstLanguageProficiency = dto.FirstLanguageProficiency;
                 jobSeeker.SecondLanguageId = dto.SecondLanguageId;
                 jobSeeker.SecondLanguageProficiency = dto.SecondLanguageProficiency;
+                jobSeeker.Bio = dto.Bio?.Trim();
                 jobSeeker.UpdatedAt = DateTime.UtcNow;
 
                 _logger.LogInformation("Updated JobSeeker fields for user {UserId}", userId);
@@ -218,7 +219,8 @@ namespace RecruitmentPlatformAPI.Services.Profile
                 SecondLanguage = jobSeeker.SecondLanguage != null 
                     ? (isArabic ? jobSeeker.SecondLanguage.NameAr : jobSeeker.SecondLanguage.NameEn)
                     : null,
-                SecondLanguageProficiency = jobSeeker.SecondLanguageProficiency
+                SecondLanguageProficiency = jobSeeker.SecondLanguageProficiency,
+                Bio = jobSeeker.Bio
             };
         }
 

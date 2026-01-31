@@ -304,7 +304,7 @@ namespace RecruitmentPlatformAPI.Services.Profile
             }
 
             // Check file extension
-            var extension = Path.GetExtension(file.FileName);
+            var extension = Path.GetExtension(file.FileName)?.ToLowerInvariant();
             if (string.IsNullOrEmpty(extension) || !_fileSettings.IsExtensionAllowed(extension))
             {
                 var allowedExtensions = string.Join(", ", _fileSettings.AllowedExtensions);
@@ -314,13 +314,19 @@ namespace RecruitmentPlatformAPI.Services.Profile
             // Check MIME type
             if (!_fileSettings.IsMimeTypeAllowed(file.ContentType))
             {
-                return FileValidationResult.Invalid("Invalid file type. Only PDF files are allowed.");
+                var allowedExtensions = string.Join(", ", _fileSettings.AllowedExtensions);
+                return FileValidationResult.Invalid($"Invalid file type. Allowed types: {allowedExtensions}");
             }
 
-            // Validate PDF magic bytes (header check)
-            if (!IsValidPdfFile(file))
+            // Validate file content based on type
+            if (extension == ".pdf" && !IsValidPdfFile(file))
             {
                 return FileValidationResult.Invalid("The file does not appear to be a valid PDF document.");
+            }
+            
+            if (extension == ".docx" && !IsValidDocxFile(file))
+            {
+                return FileValidationResult.Invalid("The file does not appear to be a valid DOCX document.");
             }
 
             return FileValidationResult.Valid();
@@ -410,6 +416,33 @@ namespace RecruitmentPlatformAPI.Services.Profile
                        header[2] == 0x44 && // D
                        header[3] == 0x46 && // F
                        header[4] == 0x2D;   // -
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool IsValidDocxFile(IFormFile file)
+        {
+            try
+            {
+                // DOCX files are ZIP archives with specific magic bytes (PK..)
+                // ZIP file header starts with 0x50 0x4B 0x03 0x04
+                using var stream = file.OpenReadStream();
+                var header = new byte[4];
+                var bytesRead = stream.Read(header, 0, 4);
+
+                if (bytesRead < 4)
+                {
+                    return false;
+                }
+
+                // Check for ZIP/DOCX magic bytes
+                return header[0] == 0x50 && // P
+                       header[1] == 0x4B && // K
+                       header[2] == 0x03 && 
+                       header[3] == 0x04;
             }
             catch
             {

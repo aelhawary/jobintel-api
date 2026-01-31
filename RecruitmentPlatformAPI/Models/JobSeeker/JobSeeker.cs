@@ -22,6 +22,13 @@ namespace RecruitmentPlatformAPI.Models.JobSeeker
         public LanguageProficiency? FirstLanguageProficiency { get; set; }
         public int? SecondLanguageId { get; set; } // Foreign key to Language table
         public LanguageProficiency? SecondLanguageProficiency { get; set; }
+        
+        /// <summary>
+        /// Brief bio/summary about the job seeker (max 500 characters)
+        /// </summary>
+        [MaxLength(500)]
+        public string? Bio { get; set; }
+        
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

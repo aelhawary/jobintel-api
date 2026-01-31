@@ -13,11 +13,16 @@ namespace RecruitmentPlatformAPI.Controllers
     public class ProfileController : ControllerBase
     {
         private readonly IProfileService _profileService;
+        private readonly IProfilePictureService _profilePictureService;
         private readonly ILogger<ProfileController> _logger;
 
-        public ProfileController(IProfileService profileService, ILogger<ProfileController> logger)
+        public ProfileController(
+            IProfileService profileService, 
+            IProfilePictureService profilePictureService,
+            ILogger<ProfileController> logger)
         {
             _profileService = profileService;
+            _profilePictureService = profilePictureService;
             _logger = logger;
         }
 
@@ -123,6 +128,161 @@ namespace RecruitmentPlatformAPI.Controllers
             var jobTitles = await _profileService.GetJobTitlesAsync();
             return Ok(new ApiResponse<List<JobTitleDto>>(jobTitles));
         }
+
+        #region Profile Picture Endpoints
+
+        /// <summary>
+        /// Upload a profile picture (replaces existing picture if any)
+        /// </summary>
+        /// <param name="file">Image file (JPEG, PNG, or WebP, max 2MB)</param>
+        /// <returns>Upload result with URL</returns>
+        [HttpPost("picture")]
+        [Authorize]
+        [Consumes("multipart/form-data")]
+        [ProducesResponseType(typeof(ProfilePictureUploadResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProfilePictureUploadResultDto), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [RequestSizeLimit(2 * 1024 * 1024)] // 2MB limit
+        public async Task<IActionResult> UploadProfilePicture(IFormFile file)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+            {
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+            }
+
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest(new ProfilePictureUploadResultDto
+                {
+                    Success = false,
+                    Message = "No file provided"
+                });
+            }
+
+            _logger.LogInformation("Profile picture upload started for user {UserId}, file: {FileName}, size: {Size} bytes",
+                userId, file.FileName, file.Length);
+
+            using var stream = file.OpenReadStream();
+            var result = await _profilePictureService.UploadProfilePictureAsync(
+                userId, stream, file.FileName, file.ContentType);
+
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Get profile picture information (URL, metadata)
+        /// </summary>
+        /// <returns>Profile picture info with URL and metadata</returns>
+        [HttpGet("picture/info")]
+        [Authorize]
+        [ProducesResponseType(typeof(ApiResponse<ProfilePictureResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetProfilePictureInfo()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+            {
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+            }
+
+            var pictureInfo = await _profilePictureService.GetProfilePictureAsync(userId);
+            return Ok(new ApiResponse<ProfilePictureResponseDto>(pictureInfo));
+        }
+
+        /// <summary>
+        /// Get the actual profile picture file (for display)
+        /// </summary>
+        /// <returns>Image file stream</returns>
+        [HttpGet("picture")]
+        [Authorize]
+        [ProducesResponseType(typeof(FileStreamResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetProfilePicture()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+            {
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+            }
+
+            var fileResult = await _profilePictureService.GetProfilePictureFileAsync(userId);
+            
+            if (fileResult == null)
+            {
+                return NotFound(new ApiErrorResponse("Profile picture not found"));
+            }
+
+            var (stream, contentType, fileName) = fileResult.Value;
+            
+            if (stream == null)
+            {
+                // User has OAuth picture, redirect or return info
+                var pictureInfo = await _profilePictureService.GetProfilePictureAsync(userId);
+                if (pictureInfo.IsOAuthPicture && !string.IsNullOrEmpty(pictureInfo.Url))
+                {
+                    return Redirect(pictureInfo.Url);
+                }
+                return NotFound(new ApiErrorResponse("Profile picture not found"));
+            }
+
+            return File(stream, contentType ?? "image/jpeg", fileName);
+        }
+
+        /// <summary>
+        /// Delete the profile picture
+        /// </summary>
+        /// <returns>Success status</returns>
+        [HttpDelete("picture")]
+        [Authorize]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> DeleteProfilePicture()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+            {
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+            }
+
+            var result = await _profilePictureService.DeleteProfilePictureAsync(userId);
+            
+            if (result)
+            {
+                _logger.LogInformation("Profile picture deleted for user {UserId}", userId);
+                return Ok(new ApiResponse<bool>(true, "Profile picture deleted successfully"));
+            }
+
+            return BadRequest(new ApiErrorResponse("Failed to delete profile picture"));
+        }
+
+        /// <summary>
+        /// Check if user has a profile picture
+        /// </summary>
+        /// <returns>Boolean indicating if profile picture exists</returns>
+        [HttpGet("picture/exists")]
+        [Authorize]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> HasProfilePicture()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+            {
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+            }
+
+            var pictureInfo = await _profilePictureService.GetProfilePictureAsync(userId);
+            return Ok(new ApiResponse<bool>(pictureInfo.HasProfilePicture));
+        }
+
+        #endregion
 
         // Helper method to extract user ID from JWT token
         private int GetCurrentUserId()

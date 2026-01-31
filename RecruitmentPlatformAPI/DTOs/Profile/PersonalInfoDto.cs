@@ -76,6 +76,13 @@ namespace RecruitmentPlatformAPI.DTOs.Profile
         /// </summary>
         /// <example>Advanced</example>
         public LanguageProficiency? SecondLanguageProficiency { get; set; }
+
+        /// <summary>
+        /// Brief bio/summary about yourself (optional, max 500 characters)
+        /// </summary>
+        /// <example>Passionate software developer with 3+ years of experience in building scalable web applications.</example>
+        [StringLength(500, ErrorMessage = "Bio cannot exceed 500 characters")]
+        public string? Bio { get; set; }
     }
 
     /// <summary>
@@ -107,5 +114,7 @@ namespace RecruitmentPlatformAPI.DTOs.Profile
         /// </summary>
         /// <example>English</example>
         public string? SecondLanguage { get; set; }
+
+        // Note: Bio is inherited from PersonalInfoRequestDto
     }
 }

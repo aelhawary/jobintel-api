@@ -19,8 +19,6 @@ namespace RecruitmentPlatformAPI.Models.JobSeeker
         public DateTime StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public bool IsCurrent { get; set; }
-        [MaxLength(1000)]
-        public string? Description { get; set; }
         [Required]
         public int DisplayOrder { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
