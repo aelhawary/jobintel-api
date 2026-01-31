@@ -12,7 +12,7 @@ namespace RecruitmentPlatformAPI.Services.Auth
         Task<AuthResponseDto> VerifyEmailAsync(EmailVerificationDto verificationDto);
         Task<AuthResponseDto> ResendVerificationCodeAsync(ResendVerificationDto resendDto);
         Task<AuthResponseDto> ForgotPasswordAsync(ForgotPasswordDto forgotPasswordDto);
-        Task<AuthResponseDto> VerifyResetOtpAsync(VerifyResetOtpDto verifyOtpDto);
+        Task<AuthResponseDto> ValidateResetTokenAsync(ValidateResetTokenDto validateDto);
         Task<AuthResponseDto> ResetPasswordAsync(ResetPasswordDto resetPasswordDto);
         string GenerateJwtToken(User user);
         string HashPassword(string password);

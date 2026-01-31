@@ -785,40 +785,40 @@ namespace RecruitmentPlatformAPI.Services.Auth
                     return new AuthResponseDto
                     {
                         Success = true,
-                        Message = "If your email is associated with an account, you’ll receive a password reset code shortly."
+                        Message = "If your email is associated with an account, you’ll receive a password reset link shortly."
                     };
                 }
 
-                // Invalidate all previous password reset OTPs for this user
-                var previousOtps = await _context.PasswordResets
+                // Invalidate all previous password reset tokens for this user
+                var previousTokens = await _context.PasswordResets
                     .Where(p => p.UserId == user.Id && !p.IsUsed)
                     .ToListAsync();
 
-                foreach (var prev in previousOtps)
+                foreach (var prev in previousTokens)
                 {
                     prev.IsUsed = true;
                 }
 
-                // Generate new OTP
-                var otpCode = _emailService.GenerateVerificationCode();
+                // Generate new secure token
+                var secureToken = _emailService.GenerateSecureToken();
                 var passwordReset = new PasswordReset
                 {
                     UserId = user.Id,
-                    OtpCode = otpCode,
+                    Token = secureToken,
                     CreatedAt = DateTime.UtcNow,
-                    ExpiresAt = DateTime.UtcNow.AddMinutes(15), // OTP valid for 15 minutes
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(15), // Token valid for 15 minutes
                     IsUsed = false
                 };
                 _context.PasswordResets.Add(passwordReset);
                 await _context.SaveChangesAsync();
 
-                // Send OTP email
-                await _emailService.SendPasswordResetOtpAsync(user.Email, user.FirstName, otpCode);
+                // Send password reset link email
+                await _emailService.SendPasswordResetLinkAsync(user.Email, user.FirstName, secureToken);
 
                 return new AuthResponseDto
                 {
                     Success = true,
-                    Message = "If your email is associated with an account, you’ll receive a password reset code shortly."
+                    Message = "If your email is associated with an account, you’ll receive a password reset link shortly."
                 };
             }
             catch (DbUpdateException ex)
@@ -833,89 +833,58 @@ namespace RecruitmentPlatformAPI.Services.Auth
             }
         }
 
-        public async Task<AuthResponseDto> VerifyResetOtpAsync(VerifyResetOtpDto verifyOtpDto)
+        public async Task<AuthResponseDto> ValidateResetTokenAsync(ValidateResetTokenDto validateDto)
         {
             try
             {
                 // Input validation
-                if (string.IsNullOrWhiteSpace(verifyOtpDto.Email) || string.IsNullOrWhiteSpace(verifyOtpDto.OtpCode))
+                if (string.IsNullOrWhiteSpace(validateDto.Token))
                 {
-                    _logger.LogWarning("OTP verification attempted with missing email or code");
                     return new AuthResponseDto
                     {
                         Success = false,
-                        Message = "Email and OTP code are required."
+                        Message = "Reset token is required."
                     };
                 }
 
-                // Normalize email: trim and convert to lowercase
-                var normalizedEmail = NormalizeEmail(verifyOtpDto.Email);
-                
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
-                if (user == null)
-                {
-                    _logger.LogWarning($"OTP verification attempted for non-existent user: {normalizedEmail}");
-                    return new AuthResponseDto
-                    {
-                        Success = false,
-                        Message = "User not found."
-                    };
-                }
-
-                // Get the most recent unused OTP
+                // Find the password reset record by token
                 var passwordReset = await _context.PasswordResets
-                    .Where(p => p.UserId == user.Id && !p.IsUsed)
-                    .OrderByDescending(p => p.CreatedAt)
-                    .FirstOrDefaultAsync();
+                    .Include(p => p.User)
+                    .FirstOrDefaultAsync(p => p.Token == validateDto.Token && !p.IsUsed);
 
                 if (passwordReset == null)
                 {
-                    _logger.LogWarning($"No valid OTP found for user: {user.Email}");
+                    _logger.LogWarning("Invalid or already used password reset token");
                     return new AuthResponseDto
                     {
                         Success = false,
-                        Message = "No valid OTP found. Please request a new one."
+                        Message = "Invalid or expired reset link. Please request a new password reset."
                     };
                 }
 
-                // Check if OTP has expired
+                // Check if token has expired
                 if (passwordReset.ExpiresAt < DateTime.UtcNow)
                 {
-                    _logger.LogWarning($"Expired OTP used for user: {user.Email}");
+                    _logger.LogWarning($"Expired password reset token for user: {passwordReset.User?.Email}");
                     return new AuthResponseDto
                     {
                         Success = false,
-                        Message = "OTP has expired. Please request a new one."
+                        Message = "This reset link has expired. Please request a new password reset."
                     };
                 }
 
-                // Use constant-time comparison to prevent timing attacks
-                if (!ConstantTimeEquals(passwordReset.OtpCode, verifyOtpDto.OtpCode))
-                {
-                    _logger.LogWarning($"Invalid OTP attempt for user: {user.Email}");
-                    return new AuthResponseDto
-                    {
-                        Success = false,
-                        Message = "Invalid OTP code. Please check and try again."
-                    };
-                }
-
-                _logger.LogInformation($"OTP successfully verified for user: {user.Email}");
-
-                // OTP is valid - Generate reset token bound to this specific PasswordReset record
-                var resetToken = _tokenService.GeneratePasswordResetToken(user.Email, user.Id, passwordReset.Id);
+                _logger.LogInformation($"Password reset token validated for user: {passwordReset.User?.Email}");
 
                 return new AuthResponseDto
                 {
                     Success = true,
-                    Message = "OTP verified successfully. You can now reset your password.",
-                    ResetToken = resetToken
+                    Message = "Reset link is valid. You can proceed to reset your password."
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"OTP verification failed due to unexpected error for email: {verifyOtpDto.Email}");
-                return new AuthResponseDto { Success = false, Message = "OTP verification failed. Please try again later." };
+                _logger.LogError(ex, "Token validation failed due to unexpected error");
+                return new AuthResponseDto { Success = false, Message = "Token validation failed. Please try again later." };
             }
         }
 
@@ -923,32 +892,43 @@ namespace RecruitmentPlatformAPI.Services.Auth
         {
             try
             {
-                // Normalize email: trim and convert to lowercase
-                var normalizedEmail = NormalizeEmail(resetPasswordDto.Email);
-                
-                // Validate reset token
-                var (isValid, tokenEmail, tokenUserId, passwordResetId) = _tokenService.ValidatePasswordResetToken(resetPasswordDto.ResetToken);
-                
-                if (!isValid)
+                // Input validation
+                if (string.IsNullOrWhiteSpace(resetPasswordDto.Token))
                 {
                     return new AuthResponseDto
                     {
                         Success = false,
-                        Message = "Invalid or expired reset token. Please verify your OTP again."
+                        Message = "Reset token is required."
                     };
                 }
 
-                // Verify email matches token (compare normalized versions)
-                if (tokenEmail.ToLowerInvariant() != normalizedEmail)
+                // Find the password reset record by token
+                var passwordReset = await _context.PasswordResets
+                    .Include(p => p.User)
+                    .FirstOrDefaultAsync(p => p.Token == resetPasswordDto.Token && !p.IsUsed);
+
+                if (passwordReset == null)
                 {
+                    _logger.LogWarning("Invalid or already used password reset token");
                     return new AuthResponseDto
                     {
                         Success = false,
-                        Message = "Email does not match reset token."
+                        Message = "Invalid or expired reset link. Please request a new password reset."
                     };
                 }
 
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == tokenUserId);
+                // Check if token has expired
+                if (passwordReset.ExpiresAt < DateTime.UtcNow)
+                {
+                    _logger.LogWarning($"Expired password reset token for user: {passwordReset.User?.Email}");
+                    return new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = "This reset link has expired. Please request a new password reset."
+                    };
+                }
+
+                var user = passwordReset.User;
                 if (user == null)
                 {
                     return new AuthResponseDto
@@ -957,20 +937,8 @@ namespace RecruitmentPlatformAPI.Services.Auth
                         Message = "User not found."
                     };
                 }
-                // Load the exact PasswordReset record referenced by the token
-                var passwordReset = await _context.PasswordResets
-                    .FirstOrDefaultAsync(p => p.Id == passwordResetId && p.UserId == user.Id);
 
-                if (passwordReset == null || passwordReset.IsUsed || passwordReset.ExpiresAt < DateTime.UtcNow)
-                {
-                    return new AuthResponseDto
-                    {
-                        Success = false,
-                        Message = "No valid OTP found. Please request a new one."
-                    };
-                }
-
-                // Mark OTP as used (single-use)
+                // Mark token as used (single-use)
                 passwordReset.IsUsed = true;
 
                 // Update user's password

@@ -239,7 +239,22 @@ The JobIntel Team
             return (randomNumber % 900000 + 100000).ToString();
         }
 
-        public async Task<bool> SendPasswordResetOtpAsync(string email, string firstName, string otpCode)
+        /// <summary>
+        /// Generate a cryptographically secure token for password reset links
+        /// </summary>
+        public string GenerateSecureToken()
+        {
+            using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+            var bytes = new byte[48]; // 48 bytes = 64 base64 characters
+            rng.GetBytes(bytes);
+            // Use URL-safe base64 encoding (replace + with -, / with _, remove =)
+            return Convert.ToBase64String(bytes)
+                .Replace("+", "-")
+                .Replace("/", "_")
+                .Replace("=", "");
+        }
+
+        public async Task<bool> SendPasswordResetLinkAsync(string email, string firstName, string resetToken)
         {
             try
             {
@@ -247,6 +262,9 @@ The JobIntel Team
                 message.From.Add(new MailboxAddress(_emailSettings.SenderName, _emailSettings.SenderEmail));
                 message.To.Add(new MailboxAddress(firstName, email));
                 message.Subject = "🔒 Reset Your JobIntel Password";
+
+                // Build the reset link URL
+                var resetLink = $"{_emailSettings.FrontendUrl}/reset-password?token={resetToken}";
 
                 var bodyBuilder = new BodyBuilder
                 {
@@ -267,17 +285,22 @@ The JobIntel Team
                                         Hi {firstName},
                                     </p>
                                     <p style='color: #555; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;'>
-                                        We received a request to reset the password for your JobIntel account. Use the verification code below to proceed:
+                                        We received a request to reset the password for your JobIntel account. Click the button below to reset your password:
                                     </p>
-                                    <div style='background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%); padding: 25px; margin: 30px 0; text-align: center; border-radius: 8px;'>
-                                        <p style='color: white; margin: 0 0 10px 0; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;'>Your Reset Code</p>
-                                        <div style='background-color: white; padding: 15px; border-radius: 6px; display: inline-block;'>
-                                            <h1 style='color: #19547b; margin: 0; letter-spacing: 8px; font-size: 36px; font-weight: 700;'>{otpCode}</h1>
-                                        </div>
+                                    <div style='text-align: center; margin: 30px 0;'>
+                                        <a href='{resetLink}' style='display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 16px 40px; font-size: 18px; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);'>
+                                            Reset My Password
+                                        </a>
+                                    </div>
+                                    <p style='color: #777; font-size: 13px; text-align: center; margin: 20px 0;'>
+                                        Or copy and paste this link into your browser:
+                                    </p>
+                                    <div style='background-color: #f8f9fa; padding: 15px; border-radius: 6px; word-break: break-all; margin: 20px 0;'>
+                                        <a href='{resetLink}' style='color: #667eea; font-size: 13px; text-decoration: none;'>{resetLink}</a>
                                     </div>
                                     <div style='background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 30px 0; border-radius: 4px;'>
                                         <p style='color: #856404; margin: 0; font-size: 14px;'>
-                                            ⏱️ <strong>Time-Sensitive:</strong> This code expires in 15 minutes for your security.
+                                            ⏱️ <strong>Time-Sensitive:</strong> This link expires in 15 minutes for your security.
                                         </p>
                                     </div>
                                     <div style='background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 30px 0; border-radius: 4px;'>
@@ -285,7 +308,7 @@ The JobIntel Team
                                             🛡️ Security Tips:
                                         </p>
                                         <ul style='color: #721c24; margin: 0; padding-left: 20px; font-size: 13px;'>
-                                            <li style='margin: 5px 0;'>Never share this code with anyone, including JobIntel staff</li>
+                                            <li style='margin: 5px 0;'>Never share this link with anyone, including JobIntel staff</li>
                                             <li style='margin: 5px 0;'>If you didn't request this reset, please ignore this email</li>
                                             <li style='margin: 5px 0;'>Your password will remain unchanged if you don't take action</li>
                                         </ul>
@@ -313,12 +336,13 @@ Hi {firstName},
 
 We received a request to reset the password for your JobIntel account.
 
-Your password reset code is: {otpCode}
+Click the link below to reset your password:
+{resetLink}
 
-⏱️ This code expires in 15 minutes for your security.
+⏱️ This link expires in 15 minutes for your security.
 
 🛡️ Security Tips:
-• Never share this code with anyone, including JobIntel staff
+• Never share this link with anyone, including JobIntel staff
 • If you didn't request this reset, please ignore this email
 • Your password will remain unchanged if you don't take action
 
@@ -341,12 +365,12 @@ The JobIntel Team
                 await client.SendAsync(message);
                 await client.DisconnectAsync(true);
 
-                _logger.LogInformation($"Password reset OTP sent successfully to: {email}");
+                _logger.LogInformation($"Password reset link sent successfully to: {email}");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Failed to send password reset OTP to {email}: {ex.Message}");
+                _logger.LogError($"Failed to send password reset link to {email}: {ex.Message}");
                 return false;
             }
         }

@@ -178,12 +178,12 @@ namespace RecruitmentPlatformAPI.Controllers
         }
 
         /// <summary>
-        /// Request password reset OTP via email
+        /// Request password reset link via email
         /// NOTE: Always returns 200 OK to prevent email enumeration attacks
         /// </summary>
-        /// <param name="forgotPasswordDto">Email address to send OTP</param>
+        /// <param name="forgotPasswordDto">Email address to send reset link</param>
         /// <returns>Success message (always 200 OK for security)</returns>
-        /// <response code="200">Request processed - OTP sent if email exists</response>
+        /// <response code="200">Request processed - reset link sent if email exists</response>
         [HttpPost("forgot-password")]
         [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
         public async Task<ActionResult<AuthResponseDto>> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
@@ -200,23 +200,23 @@ namespace RecruitmentPlatformAPI.Controllers
         }
 
         /// <summary>
-        /// Verify password reset OTP and receive temporary reset token
+        /// Validate password reset token (check if link is still valid)
         /// </summary>
-        /// <param name="verifyOtpDto">Email and OTP code</param>
-        /// <returns>Auth response with reset token</returns>
-        /// <response code="200">OTP verified - returns temporary reset token</response>
-        /// <response code="400">Bad request - invalid OTP, expired OTP, or user not found</response>
-        [HttpPost("verify-reset-otp")]
+        /// <param name="validateDto">Reset token from email link</param>
+        /// <returns>Success if token is valid</returns>
+        /// <response code="200">Token is valid - can proceed to reset password</response>
+        /// <response code="400">Bad request - invalid token or expired token</response>
+        [HttpPost("validate-reset-token")]
         [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<AuthResponseDto>> VerifyResetOtp([FromBody] VerifyResetOtpDto verifyOtpDto)
+        public async Task<ActionResult<AuthResponseDto>> ValidateResetToken([FromBody] ValidateResetTokenDto validateDto)
         {
             if (!ModelState.IsValid)
             {
                 return ValidationProblem(ModelState);
             }
 
-            var result = await _authService.VerifyResetOtpAsync(verifyOtpDto);
+            var result = await _authService.ValidateResetTokenAsync(validateDto);
             
             if (result.Success)
             {
@@ -227,9 +227,9 @@ namespace RecruitmentPlatformAPI.Controllers
         }
 
         /// <summary>
-        /// Reset password using temporary reset token
+        /// Reset password using token from email link
         /// </summary>
-        /// <param name="resetPasswordDto">Email, reset token, and new password</param>
+        /// <param name="resetPasswordDto">Reset token and new password</param>
         /// <returns>Success message</returns>
         /// <response code="200">Password reset successful</response>
         /// <response code="400">Bad request - invalid token, expired token, or validation failed</response>

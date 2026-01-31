@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace RecruitmentPlatformAPI.DTOs.Auth
 {
-/// <summary>
+    /// <summary>
     /// Request to initiate password reset process
     /// </summary>
     public class ForgotPasswordDto
@@ -18,49 +18,16 @@ namespace RecruitmentPlatformAPI.DTOs.Auth
     }
 
     /// <summary>
-    /// Request to verify the OTP sent for password reset
-    /// </summary>
-    public class VerifyResetOtpDto
-    {
-        /// <summary>
-        /// User's email address
-        /// </summary>
-        /// <example>john.doe@example.com</example>
-        [Required(ErrorMessage = "Email is required")]
-        [EmailAddress(ErrorMessage = "Invalid email format")]
-        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Invalid email format. Please provide a valid email address")]
-        public string Email { get; set; } = string.Empty;
-
-        /// <summary>
-        /// 6-digit OTP code sent to email
-        /// </summary>
-        /// <example>123456</example>
-        [Required(ErrorMessage = "OTP code is required")]
-        [StringLength(6, MinimumLength = 6, ErrorMessage = "OTP code must be exactly 6 digits")]
-        [RegularExpression(@"^\d{6}$", ErrorMessage = "OTP code must be 6 digits")]
-        public string OtpCode { get; set; } = string.Empty;
-    }
-
-    /// <summary>
-    /// Request to reset password with new password
+    /// Request to reset password using the token from email link
     /// </summary>
     public class ResetPasswordDto
     {
         /// <summary>
-        /// User's email address
+        /// Secure token from password reset email link
         /// </summary>
-        /// <example>john.doe@example.com</example>
-        [Required(ErrorMessage = "Email is required")]
-        [EmailAddress(ErrorMessage = "Invalid email format")]
-        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Invalid email format. Please provide a valid email address")]
-        public string Email { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Reset token received from verify-reset-otp endpoint
-        /// </summary>
-        /// <example>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</example>
+        /// <example>a1b2c3d4e5f6...</example>
         [Required(ErrorMessage = "Reset token is required")]
-        public string ResetToken { get; set; } = string.Empty;
+        public string Token { get; set; } = string.Empty;
 
         /// <summary>
         /// New password (minimum 8 characters, must contain uppercase, lowercase, and digit)
@@ -79,5 +46,17 @@ namespace RecruitmentPlatformAPI.DTOs.Auth
         [Required(ErrorMessage = "Confirm password is required")]
         [Compare(nameof(NewPassword), ErrorMessage = "Passwords do not match")]
         public string ConfirmNewPassword { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Request to validate a password reset token (to check if link is still valid)
+    /// </summary>
+    public class ValidateResetTokenDto
+    {
+        /// <summary>
+        /// Secure token from password reset email link
+        /// </summary>
+        [Required(ErrorMessage = "Reset token is required")]
+        public string Token { get; set; } = string.Empty;
     }
 }
