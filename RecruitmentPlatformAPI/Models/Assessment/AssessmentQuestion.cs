@@ -19,6 +19,13 @@ namespace RecruitmentPlatformAPI.Models.Assessment
         public QuestionCategory Category { get; set; }
         
         /// <summary>
+        /// Role family this question targets (e.g., Backend, Frontend, Data).
+        /// Used to select relevant questions based on job seeker's job title.
+        /// </summary>
+        [Required]
+        public JobTitleRoleFamily RoleFamily { get; set; }
+        
+        /// <summary>
         /// For technical questions only (nullable for soft skills)
         /// </summary>
         public int? SkillId { get; set; }
@@ -50,6 +57,14 @@ namespace RecruitmentPlatformAPI.Models.Assessment
         public bool IsActive { get; set; } = true;
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        
+        /// <summary>
+        /// Explanation shown after answering (why the correct answer is correct)
+        /// </summary>
+        [MaxLength(1000)]
+        public string? Explanation { get; set; }
         
         // Navigation properties
         public Skill? Skill { get; set; }

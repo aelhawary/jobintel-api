@@ -51,6 +51,17 @@ namespace RecruitmentPlatformAPI.Models.Assessment
         public int TimeLimitMinutes { get; set; } = 45;
         
         /// <summary>
+        /// Total number of questions in this assessment
+        /// </summary>
+        [Required]
+        public int TotalQuestions { get; set; }
+        
+        /// <summary>
+        /// Number of questions answered so far
+        /// </summary>
+        public int QuestionsAnswered { get; set; } = 0;
+        
+        /// <summary>
         /// Calculated: StartedAt + TimeLimitMinutes
         /// </summary>
         [Required]
@@ -66,10 +77,16 @@ namespace RecruitmentPlatformAPI.Models.Assessment
         /// </summary>
         public bool IsActive { get; set; } = false;
         
+        /// <summary>
+        /// Which attempt number this is (1st, 2nd, 3rd, etc.)
+        /// Used to enforce retake limits
+        /// </summary>
+        [Required]
+        public int RetakeNumber { get; set; } = 1;
+        
         // Navigation properties
         public JobSeekerModel JobSeeker { get; set; } = null!;
         public JobTitle JobTitle { get; set; } = null!;
         public ICollection<AssessmentAnswer> Answers { get; set; } = new List<AssessmentAnswer>();
-        public ICollection<AssessmentSkillScore> SkillScores { get; set; } = new List<AssessmentSkillScore>();
     }
 }

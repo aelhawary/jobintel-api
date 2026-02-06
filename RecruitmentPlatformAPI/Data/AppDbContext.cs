@@ -34,7 +34,6 @@ namespace RecruitmentPlatformAPI.Data
         public DbSet<AssessmentQuestion> AssessmentQuestions { get; set; }
         public DbSet<AssessmentAttempt> AssessmentAttempts { get; set; }
         public DbSet<AssessmentAnswer> AssessmentAnswers { get; set; }
-        public DbSet<AssessmentSkillScore> AssessmentSkillScores { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -322,8 +321,11 @@ namespace RecruitmentPlatformAPI.Data
                 b.Property(q => q.SeniorityLevel)
                  .HasConversion<int>();
                 
-                // Index for efficient question filtering
-                b.HasIndex(q => new { q.Category, q.Difficulty, q.SeniorityLevel, q.IsActive })
+                b.Property(q => q.RoleFamily)
+                 .HasConversion<int>();
+                
+                // Index for efficient question filtering by role family, category, difficulty, seniority
+                b.HasIndex(q => new { q.RoleFamily, q.Category, q.Difficulty, q.SeniorityLevel, q.IsActive })
                  .HasDatabaseName("IX_AssessmentQuestion_Filtering");
                 
                 // Relationship with Skill (nullable for soft skills)
@@ -365,6 +367,12 @@ namespace RecruitmentPlatformAPI.Data
                 
                 b.HasIndex(a => new { a.JobSeekerId, a.Status, a.StartedAt })
                  .HasDatabaseName("IX_AssessmentAttempt_JobSeeker_Status");
+                
+                // Ensure only one in-progress assessment per job seeker at a time
+                b.HasIndex(a => a.JobSeekerId)
+                 .IsUnique()
+                 .HasFilter("[Status] = 1")  // 1 = InProgress
+                 .HasDatabaseName("IX_AssessmentAttempt_SingleInProgress");
             });
             
             // AssessmentAnswer
@@ -388,32 +396,6 @@ namespace RecruitmentPlatformAPI.Data
                 b.HasIndex(a => new { a.AssessmentAttemptId, a.QuestionId })
                  .IsUnique()
                  .HasDatabaseName("IX_AssessmentAnswer_Attempt_Question");
-            });
-            
-            // AssessmentSkillScore
-            modelBuilder.Entity<AssessmentSkillScore>(b =>
-            {
-                b.ToTable("AssessmentSkillScore");
-                b.HasKey(s => s.Id);
-                
-                // Precision for score
-                b.Property(s => s.Score).HasPrecision(5, 2);
-                
-                // Relationships
-                b.HasOne(s => s.AssessmentAttempt)
-                 .WithMany(a => a.SkillScores)
-                 .HasForeignKey(s => s.AssessmentAttemptId)
-                 .OnDelete(DeleteBehavior.Cascade);
-                
-                b.HasOne(s => s.Skill)
-                 .WithMany()
-                 .HasForeignKey(s => s.SkillId)
-                 .OnDelete(DeleteBehavior.Restrict);
-                
-                // Ensure one score per skill per attempt
-                b.HasIndex(s => new { s.AssessmentAttemptId, s.SkillId })
-                 .IsUnique()
-                 .HasDatabaseName("IX_AssessmentSkillScore_Attempt_Skill");
             });
         }
     }

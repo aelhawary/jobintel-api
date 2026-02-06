@@ -343,11 +343,37 @@ namespace RecruitmentPlatformAPI.Services.Auth
             try
             {
                 var clientId = _configuration["GoogleOAuth:ClientId"];
+                
+                // Validate that Client ID is configured (security requirement)
+                if (string.IsNullOrEmpty(clientId))
+                {
+                    _logger.LogError("Google OAuth Client ID is not configured. Token validation cannot proceed.");
+                    return null;
+                }
+                
                 var settings = new GoogleJsonWebSignature.ValidationSettings
                 {
-                    Audience = string.IsNullOrEmpty(clientId) ? null : new[] { clientId }
+                    Audience = new[] { clientId },
+                    // Allow small clock skew (5 minutes) to handle server time differences
+                    IssuedAtClockTolerance = TimeSpan.FromMinutes(5),
+                    ExpirationTimeClockTolerance = TimeSpan.FromMinutes(5)
                 };
+                
                 var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
+
+                // Additional validation: ensure Subject (user ID) is present
+                if (string.IsNullOrEmpty(payload.Subject))
+                {
+                    _logger.LogWarning("Google token missing Subject (sub) claim");
+                    return null;
+                }
+                
+                // Additional validation: ensure Email is present
+                if (string.IsNullOrEmpty(payload.Email))
+                {
+                    _logger.LogWarning("Google token missing Email claim");
+                    return null;
+                }
 
                 return new GoogleUserInfo
                 {
@@ -359,9 +385,14 @@ namespace RecruitmentPlatformAPI.Services.Auth
                     Picture = payload.Picture
                 };
             }
+            catch (Google.Apis.Auth.InvalidJwtException ex)
+            {
+                _logger.LogWarning(ex, "Invalid Google JWT token: {Message}", ex.Message);
+                return null;
+            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Google token verification failed");
+                _logger.LogError(ex, "Google token verification failed unexpectedly");
                 return null;
             }
         }
@@ -399,6 +430,24 @@ namespace RecruitmentPlatformAPI.Services.Auth
                 if (existingUser != null)
                 {
                     // User exists - handle login
+                    
+                    // CHECK IF ACCOUNT IS LOCKED (same security check as email/password login)
+                    if (existingUser.LockoutEnd.HasValue && DateTime.UtcNow < existingUser.LockoutEnd.Value)
+                    {
+                        var remainingTime = existingUser.LockoutEnd.Value - DateTime.UtcNow;
+                        int remainingMinutes = (int)Math.Ceiling(remainingTime.TotalMinutes);
+                        
+                        _logger.LogWarning($"Google login attempt on locked account: {existingUser.Email}. Locked until {existingUser.LockoutEnd.Value}");
+                        
+                        return new AuthResponseDto
+                        {
+                            Success = false,
+                            Message = $"Account is locked due to multiple failed login attempts. Please try again in {remainingMinutes} minute{(remainingMinutes != 1 ? "s" : "")} or reset your password.",
+                            LockoutEnd = existingUser.LockoutEnd.Value,
+                            RemainingMinutes = remainingMinutes
+                        };
+                    }
+                    
                     if (!existingUser.IsActive)
                     {
                         return new AuthResponseDto
@@ -408,20 +457,41 @@ namespace RecruitmentPlatformAPI.Services.Auth
                         };
                     }
 
-                    // Update OAuth info if not already set
+                    // Update OAuth info if not already set (account linking)
+                    // Security: Only link if user is logging in with same Google account (verified email matches)
                     if (existingUser.AuthProvider == AuthProvider.Email || existingUser.ProviderUserId == null)
                     {
+                        _logger.LogInformation($"Linking Google account to existing email user: {existingUser.Email}");
                         existingUser.AuthProvider = AuthProvider.Google;
                         existingUser.ProviderUserId = googleUser.Sub;
-                        existingUser.ProfilePictureUrl = googleUser.Picture;
+                        existingUser.ProfilePictureUrl ??= googleUser.Picture; // Only update if not already set
                         existingUser.IsEmailVerified = true;
                         existingUser.UpdatedAt = DateTime.UtcNow;
-                        await _context.SaveChangesAsync();
                     }
+                    // Verify Google Sub matches for existing Google users (prevent account hijacking)
+                    else if (existingUser.AuthProvider == AuthProvider.Google && existingUser.ProviderUserId != googleUser.Sub)
+                    {
+                        _logger.LogWarning($"Google Sub mismatch for user: {existingUser.Email}. Expected: {existingUser.ProviderUserId}, Got: {googleUser.Sub}");
+                        return new AuthResponseDto
+                        {
+                            Success = false,
+                            Message = "Authentication failed. This email is associated with a different Google account."
+                        };
+                    }
+                    
+                    // Reset lockout counters on successful Google login (same as email login)
+                    existingUser.FailedLoginAttempts = 0;
+                    existingUser.LastFailedLoginAt = null;
+                    existingUser.LockoutEnd = null;
+                    existingUser.LockoutReason = null;
+                    existingUser.LastSuccessfulLoginAt = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
 
                     await transaction.CommitAsync();
 
                     var token = GenerateJwtToken(existingUser);
+                    
+                    _logger.LogInformation($"Successful Google login: {existingUser.Email}");
 
                     return new AuthResponseDto
                     {

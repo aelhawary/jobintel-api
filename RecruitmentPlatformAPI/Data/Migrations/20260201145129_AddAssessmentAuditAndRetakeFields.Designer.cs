@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RecruitmentPlatformAPI.Data;
 
@@ -11,9 +12,11 @@ using RecruitmentPlatformAPI.Data;
 namespace RecruitmentPlatformAPI.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260201145129_AddAssessmentAuditAndRetakeFields")]
+    partial class AddAssessmentAuditAndRetakeFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -193,6 +196,41 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                         .HasDatabaseName("IX_AssessmentQuestion_Filtering");
 
                     b.ToTable("AssessmentQuestion", (string)null);
+                });
+
+            modelBuilder.Entity("RecruitmentPlatformAPI.Models.Assessment.AssessmentSkillScore", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AssessmentAttemptId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CorrectAnswers")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuestionsAttempted")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Score")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<int>("SkillId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SkillId");
+
+                    b.HasIndex("AssessmentAttemptId", "SkillId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_AssessmentSkillScore_Attempt_Skill");
+
+                    b.ToTable("AssessmentSkillScore", (string)null);
                 });
 
             modelBuilder.Entity("RecruitmentPlatformAPI.Models.Identity.EmailVerification", b =>
@@ -3123,6 +3161,25 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                     b.Navigation("Skill");
                 });
 
+            modelBuilder.Entity("RecruitmentPlatformAPI.Models.Assessment.AssessmentSkillScore", b =>
+                {
+                    b.HasOne("RecruitmentPlatformAPI.Models.Assessment.AssessmentAttempt", "AssessmentAttempt")
+                        .WithMany("SkillScores")
+                        .HasForeignKey("AssessmentAttemptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RecruitmentPlatformAPI.Models.Reference.Skill", "Skill")
+                        .WithMany()
+                        .HasForeignKey("SkillId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AssessmentAttempt");
+
+                    b.Navigation("Skill");
+                });
+
             modelBuilder.Entity("RecruitmentPlatformAPI.Models.Identity.EmailVerification", b =>
                 {
                     b.HasOne("RecruitmentPlatformAPI.Models.Identity.User", "User")
@@ -3321,6 +3378,8 @@ namespace RecruitmentPlatformAPI.Data.Migrations
             modelBuilder.Entity("RecruitmentPlatformAPI.Models.Assessment.AssessmentAttempt", b =>
                 {
                     b.Navigation("Answers");
+
+                    b.Navigation("SkillScores");
                 });
 
             modelBuilder.Entity("RecruitmentPlatformAPI.Models.JobSeeker.JobSeeker", b =>

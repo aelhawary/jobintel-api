@@ -24,6 +24,11 @@ namespace RecruitmentPlatformAPI.Models.Assessment
         [Required]
         public bool IsCorrect { get; set; }
         
+        /// <summary>
+        /// Time spent on this question in seconds (for analytics)
+        /// </summary>
+        public int TimeSpentSeconds { get; set; }
+        
         [Required]
         public DateTime AnsweredAt { get; set; } = DateTime.UtcNow;
         
