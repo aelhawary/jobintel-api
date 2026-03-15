@@ -33,11 +33,6 @@ namespace RecruitmentPlatformAPI.DTOs.JobSeeker
 
         /// <summary>
         /// Grade or GPA (optional)
-        /// </summary>
-        /// <example>3.8</example>
-        [MaxLength(50, ErrorMessage = "Grade/GPA cannot exceed 50 characters")]
-        public string? GradeOrGPA { get; set; }
-
         /// <summary>
         /// Start date (YYYY-MM format accepted)
         /// </summary>
@@ -88,11 +83,6 @@ namespace RecruitmentPlatformAPI.DTOs.JobSeeker
         /// Field of Study / Major
         /// </summary>
         public string FieldOfStudy { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Grade or GPA (if provided)
-        /// </summary>
-        public string? GradeOrGPA { get; set; }
 
         /// <summary>
         /// Start date

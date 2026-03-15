@@ -33,11 +33,6 @@ namespace RecruitmentPlatformAPI.DTOs.JobSeeker
 
         /// <summary>
         /// Type of employment
-        /// </summary>
-        /// <example>FullTime</example>
-        [Required(ErrorMessage = "Employment type is required")]
-        public EmploymentType EmploymentType { get; set; } = EmploymentType.FullTime;
-
         /// <summary>
         /// Start date of employment (YYYY-MM format accepted)
         /// </summary>
@@ -56,13 +51,6 @@ namespace RecruitmentPlatformAPI.DTOs.JobSeeker
         /// </summary>
         /// <example>true</example>
         public bool IsCurrent { get; set; }
-
-        /// <summary>
-        /// Description of responsibilities and achievements (max 2000 chars)
-        /// </summary>
-        /// <example>Led product design for mobile app with 1M+ users...</example>
-        [MaxLength(2000, ErrorMessage = "Responsibilities cannot exceed 2000 characters")]
-        public string? Responsibilities { get; set; }
 
         /// <summary>
         /// Display order (lower numbers appear first)
@@ -97,16 +85,6 @@ namespace RecruitmentPlatformAPI.DTOs.JobSeeker
         public string? Location { get; set; }
 
         /// <summary>
-        /// Type of employment
-        /// </summary>
-        public EmploymentType EmploymentType { get; set; }
-
-        /// <summary>
-        /// Human-readable employment type
-        /// </summary>
-        public string EmploymentTypeName { get; set; } = string.Empty;
-
-        /// <summary>
         /// Start date of employment
         /// </summary>
         public DateTime StartDate { get; set; }
@@ -120,11 +98,6 @@ namespace RecruitmentPlatformAPI.DTOs.JobSeeker
         /// Whether this is the current position
         /// </summary>
         public bool IsCurrent { get; set; }
-
-        /// <summary>
-        /// Description of responsibilities
-        /// </summary>
-        public string? Responsibilities { get; set; }
 
         /// <summary>
         /// Display order

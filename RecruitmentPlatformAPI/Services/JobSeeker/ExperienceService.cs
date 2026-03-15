@@ -78,11 +78,9 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                     JobTitle = dto.JobTitle.Trim(),
                     CompanyName = dto.CompanyName.Trim(),
                     Location = dto.Location?.Trim(),
-                    EmploymentType = dto.EmploymentType,
                     StartDate = dto.StartDate,
                     EndDate = dto.EndDate,
                     IsCurrent = dto.IsCurrent,
-                    Responsibilities = dto.Responsibilities?.Trim(),
                     DisplayOrder = dto.DisplayOrder,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
@@ -140,11 +138,9 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                 experience.JobTitle = dto.JobTitle.Trim();
                 experience.CompanyName = dto.CompanyName.Trim();
                 experience.Location = dto.Location?.Trim();
-                experience.EmploymentType = dto.EmploymentType;
                 experience.StartDate = dto.StartDate;
                 experience.EndDate = dto.EndDate;
                 experience.IsCurrent = dto.IsCurrent;
-                experience.Responsibilities = dto.Responsibilities?.Trim();
                 experience.DisplayOrder = dto.DisplayOrder;
                 experience.UpdatedAt = DateTime.UtcNow;
 
@@ -264,28 +260,13 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                 JobTitle = experience.JobTitle,
                 CompanyName = experience.CompanyName,
                 Location = experience.Location,
-                EmploymentType = experience.EmploymentType,
-                EmploymentTypeName = GetEmploymentTypeName(experience.EmploymentType),
                 StartDate = experience.StartDate,
                 EndDate = experience.EndDate,
                 IsCurrent = experience.IsCurrent,
-                Responsibilities = experience.Responsibilities,
                 DisplayOrder = experience.DisplayOrder,
                 DateRange = FormatDateRange(experience.StartDate, experience.EndDate, experience.IsCurrent),
                 CreatedAt = experience.CreatedAt,
                 UpdatedAt = experience.UpdatedAt
-            };
-        }
-
-        private static string GetEmploymentTypeName(Enums.EmploymentType type)
-        {
-            return type switch
-            {
-                Enums.EmploymentType.FullTime => "Full-time",
-                Enums.EmploymentType.PartTime => "Part-time",
-                Enums.EmploymentType.Freelance => "Freelance/Contract",
-                Enums.EmploymentType.Internship => "Internship",
-                _ => type.ToString()
             };
         }
 

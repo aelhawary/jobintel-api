@@ -78,7 +78,6 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                     Institution = dto.Institution.Trim(),
                     Degree = dto.Degree,
                     Major = dto.FieldOfStudy.Trim(), // FieldOfStudy maps to Major in model
-                    GradeOrGPA = dto.GradeOrGPA?.Trim(),
                     StartDate = dto.StartDate,
                     EndDate = dto.EndDate,
                     IsCurrent = dto.IsCurrent,
@@ -139,7 +138,6 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                 education.Institution = dto.Institution.Trim();
                 education.Degree = dto.Degree;
                 education.Major = dto.FieldOfStudy.Trim();
-                education.GradeOrGPA = dto.GradeOrGPA?.Trim();
                 education.StartDate = dto.StartDate;
                 education.EndDate = dto.EndDate;
                 education.IsCurrent = dto.IsCurrent;
@@ -262,7 +260,6 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                 Institution = education.Institution,
                 Degree = education.Degree,
                 FieldOfStudy = education.Major, // Major maps to FieldOfStudy in DTO
-                GradeOrGPA = education.GradeOrGPA,
                 StartDate = education.StartDate,
                 EndDate = education.EndDate,
                 IsCurrent = education.IsCurrent,
