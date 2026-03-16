@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using RecruitmentPlatformAPI.Configuration;
 using RecruitmentPlatformAPI.Data;
 using RecruitmentPlatformAPI.DTOs.JobSeeker;
+using RecruitmentPlatformAPI.Enums;
 
 namespace RecruitmentPlatformAPI.Services.JobSeeker
 {
@@ -87,8 +88,8 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                     await fileStream.CopyToAsync(fileStreamWriter);
                 }
 
-                // Update user's profile picture URL
-                var pictureUrl = $"{_fileSettings.BaseUrl}/api/profile/picture";
+                // Use role-specific route so stored URL matches the actual controller endpoint.
+                var pictureUrl = BuildProfilePictureUrl(user.AccountType);
                 user.ProfilePictureUrl = pictureUrl;
                 user.UpdatedAt = DateTime.UtcNow;
 
@@ -395,6 +396,15 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
             return url.StartsWith("http://") || url.StartsWith("https://") 
                 ? !url.Contains(_fileSettings.BaseUrl)
                 : false;
+        }
+
+        private string BuildProfilePictureUrl(AccountType accountType)
+        {
+            var routePrefix = accountType == AccountType.Recruiter
+                ? "recruiter"
+                : "jobseeker";
+
+            return $"{_fileSettings.BaseUrl}/api/{routePrefix}/picture";
         }
 
         private string GetContentTypeFromExtension(string extension)

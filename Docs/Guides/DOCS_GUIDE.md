@@ -95,7 +95,7 @@ Quick 10-minute setup, then read:
 | Feature | Status | Documentation |
 |---------|--------|---------------|
 | Authentication (Email + Google) | Complete | [AUTH_API_INTEGRATION.md](../API/AUTH_API_INTEGRATION.md) |
-| Job Seeker Wizard (6 steps) | Complete | [API_REFERENCE.md](../API/API_REFERENCE.md) |
+| Job Seeker Wizard (4 steps) | Complete | [API_REFERENCE.md](../API/API_REFERENCE.md) |
 | Recruiter Profile | Complete | [API_REFERENCE.md](../API/API_REFERENCE.md) |
 | Reference Data | Complete | [API_REFERENCE.md](../API/API_REFERENCE.md) |
-| Job Management | Next | [JOBS_MODULE_IMPLEMENTATION_GUIDE.md](JOBS_MODULE_IMPLEMENTATION_GUIDE.md) |
+| Job Management | Complete | [API_REFERENCE.md](../API/API_REFERENCE.md) |

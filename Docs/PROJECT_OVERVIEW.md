@@ -9,8 +9,8 @@ Welcome! This guide will help you understand our backend project quickly.
 ## What is This Project?
 
 A **REST API** for a recruitment platform where:
-- **Job Seekers** can create profiles, upload CVs, add experience/education
-- **Recruiters** can register their companies and post jobs (future feature)
+- **Job Seekers** can build profiles and manage resume, projects, experience, education, skills, social links, and certificates
+- **Recruiters** can register companies and manage job postings
 
 Built with: **ASP.NET Core 9.0** + **Entity Framework Core** + **SQL Server**
 
@@ -34,15 +34,13 @@ RecruitmentPlatformAPI/
 
 ## The Two User Types
 
-### 1. Job Seeker (6-step profile wizard)
+### 1. Job Seeker (4-step profile wizard)
 | Step | What They Fill |
 |------|---------------|
 | 1 | Personal Info (name, job title, location, bio) |
-| 2 | Projects (portfolio items) |
-| 3 | CV Upload (PDF resume) |
-| 4 | Experience (work history) |
-| 5 | Education (degrees, schools) |
-| 6 | Social Links (LinkedIn, GitHub, etc.) |
+| 2 | Experience + Education |
+| 3 | Projects (portfolio items) |
+| 4 | Skills + Social Links + Certificates |
 
 ### 2. Recruiter (1-step profile)
 | Step | What They Fill |
@@ -209,13 +207,18 @@ dotnet run
 
 ✅ **Job Seeker Profile**
 - Personal info (Step 1)
-- Projects CRUD (Step 2)
-- Resume upload (Step 3)
-- Experience CRUD (Step 4)
-- Education CRUD (Step 5)
-- Social accounts (Step 6)
+- Experience CRUD (Step 2)
+- Education CRUD (Step 2)
+- Projects CRUD (Step 3)
+- Skills + social accounts + certificates (Step 4)
+- Resume upload (profile asset)
 - Profile picture upload
 - Wizard status tracking
+
+✅ **Jobs Management**
+- Recruiter-owned job CRUD
+- Job activate/deactivate
+- Job skills lookup and association
 
 ✅ **Recruiter Profile**
 - Company info (single step)
@@ -232,9 +235,10 @@ dotnet run
 
 ## What's NOT Done Yet
 
-- [ ] Job posting by recruiters
-- [ ] Job search by job seekers
-- [ ] Application/matching system
+- [ ] Job search/feed for job seekers
+- [ ] Application lifecycle (apply/unapply/status)
+- [ ] Assessment runtime APIs
+- [ ] Recommendation APIs
 - [ ] Notifications
 - [ ] Admin panel
 

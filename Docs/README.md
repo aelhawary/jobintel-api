@@ -21,13 +21,12 @@ All documentation updated and verified (February 2026).
   - Password reset flow (cryptographic token link)
   - Account lockout protection
 
-- **Job Seeker Profile Wizard (6 steps):** Complete (35 endpoints)
+- **Job Seeker Profile Wizard (4 steps):** Complete (35 endpoints)
   - Step 1: Personal Information (name, job title, location, bio, languages)
-  - Step 2: Projects Portfolio (CRUD with soft delete & auto-reorder)
-  - Step 3: CV Upload (PDF with magic bytes validation, max 5MB)
-  - Step 4: Work Experience (CRUD with soft delete & reorder)
-  - Step 5: Education (CRUD with soft delete & reorder)
-  - Step 6: Social Links (LinkedIn, GitHub, Behance, Dribbble, Website)
+  - Step 2: Experience + Education (CRUD with soft delete & reorder)
+  - Step 3: Projects Portfolio (CRUD with soft delete & auto-reorder)
+  - Step 4: Skills + Social Links + Certificates
+  - Resume upload (PDF with magic bytes validation, max 5MB)
   - Profile Picture (upload, download, delete — JPEG/PNG/WebP, max 2MB)
 
 - **Recruiter Profile:** Complete (10 endpoints)
@@ -38,9 +37,9 @@ All documentation updated and verified (February 2026).
   - 90 job titles, 65 countries, 50 languages seeded
 
 ### Next Phase
-- Job posting and management (recruiter CRUD)
+- Assessment runtime APIs
 - AI-powered recommendations
-- Skills assessments
+- Job seeker-side job discovery and applications
 
 ---
 
@@ -145,7 +144,7 @@ Docs/
 | Category | Route Prefix | Endpoints | Description |
 |----------|-------------|-----------|-------------|
 | Authentication | `/api/auth/` | 9 | Register, login, OAuth, verify, reset |
-| Job Seeker | `/api/jobseeker/` | 35 | Profile wizard (6 steps) + profile picture |
+| Job Seeker | `/api/jobseeker/` | 35 | Profile wizard (4 steps) + profile picture |
 | Recruiter | `/api/recruiter/` | 10 | Company info + profile picture |
 | Reference Data | `/api/locations/` | 2 | Countries, languages (bilingual) |
 
@@ -155,10 +154,10 @@ Docs/
 
 - **Authentication System:** Complete (Email/Password + Google OAuth 2.0)
 - **Security Features:** Complete (Account Lockout + Password Policy + Constant-Time Comparison)
-- **Job Seeker Profile:** Complete (all 6 wizard steps)
+- **Job Seeker Profile:** Complete (all 4 wizard steps)
 - **Recruiter Profile:** Complete (company info + picture)
 - **API Documentation:** Updated February 2026
-- **Next Phase:** Job posting and management module
+- **Next Phase:** Assessment runtime + recommendation modules
 
 ---
 

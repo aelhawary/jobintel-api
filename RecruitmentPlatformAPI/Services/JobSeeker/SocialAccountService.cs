@@ -80,7 +80,7 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                     // If no links provided and no existing record, just return success (user skipped step)
                     if (!hasAnyLink)
                     {
-                        _logger.LogInformation("User {UserId} skipped social links (Step 6) - no links provided", userId);
+                        _logger.LogInformation("User {UserId} skipped social links (Step 4) - no links provided", userId);
                         return new SocialAccountResponseDto
                         {
                             Success = true,

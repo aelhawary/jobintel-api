@@ -617,17 +617,15 @@ No body returned. HTTP 401 status indicates:
 
 ## Profile Wizard Endpoints
 
-The profile wizard is a 6-step process for job seekers to complete their profile:
+The profile wizard is a 4-step process for job seekers to complete their profile:
 1. Personal Information
-2. Projects
-3. CV Upload
-4. Experience
-5. Education
-6. Social Links
+2. Experience and Education
+3. Projects
+4. Skills, Social Links, and Certificates
 
 ### 10. Save Personal Info
 
-**Endpoint:** `POST /api/profile/personal-info`  
+**Endpoint:** `POST /api/jobseeker/personal-info`  
 **Authentication:** Required (JWT token)  
 **Description:** Save or update personal information (Step 1 of profile wizard)
 
@@ -654,7 +652,7 @@ Authorization: Bearer {token}
 ```
 
 **Field Requirements:**
-- `jobTitleId` (required): Integer - Must be valid ID from GET /api/profile/job-titles
+- `jobTitleId` (required): Integer - Must be valid ID from GET /api/jobseeker/job-titles
 - `yearsOfExperience` (required): Integer between 0 and 50
 - `countryId` (required): Integer - Must be valid ID from GET /api/locations/countries
 - `city` (required, max 100 chars): City of residence (auto-normalized to Title Case)
@@ -708,7 +706,7 @@ Missing or invalid JWT token.
 
 ### 11. Get Personal Info
 
-**Endpoint:** `GET /api/profile/personal-info`  
+**Endpoint:** `GET /api/jobseeker/personal-info`  
 **Authentication:** Required (JWT token)  
 **Description:** Get current personal information
 
@@ -722,7 +720,7 @@ Authorization: Bearer {token}
 
 - `lang` (optional): Language code for localized names ("en" or "ar", default: "en")
 
-**Example:** `GET /api/profile/personal-info?lang=ar`
+**Example:** `GET /api/jobseeker/personal-info?lang=ar`
 
 #### Success Response (200 OK)
 
@@ -784,7 +782,7 @@ Authorization: Bearer {token}
 
 ### 12. Get Wizard Status
 
-**Endpoint:** `GET /api/profile/wizard-status`  
+**Endpoint:** `GET /api/jobseeker/wizard-status`  
 **Authentication:** Required (JWT token)  
 **Description:** Get profile completion wizard status
 
@@ -809,8 +807,8 @@ Authorization: Bearer {token}
 ```
 
 **Field Descriptions:**
-- `currentStep`: Integer 0-6 indicating progress
-- `isComplete`: true when step >= 6
+- `currentStep`: Integer 0-4 indicating progress
+- `isComplete`: true when step >= 4
 - `stepName`: Human-readable name of current step
 - `completedSteps`: Array of completed step names
 
@@ -818,7 +816,7 @@ Authorization: Bearer {token}
 
 ### 13. Get Job Titles
 
-**Endpoint:** `GET /api/profile/job-titles`  
+**Endpoint:** `GET /api/jobseeker/job-titles`  
 **Authentication:** Not required  
 **Description:** Get list of all available job titles for selection
 

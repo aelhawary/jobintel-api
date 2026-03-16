@@ -23,7 +23,7 @@ namespace RecruitmentPlatformAPI.Controllers
         }
 
         /// <summary>
-        /// Add or update social account links (Step 6 of profile wizard)
+        /// Add or update social account links (Step 4 of profile wizard)
         /// </summary>
         
         /// <param name="dto">Social account links (all optional)</param>

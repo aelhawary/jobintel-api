@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 namespace RecruitmentPlatformAPI.DTOs.JobSeeker
 {
 /// <summary>
-    /// DTO for updating social account links (Step 6 of profile wizard)
+    /// DTO for updating social account links (Step 4 of profile wizard)
     /// All fields are optional - users can add any combination of links or skip entirely
     /// </summary>
     public class UpdateSocialAccountDto

@@ -102,7 +102,8 @@ Backend-2/
 │   │   └── SWAGGER_IMPROVEMENTS.md
 │   ├── Database/                       # ERD (Markdown, DBML, PlantUML)
 │   ├── Diagrams/                       # Class diagram (Mermaid)
-│   └── Guides/                         # Setup, email, Google OAuth, Jobs module
+│   ├── Guides/                         # Setup, email, Google OAuth, Jobs module
+│   └── Context/                        # AI handoff context docs and bootstrap prompts
 │
 └── RecruitmentPlatformAPI/
     ├── Program.cs                      # DI, JWT, CORS, JSON config, middleware
@@ -241,6 +242,7 @@ Seed data: **90** job titles, **65** countries, **50** languages (bilingual EN/A
 | [Docs/Guides/SETUP_GUIDE.md](Docs/Guides/SETUP_GUIDE.md) | Detailed setup with troubleshooting |
 | [Docs/API/AUTH_API_INTEGRATION.md](Docs/API/AUTH_API_INTEGRATION.md) | Auth handoff guide for frontend team |
 | [Docs/API/API_REFERENCE.md](Docs/API/API_REFERENCE.md) | Complete endpoint reference |
+| [Docs/Context/README.md](Docs/Context/README.md) | AI handoff docs index and bootstrap references |
 | [Docs/Database/ERD_DIAGRAM.md](Docs/Database/ERD_DIAGRAM.md) | Entity Relationship Diagram |
 | [Docs/Diagrams/CLASS_DIAGRAM.md](Docs/Diagrams/CLASS_DIAGRAM.md) | Full class diagram (Mermaid) |
 | [Docs/CHANGELOG.md](Docs/CHANGELOG.md) | Version history |
@@ -250,4 +252,4 @@ Seed data: **90** job titles, **65** countries, **50** languages (bilingual EN/A
 
 ## Next Step
 
-The immediate next implementation is the **Job Management module** (recruiter job posting CRUD). See [JOBS_MODULE_IMPLEMENTATION_GUIDE.md](Docs/Guides/JOBS_MODULE_IMPLEMENTATION_GUIDE.md) for the complete plan.
+The immediate next implementation focus is **Assessment runtime + Recommendation APIs**. Start with [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md), then follow [Docs/Context/DEVELOPMENT_ROADMAP.md](Docs/Context/DEVELOPMENT_ROADMAP.md) for prioritized tasks.

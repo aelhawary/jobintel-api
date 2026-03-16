@@ -115,7 +115,7 @@ Added `Swashbuckle.AspNetCore.Annotations` package for enhanced Swagger capabili
 |----------|--------|--------------|
 | `/api/jobseeker/personal-info` | POST | Foreign key ID requirements clear |
 | `/api/jobseeker/personal-info` | GET | Localization parameter documented |
-| `/api/jobseeker/wizard-status` | GET | 6-step wizard flow described |
+| `/api/jobseeker/wizard-status` | GET | 4-step wizard flow described |
 | `/api/jobseeker/job-titles` | GET | Category information included |
 | `/api/jobseeker/picture` | POST/GET/DELETE | Profile picture management |
 
