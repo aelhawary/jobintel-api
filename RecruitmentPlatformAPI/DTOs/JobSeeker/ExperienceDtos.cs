@@ -32,8 +32,6 @@ namespace RecruitmentPlatformAPI.DTOs.JobSeeker
         public string? Location { get; set; }
 
         /// <summary>
-        /// Type of employment
-        /// <summary>
         /// Start date of employment (YYYY-MM format accepted)
         /// </summary>
         /// <example>2021-01-01</example>

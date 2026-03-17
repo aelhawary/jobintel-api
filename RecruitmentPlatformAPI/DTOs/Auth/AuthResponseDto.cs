@@ -97,7 +97,7 @@ namespace RecruitmentPlatformAPI.DTOs.Auth
         public bool IsActive { get; set; }
 
         /// <summary>
-        /// Profile wizard completion step (0 = not started, 1-3 = in progress, 4 = complete)
+        /// Profile wizard completion step. Job Seekers: 0 = not started, 1-3 = in progress, 4 = complete. Recruiters: 0 = not started, 1 = complete.
         /// </summary>
         /// <example>0</example>
         public int ProfileCompletionStep { get; set; }

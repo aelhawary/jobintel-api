@@ -10,6 +10,7 @@ namespace RecruitmentPlatformAPI.Controllers
     [ApiController]
     [Route("api/jobseeker")]
     [Produces("application/json")]
+    [Authorize(Roles = "JobSeeker")]
     public class JobSeekerController : ControllerBase
     {
         private readonly IJobSeekerService _jobSeekerService;
@@ -32,7 +33,6 @@ namespace RecruitmentPlatformAPI.Controllers
         /// <param name="dto">Personal information with foreign key IDs (jobTitleId, countryId, languageIds)</param>
         /// <returns>Success response with profile completion step</returns>
         [HttpPost("personal-info")]
-        [Authorize]
         [ProducesResponseType(typeof(ProfileResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProfileResponseDto), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -75,7 +75,6 @@ namespace RecruitmentPlatformAPI.Controllers
         /// <param name="lang">Language code: "en" for English, "ar" for Arabic (default: "en")</param>
         /// <returns>Personal information with both IDs and localized names based on language parameter</returns>
         [HttpGet("personal-info")]
-        [Authorize]
         [ProducesResponseType(typeof(ApiResponse<PersonalInfoDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
@@ -102,7 +101,6 @@ namespace RecruitmentPlatformAPI.Controllers
         /// </summary>
         /// <returns>Current step number, step name, completion status, and list of completed steps</returns>
         [HttpGet("wizard-status")]
-        [Authorize]
         [ProducesResponseType(typeof(ApiResponse<WizardStatusDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetWizardStatus()
@@ -123,7 +121,6 @@ namespace RecruitmentPlatformAPI.Controllers
         /// <param name="stepNumber">The target step number (1-4)</param>
         /// <returns>Success response with updated profile completion step</returns>
         [HttpPost("wizard/advance/{stepNumber}")]
-        [Authorize]
         [ProducesResponseType(typeof(ApiResponse<ProfileResponseDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
@@ -149,6 +146,7 @@ namespace RecruitmentPlatformAPI.Controllers
         /// </summary>
         /// <returns>List of all active job titles with ID, title, and category</returns>
         [HttpGet("job-titles")]
+        [AllowAnonymous]
         [ProducesResponseType(typeof(ApiResponse<List<JobTitleDto>>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetJobTitles()
         {
@@ -164,7 +162,6 @@ namespace RecruitmentPlatformAPI.Controllers
         /// <param name="file">Image file (JPEG, PNG, or WebP, max 2MB)</param>
         /// <returns>Upload result with URL</returns>
         [HttpPost("picture")]
-        [Authorize]
         [Consumes("multipart/form-data")]
         [ProducesResponseType(typeof(ProfilePictureUploadResultDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProfilePictureUploadResultDto), StatusCodes.Status400BadRequest)]
@@ -207,7 +204,6 @@ namespace RecruitmentPlatformAPI.Controllers
         /// </summary>
         /// <returns>Profile picture info with URL and metadata</returns>
         [HttpGet("picture/info")]
-        [Authorize]
         [ProducesResponseType(typeof(ApiResponse<ProfilePictureResponseDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetProfilePictureInfo()
@@ -227,7 +223,6 @@ namespace RecruitmentPlatformAPI.Controllers
         /// </summary>
         /// <returns>Image file stream</returns>
         [HttpGet("picture")]
-        [Authorize]
         [ProducesResponseType(typeof(FileStreamResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
@@ -267,7 +262,6 @@ namespace RecruitmentPlatformAPI.Controllers
         /// </summary>
         /// <returns>Success status</returns>
         [HttpDelete("picture")]
-        [Authorize]
         [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> DeleteProfilePicture()
@@ -294,7 +288,6 @@ namespace RecruitmentPlatformAPI.Controllers
         /// </summary>
         /// <returns>Boolean indicating if profile picture exists</returns>
         [HttpGet("picture/exists")]
-        [Authorize]
         [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> HasProfilePicture()

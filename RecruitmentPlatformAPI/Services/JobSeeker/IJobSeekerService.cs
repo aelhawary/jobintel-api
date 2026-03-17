@@ -1,3 +1,4 @@
+using RecruitmentPlatformAPI.DTOs.Common;
 using RecruitmentPlatformAPI.DTOs.JobSeeker;
 
 namespace RecruitmentPlatformAPI.Services.JobSeeker

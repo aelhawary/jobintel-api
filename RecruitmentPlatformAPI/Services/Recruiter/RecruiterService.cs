@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using RecruitmentPlatformAPI.Data;
-using RecruitmentPlatformAPI.DTOs.JobSeeker;
+using RecruitmentPlatformAPI.DTOs.Common;
 using RecruitmentPlatformAPI.DTOs.Recruiter;
 using RecruitmentPlatformAPI.Enums;
 using RecruitmentPlatformAPI.Models.Recruiter;
@@ -243,7 +243,7 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
         public async Task<WizardStatusDto> GetWizardStatusAsync(int userId)
         {
             var user = await _context.Users.FindAsync(userId);
-            if (user == null)
+            if (user == null || user.AccountType != AccountType.Recruiter)
             {
                 return new WizardStatusDto
                 {

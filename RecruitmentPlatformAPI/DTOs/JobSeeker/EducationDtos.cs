@@ -32,8 +32,6 @@ namespace RecruitmentPlatformAPI.DTOs.JobSeeker
         public string FieldOfStudy { get; set; } = string.Empty;
 
         /// <summary>
-        /// Grade or GPA (optional)
-        /// <summary>
         /// Start date (YYYY-MM format accepted)
         /// </summary>
         /// <example>2017-09-01</example>

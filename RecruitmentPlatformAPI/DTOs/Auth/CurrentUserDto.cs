@@ -12,7 +12,8 @@ namespace RecruitmentPlatformAPI.DTOs.Auth
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         /// <summary>
-        /// Profile wizard completion step (0 = not started, 1-3 = in progress, 4 = complete)
+        /// Profile wizard completion step. Job Seekers: 0 = not started, 1-3 = in progress, 4 = complete. Recruiters: 0 = not started, 1 = complete.
+        /// Note: This value is a snapshot from login time. Use the wizard-status endpoint for real-time data.
         /// </summary>
         public int ProfileCompletionStep { get; set; }
     }

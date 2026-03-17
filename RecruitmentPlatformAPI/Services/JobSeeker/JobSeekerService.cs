@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using RecruitmentPlatformAPI.Data;
+using RecruitmentPlatformAPI.DTOs.Common;
 using RecruitmentPlatformAPI.DTOs.JobSeeker;
 using RecruitmentPlatformAPI.Enums;
 using RecruitmentPlatformAPI.Models.JobSeeker;
@@ -230,6 +231,15 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                 return new ProfileResponseDto { Success = false, Message = "User not found" };
             }
 
+            if (user.AccountType != AccountType.JobSeeker)
+            {
+                return new ProfileResponseDto
+                {
+                    Success = false,
+                    Message = "Wizard advancement is only available for job seeker accounts"
+                };
+            }
+
             if (user.ProfileCompletionStep < targetStep)
             {
                 user.ProfileCompletionStep = targetStep;
@@ -250,7 +260,7 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
         public async Task<WizardStatusDto> GetWizardStatusAsync(int userId)
         {
             var user = await _context.Users.FindAsync(userId);
-            if (user == null)
+            if (user == null || user.AccountType != AccountType.JobSeeker)
             {
                 return new WizardStatusDto
                 {
