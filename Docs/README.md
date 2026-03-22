@@ -1,17 +1,17 @@
 # Documentation Index
 
 **Project:** JobIntel Recruitment Platform — Backend API
-**Version:** 1.5.1
-**Last Updated:** February 2026
+**Version:** 1.6.0
+**Last Updated:** March 2026
 
 ---
 
 ## Documentation Status
 
-All documentation updated and verified (February 2026).
+All documentation updated and verified (March 2026).
 
-**Backend Version:** 1.5.1
-**Endpoints:** 56 across 9 controllers
+**Backend Version:** 1.6.0
+**Endpoints:** 64 across 10 controllers
 **Status:** Production Ready for Frontend Integration
 
 ### Current Implementation
@@ -32,6 +32,10 @@ All documentation updated and verified (February 2026).
 - **Recruiter Profile:** Complete (10 endpoints)
   - Company info, wizard status, industries, company sizes, profile picture
 
+- **Jobs Module:** Complete (8 endpoints)
+  - Job posting CRUD for recruiters
+  - Skills attachment, activation toggle
+
 - **Reference Data:** Complete (2 endpoints)
   - Countries, Languages (bilingual EN/AR)
   - 90 job titles, 65 countries, 50 languages seeded
@@ -47,6 +51,7 @@ All documentation updated and verified (February 2026).
 
 ### For Frontend Developers (START HERE)
 - **[Auth API Integration Guide](API/AUTH_API_INTEGRATION.md)** — Authentication endpoints with request/response examples
+- **[Job Seeker Wizard Integration Guide](API/JOBSEEKER_WIZARD_INTEGRATION.md)** — Complete 4-step wizard frontend integration
 - **[Google OAuth Guide](Guides/GOOGLE_AUTH_GUIDE.md)** — Google Sign-In implementation guide
 
 ### For API Documentation & Standards
@@ -84,6 +89,7 @@ Docs/
 +-- API/                               # API Documentation
 |   +-- API_REFERENCE.md              # Complete endpoint reference
 |   +-- AUTH_API_INTEGRATION.md       # Auth handoff for frontend team
+|   +-- JOBSEEKER_WIZARD_INTEGRATION.md # Job Seeker wizard frontend guide
 |   +-- API_DOCUMENTATION_STANDARDS.md # API documentation standards
 |   +-- SWAGGER_IMPROVEMENTS.md       # Swagger documentation guide
 |
@@ -114,9 +120,10 @@ Docs/
 
 1. **[Guides/TEAMMATE_SETUP_GUIDE.md](Guides/TEAMMATE_SETUP_GUIDE.md)** — 10-minute project setup
 2. **[API/AUTH_API_INTEGRATION.md](API/AUTH_API_INTEGRATION.md)** — Authentication flows and frontend integration
-3. **[API/API_REFERENCE.md](API/API_REFERENCE.md)** — All 56 API endpoints documented
-4. **[Guides/GOOGLE_AUTH_GUIDE.md](Guides/GOOGLE_AUTH_GUIDE.md)** — Google OAuth implementation
-5. **[Database/ERD_DIAGRAM.md](Database/ERD_DIAGRAM.md)** — 19-table database schema
+3. **[API/JOBSEEKER_WIZARD_INTEGRATION.md](API/JOBSEEKER_WIZARD_INTEGRATION.md)** — Job Seeker profile wizard integration
+4. **[API/API_REFERENCE.md](API/API_REFERENCE.md)** — All API endpoints documented
+5. **[Guides/GOOGLE_AUTH_GUIDE.md](Guides/GOOGLE_AUTH_GUIDE.md)** — Google OAuth implementation
+6. **[Database/ERD_DIAGRAM.md](Database/ERD_DIAGRAM.md)** — 19-table database schema
 
 ---
 
@@ -146,6 +153,7 @@ Docs/
 | Authentication | `/api/auth/` | 9 | Register, login, OAuth, verify, reset |
 | Job Seeker | `/api/jobseeker/` | 35 | Profile wizard (4 steps) + profile picture |
 | Recruiter | `/api/recruiter/` | 10 | Company info + profile picture |
+| Jobs | `/api/jobs/` | 8 | Job posting CRUD for recruiters |
 | Reference Data | `/api/locations/` | 2 | Countries, languages (bilingual) |
 
 ---
@@ -156,7 +164,8 @@ Docs/
 - **Security Features:** Complete (Account Lockout + Password Policy + Constant-Time Comparison)
 - **Job Seeker Profile:** Complete (all 4 wizard steps)
 - **Recruiter Profile:** Complete (company info + picture)
-- **API Documentation:** Updated February 2026
+- **Jobs Module:** Complete (CRUD + skills + activation)
+- **API Documentation:** Updated March 2026
 - **Next Phase:** Assessment runtime + recommendation modules
 
 ---

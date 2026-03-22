@@ -1,7 +1,7 @@
 # JobIntel Recruitment Platform — Backend API
 
-**Version:** 1.5.1
-**Last Updated:** February 2026
+**Version:** 1.6.0
+**Last Updated:** March 2026
 **Framework:** ASP.NET Core 9.0 (C# 12)
 **Database:** SQL Server (Entity Framework Core 9.0)
 
@@ -9,21 +9,21 @@
 
 ## Project Overview
 
-JobIntel is a recruitment platform backend that connects **Job Seekers** with **Recruiters**. This repository contains the REST API powering authentication, profile management, and (soon) job posting.
+JobIntel is a recruitment platform backend that connects **Job Seekers** with **Recruiters**. This repository contains the REST API powering authentication, profile management, and job posting.
 
 ### Current Status
 
 | Module | Status | Endpoints |
 |--------|--------|-----------|
 | Authentication (Email + Google OAuth) | ✅ Complete | 9 |
-| Job Seeker Profile Wizard (6 steps) | ✅ Complete | 35 |
+| Job Seeker Profile Wizard (4 steps) | ✅ Complete | 35 |
 | Recruiter Profile | ✅ Complete | 10 |
 | Reference Data (Countries, Languages) | ✅ Complete | 2 |
-| **Job Posting & Management** | **🔜 Next** | — |
+| Job Posting & Management | ✅ Complete | 8 |
 | AI Matching / Recommendations | 📋 Planned | — |
 | Assessments / Notifications / Admin | 📋 Planned | — |
 
-**Total:** 56 API endpoints across 9 controllers
+**Total:** 64 API endpoints across 10 controllers
 
 ---
 
@@ -107,7 +107,7 @@ Backend-2/
 │
 └── RecruitmentPlatformAPI/
     ├── Program.cs                      # DI, JWT, CORS, JSON config, middleware
-    ├── Controllers/                    # 9 controllers
+    ├── Controllers/                    # 10 controllers
     │   ├── AuthController.cs           # 9 endpoints — login, register, OAuth, verify, reset
     │   ├── JobSeekerController.cs      # 9 endpoints — personal info, wizard, profile picture
     │   ├── ProjectsController.cs       # 4 endpoints — CRUD with soft delete & auto-reorder
@@ -116,6 +116,7 @@ Backend-2/
     │   ├── ResumeController.cs         # 5 endpoints — PDF upload/download with validation
     │   ├── SocialAccountsController.cs # 3 endpoints — upsert/get/delete social links
     │   ├── RecruiterController.cs      # 10 endpoints — company info, wizard, profile picture
+    │   ├── JobsController.cs           # 8 endpoints — job posting CRUD for recruiters
     │   └── LocationsController.cs      # 2 endpoints — countries, languages (bilingual)
     ├── Services/
     │   ├── Auth/                        # AuthService, EmailService, TokenService
@@ -166,11 +167,11 @@ Backend-2/
 |-------|-----------|-------------|
 | Personal Info (Step 1) | 4 | Save/get info, wizard status, job titles |
 | Profile Picture | 5 | Upload, get info, download, delete, exists |
-| Projects (Step 2) | 4 | CRUD with auto-reorder & soft delete |
-| Resume (Step 3) | 5 | PDF upload, download, delete, info, exists |
-| Experience (Step 4) | 7 | CRUD with reorder & soft delete |
-| Education (Step 5) | 7 | CRUD with reorder & soft delete |
-| Social Links (Step 6) | 3 | Upsert, get, delete |
+| Resume | 5 | PDF upload, download, delete, info, exists |
+| Experience (Step 2) | 7 | CRUD with reorder & soft delete |
+| Education (Step 2) | 7 | CRUD with reorder & soft delete |
+| Projects (Step 3) | 4 | CRUD with auto-reorder & soft delete |
+| Skills & Social (Step 4) | 3 | Skills update, social links upsert/get/delete |
 
 ### Recruiter (`/api/recruiter/`) — 10 endpoints
 
@@ -186,6 +187,19 @@ Backend-2/
 |--------|-------|-------------|
 | GET | `/countries?lang=en` | Countries (bilingual EN/AR) |
 | GET | `/languages?lang=en` | Languages (bilingual EN/AR) |
+
+### Jobs (`/api/jobs/`) — 8 endpoints
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | `/` | ✅ | List recruiter's jobs (paginated) |
+| GET | `/{id}` | ✅ | Get single job details |
+| POST | `/` | ✅ | Create new job posting |
+| PUT | `/{id}` | ✅ | Update job posting |
+| DELETE | `/{id}` | ✅ | Delete job posting |
+| PATCH | `/{id}/activate` | ✅ | Activate job |
+| PATCH | `/{id}/deactivate` | ✅ | Deactivate job |
+| GET | `/skills` | No | Get available skills for job creation |
 
 ---
 
@@ -241,15 +255,15 @@ Seed data: **90** job titles, **65** countries, **50** languages (bilingual EN/A
 | [Docs/Guides/TEAMMATE_SETUP_GUIDE.md](Docs/Guides/TEAMMATE_SETUP_GUIDE.md) | Quick 10-min setup for new developers |
 | [Docs/Guides/SETUP_GUIDE.md](Docs/Guides/SETUP_GUIDE.md) | Detailed setup with troubleshooting |
 | [Docs/API/AUTH_API_INTEGRATION.md](Docs/API/AUTH_API_INTEGRATION.md) | Auth handoff guide for frontend team |
+| [Docs/API/JOBSEEKER_WIZARD_INTEGRATION.md](Docs/API/JOBSEEKER_WIZARD_INTEGRATION.md) | Job Seeker wizard frontend integration |
 | [Docs/API/API_REFERENCE.md](Docs/API/API_REFERENCE.md) | Complete endpoint reference |
 | [Docs/Context/README.md](Docs/Context/README.md) | AI handoff docs index and bootstrap references |
 | [Docs/Database/ERD_DIAGRAM.md](Docs/Database/ERD_DIAGRAM.md) | Entity Relationship Diagram |
 | [Docs/Diagrams/CLASS_DIAGRAM.md](Docs/Diagrams/CLASS_DIAGRAM.md) | Full class diagram (Mermaid) |
 | [Docs/CHANGELOG.md](Docs/CHANGELOG.md) | Version history |
-| [Docs/Guides/JOBS_MODULE_IMPLEMENTATION_GUIDE.md](Docs/Guides/JOBS_MODULE_IMPLEMENTATION_GUIDE.md) | Next step: Jobs module guide |
 
 ---
 
-## Next Step
+## Next Phase
 
 The immediate next implementation focus is **Assessment runtime + Recommendation APIs**. Start with [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md), then follow [Docs/Context/DEVELOPMENT_ROADMAP.md](Docs/Context/DEVELOPMENT_ROADMAP.md) for prioritized tasks.
