@@ -62,7 +62,9 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     // Detect PostgreSQL by connection string format
-    if (connectionString.Contains("postgres") || connectionString.Contains("Host="))
+    // Railway format: postgresql://user:password@host:port/database
+    // Local SQL Server format: Server=...
+    if (connectionString.Contains("postgresql://") || connectionString.Contains("postgres") || connectionString.Contains("Host="))
     {
         options.UseNpgsql(connectionString, b => b.MigrationsAssembly("RecruitmentPlatformAPI"));
     }
@@ -191,7 +193,8 @@ using (var scope = app.Services.CreateScope())
     try
     {
         // Check if this is PostgreSQL
-        var isPostgres = connectionString.Contains("postgres") || connectionString.Contains("Host=");
+        // Railway format: postgresql://user:password@host:port/database
+        var isPostgres = connectionString.Contains("postgresql://") || connectionString.Contains("postgres") || connectionString.Contains("Host=");
 
         if (isPostgres)
         {
