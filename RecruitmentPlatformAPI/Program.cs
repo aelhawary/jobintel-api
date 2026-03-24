@@ -4,9 +4,11 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using RecruitmentPlatformAPI.Configuration;
 using RecruitmentPlatformAPI.Data;
+using RecruitmentPlatformAPI.Data.Seed;
 using RecruitmentPlatformAPI.Services.Auth;
 using RecruitmentPlatformAPI.Services.JobSeeker;
 using RecruitmentPlatformAPI.Services.Recruiter;
+using RecruitmentPlatformAPI.Services.Assessment;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,12 +27,27 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.SetIsOriginAllowed(origin => 
+        policy.SetIsOriginAllowed(origin =>
         {
-            // Allow localhost with any port
-            if (string.IsNullOrEmpty(origin)) return true; // Allow null origin (file://)
+            if (string.IsNullOrEmpty(origin)) return true;
             var uri = new Uri(origin);
-            return uri.Host == "localhost" || uri.Host == "127.0.0.1";
+
+            // Allow localhost (development)
+            if (uri.Host == "localhost" || uri.Host == "127.0.0.1") return true;
+
+            // Allow common frontend hosting platforms
+            if (uri.Host.EndsWith(".vercel.app")) return true;
+            if (uri.Host.EndsWith(".netlify.app")) return true;
+            if (uri.Host.EndsWith(".pages.dev")) return true;  // Cloudflare Pages
+            if (uri.Host.EndsWith(".github.io")) return true;
+            if (uri.Host.EndsWith(".onrender.com")) return true;
+            if (uri.Host.EndsWith(".railway.app")) return true;
+
+            // Allow ngrok tunnels (for temporary testing)
+            if (uri.Host.EndsWith(".ngrok-free.app")) return true;
+            if (uri.Host.EndsWith(".ngrok.io")) return true;
+
+            return false;
         })
         .AllowAnyMethod()
         .AllowAnyHeader()
@@ -38,11 +55,22 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Configure EF Core (SQL Server)
+// Configure EF Core (SQL Server or PostgreSQL based on connection string)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                        ?? "Server=(localdb)\\mssqllocaldb;Database=RecruitmentPlatformDb;Trusted_Connection=True;MultipleActiveResultSets=true";
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(connectionString, b => b.MigrationsAssembly("RecruitmentPlatformAPI")));
+{
+    // Detect PostgreSQL by connection string format
+    if (connectionString.Contains("postgres") || connectionString.Contains("Host="))
+    {
+        options.UseNpgsql(connectionString, b => b.MigrationsAssembly("RecruitmentPlatformAPI"));
+    }
+    else
+    {
+        options.UseSqlServer(connectionString, b => b.MigrationsAssembly("RecruitmentPlatformAPI"));
+    }
+});
 
 // Configure JWT Settings
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
@@ -113,6 +141,7 @@ builder.Services.AddScoped<IEducationService, EducationService>();
 builder.Services.AddScoped<IJobService, JobService>();
 builder.Services.AddScoped<ICertificateService, CertificateService>();
 builder.Services.AddScoped<IJobSeekerSkillService, JobSeekerSkillService>();
+builder.Services.AddScoped<IAssessmentService, AssessmentService>();
 
 // Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
@@ -153,12 +182,64 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+// Auto-migrate/create database on startup (for cloud deployment)
+using (var scope = app.Services.CreateScope())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    try
+    {
+        // Check if this is PostgreSQL
+        var isPostgres = connectionString.Contains("postgres") || connectionString.Contains("Host=");
+
+        if (isPostgres)
+        {
+            // For PostgreSQL: Create database schema (migrations are SQL Server specific)
+            logger.LogInformation("PostgreSQL detected. Ensuring database is created...");
+            db.Database.EnsureCreated();
+
+            // Seed data if tables are empty (EnsureCreated doesn't run HasData)
+            if (!db.Countries.Any())
+            {
+                logger.LogInformation("Seeding reference data for PostgreSQL...");
+                db.Countries.AddRange(CountrySeed.GetCountries());
+                db.Languages.AddRange(LanguageSeed.GetLanguages());
+                db.JobTitles.AddRange(JobTitleSeed.GetJobTitles());
+                db.Skills.AddRange(SkillSeed.GetSkills());
+                db.AssessmentQuestions.AddRange(AssessmentQuestionSeed.GetQuestions());
+                db.SaveChanges();
+                logger.LogInformation("Reference data seeded successfully.");
+            }
+        }
+        else
+        {
+            // For SQL Server: Apply migrations
+            logger.LogInformation("SQL Server detected. Applying migrations...");
+            db.Database.Migrate();
+        }
+
+        logger.LogInformation("Database initialization completed successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Database initialization failed. Attempting fallback...");
+        try
+        {
+            db.Database.EnsureCreated();
+            logger.LogInformation("Fallback database creation succeeded.");
+        }
+        catch (Exception fallbackEx)
+        {
+            logger.LogError(fallbackEx, "Fallback database creation also failed.");
+        }
+    }
 }
+
+// Configure the HTTP request pipeline.
+// Enable Swagger in all environments for API testing
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 

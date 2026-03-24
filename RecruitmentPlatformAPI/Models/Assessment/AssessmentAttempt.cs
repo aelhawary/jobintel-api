@@ -83,7 +83,14 @@ namespace RecruitmentPlatformAPI.Models.Assessment
         /// </summary>
         [Required]
         public int RetakeNumber { get; set; } = 1;
-        
+
+        /// <summary>
+        /// JSON array of question IDs in order for this attempt
+        /// Stores the selected questions to ensure consistent ordering
+        /// </summary>
+        [MaxLength(500)]
+        public string? QuestionIdsJson { get; set; }
+
         // Navigation properties
         public JobSeekerModel JobSeeker { get; set; } = null!;
         public JobTitle JobTitle { get; set; } = null!;

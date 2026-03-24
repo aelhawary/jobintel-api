@@ -1,0 +1,11 @@
+**/.git
+**/.vs
+**/bin
+**/obj
+**/Uploads
+**/*.user
+**/*.log
+**/appsettings.Development.json
+**/.idea
+**/node_modules
+**/.env

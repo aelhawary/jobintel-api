@@ -20,10 +20,11 @@ JobIntel is a recruitment platform backend that connects **Job Seekers** with **
 | Recruiter Profile | ✅ Complete | 10 |
 | Reference Data (Countries, Languages) | ✅ Complete | 2 |
 | Job Posting & Management | ✅ Complete | 8 |
+| Skill Assessments | ✅ Complete | 9 |
 | AI Matching / Recommendations | 📋 Planned | — |
-| Assessments / Notifications / Admin | 📋 Planned | — |
+| Notifications / Admin | 📋 Planned | — |
 
-**Total:** 64 API endpoints across 10 controllers
+**Total:** 73 API endpoints across 11 controllers
 
 ---
 
@@ -107,7 +108,7 @@ Backend-2/
 │
 └── RecruitmentPlatformAPI/
     ├── Program.cs                      # DI, JWT, CORS, JSON config, middleware
-    ├── Controllers/                    # 10 controllers
+    ├── Controllers/                    # 11 controllers
     │   ├── AuthController.cs           # 9 endpoints — login, register, OAuth, verify, reset
     │   ├── JobSeekerController.cs      # 9 endpoints — personal info, wizard, profile picture
     │   ├── ProjectsController.cs       # 4 endpoints — CRUD with soft delete & auto-reorder
@@ -117,11 +118,14 @@ Backend-2/
     │   ├── SocialAccountsController.cs # 3 endpoints — upsert/get/delete social links
     │   ├── RecruiterController.cs      # 10 endpoints — company info, wizard, profile picture
     │   ├── JobsController.cs           # 8 endpoints — job posting CRUD for recruiters
+    │   ├── AssessmentController.cs     # 9 endpoints — skill assessment flow (30 Qs, 45 min)
     │   └── LocationsController.cs      # 2 endpoints — countries, languages (bilingual)
     ├── Services/
     │   ├── Auth/                        # AuthService, EmailService, TokenService
     │   ├── JobSeeker/                   # 7 services (profile, projects, experience, etc.)
-    │   └── Recruiter/                   # RecruiterService
+    │   ├── Recruiter/                   # RecruiterService
+    │   ├── Jobs/                        # JobService
+    │   └── Assessment/                  # AssessmentService (eligibility, questions, scoring)
     ├── Models/
     │   ├── Identity/                    # User, EmailVerification, PasswordReset
     │   ├── JobSeeker/                   # JobSeeker, Project, Experience, Education, etc.
@@ -201,6 +205,20 @@ Backend-2/
 | PATCH | `/{id}/deactivate` | ✅ | Deactivate job |
 | GET | `/skills` | No | Get available skills for job creation |
 
+### Assessments (`/api/assessment/`) — 9 endpoints
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | `/eligibility` | ✅ | Check if user can start assessment |
+| POST | `/start` | ✅ | Start new 30-question assessment |
+| GET | `/current` | ✅ | Get in-progress assessment status |
+| GET | `/question` | ✅ | Get next unanswered question |
+| POST | `/answer` | ✅ | Submit answer (no immediate feedback) |
+| POST | `/complete` | ✅ | Finish and get full results |
+| POST | `/abandon` | ✅ | Abandon current attempt |
+| GET | `/history` | ✅ | Get all past attempts |
+| GET | `/result/{id}` | ✅ | Get detailed result for an attempt |
+
 ---
 
 ## Technology Stack
@@ -231,7 +249,7 @@ Backend-2/
 | Assessment | AssessmentQuestion, AssessmentAttempt, AssessmentAnswer |
 | Reference | Country, Language, JobTitle, Skill |
 
-Seed data: **90** job titles, **65** countries, **50** languages (bilingual EN/AR).
+Seed data: **90** job titles, **65** countries, **50** languages (bilingual EN/AR), **73** assessment questions.
 
 ---
 
@@ -256,6 +274,7 @@ Seed data: **90** job titles, **65** countries, **50** languages (bilingual EN/A
 | [Docs/Guides/SETUP_GUIDE.md](Docs/Guides/SETUP_GUIDE.md) | Detailed setup with troubleshooting |
 | [Docs/API/AUTH_API_INTEGRATION.md](Docs/API/AUTH_API_INTEGRATION.md) | Auth handoff guide for frontend team |
 | [Docs/API/JOBSEEKER_WIZARD_INTEGRATION.md](Docs/API/JOBSEEKER_WIZARD_INTEGRATION.md) | Job Seeker wizard frontend integration |
+| [Docs/API/ASSESSMENT_MODULE_GUIDE.md](Docs/API/ASSESSMENT_MODULE_GUIDE.md) | Complete Assessment Module technical guide |
 | [Docs/API/API_REFERENCE.md](Docs/API/API_REFERENCE.md) | Complete endpoint reference |
 | [Docs/Context/README.md](Docs/Context/README.md) | AI handoff docs index and bootstrap references |
 | [Docs/Database/ERD_DIAGRAM.md](Docs/Database/ERD_DIAGRAM.md) | Entity Relationship Diagram |
@@ -266,4 +285,4 @@ Seed data: **90** job titles, **65** countries, **50** languages (bilingual EN/A
 
 ## Next Phase
 
-The immediate next implementation focus is **Assessment runtime + Recommendation APIs**. Start with [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md), then follow [Docs/Context/DEVELOPMENT_ROADMAP.md](Docs/Context/DEVELOPMENT_ROADMAP.md) for prioritized tasks.
+The immediate next implementation focus is **AI-Powered Recommendation APIs**. This will enable intelligent job-candidate matching based on skills, experience, and assessment scores. Start with [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md), then follow [Docs/Context/DEVELOPMENT_ROADMAP.md](Docs/Context/DEVELOPMENT_ROADMAP.md) for prioritized tasks.

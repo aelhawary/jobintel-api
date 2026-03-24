@@ -335,6 +335,7 @@ namespace RecruitmentPlatformAPI.Data
             modelBuilder.Entity<Country>().HasData(CountrySeed.GetCountries());
             modelBuilder.Entity<Language>().HasData(LanguageSeed.GetLanguages());
             modelBuilder.Entity<Skill>().HasData(SkillSeed.GetSkills());
+            modelBuilder.Entity<AssessmentQuestion>().HasData(AssessmentQuestionSeed.GetQuestions());
 
             // ============= Assessment Quiz Configuration =============
             
