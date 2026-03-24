@@ -20,10 +20,10 @@ RUN mkdir -p /app/Uploads/ProfilePictures /app/Uploads/Resumes
 
 COPY --from=build /app/publish .
 
-# Expose port (Render uses PORT env variable)
+# Expose port (Railway uses PORT env variable, defaults to 8080)
 EXPOSE 8080
 
-# Set environment variables
+# Set environment variables for Railway
 ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
 
