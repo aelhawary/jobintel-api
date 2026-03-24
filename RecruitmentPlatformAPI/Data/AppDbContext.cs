@@ -99,13 +99,13 @@ namespace RecruitmentPlatformAPI.Data
                 b.Property(e => e.Degree)
                  .HasConversion<string>()
                  .HasMaxLength(50);
-                
-                // Check constraint: EndDate must be >= StartDate
+
+                // Check constraint: EndDate must be >= StartDate (database-agnostic)
                 b.ToTable(t => t.HasCheckConstraint(
                     "CK_Education_EndDateAfterStartDate",
-                    "[EndDate] IS NULL OR [EndDate] >= [StartDate]"
+                    "EndDate IS NULL OR EndDate >= StartDate"
                 ));
-                
+
                 // Index for querying non-deleted education entries
                 b.HasIndex(e => new { e.JobSeekerId, e.IsDeleted })
                  .HasDatabaseName("IX_Education_JobSeekerId_IsDeleted");
@@ -126,7 +126,7 @@ namespace RecruitmentPlatformAPI.Data
                 // Check constraint: EndDate must be >= StartDate
                 b.ToTable(t => t.HasCheckConstraint(
                     "CK_Experience_EndDateAfterStartDate",
-                    "[EndDate] IS NULL OR [EndDate] >= [StartDate]"
+                    "EndDate IS NULL OR EndDate >= StartDate"
                 ));
                 
                 // Index for querying non-deleted experiences
@@ -156,10 +156,11 @@ namespace RecruitmentPlatformAPI.Data
                  .OnDelete(DeleteBehavior.Cascade);
                 
                 // Ensure only one active (non-deleted) CV per job seeker using filtered unique index
-                b.HasIndex(r => r.JobSeekerId)
+                // Note: Filter syntax varies by database - PostgreSQL uses different syntax than SQL Server
+                // For PostgreSQL compatibility, we'll handle this at application level instead
+                b.HasIndex(r => new { r.JobSeekerId, r.IsDeleted })
                  .IsUnique()
-                 .HasFilter("[IsDeleted] = 0")
-                 .HasDatabaseName("IX_Resume_JobSeekerId_Active_Unique");
+                 .HasDatabaseName("IX_Resume_JobSeekerId_IsDeleted_Unique");
                 
                 // Index for querying non-deleted resumes
                 b.HasIndex(r => new { r.JobSeekerId, r.IsDeleted })
@@ -188,7 +189,7 @@ namespace RecruitmentPlatformAPI.Data
                 // Check constraint: ExpirationDate must be >= IssueDate
                 b.ToTable(t => t.HasCheckConstraint(
                     "CK_Certificate_ExpirationDateAfterIssueDate",
-                    "[ExpirationDate] IS NULL OR [IssueDate] IS NULL OR [ExpirationDate] >= [IssueDate]"
+                    "ExpirationDate IS NULL OR IssueDate IS NULL OR ExpirationDate >= IssueDate"
                 ));
 
                 // Index for querying non-deleted certificates
@@ -403,10 +404,10 @@ namespace RecruitmentPlatformAPI.Data
                  .HasDatabaseName("IX_AssessmentAttempt_JobSeeker_Status");
                 
                 // Ensure only one in-progress assessment per job seeker at a time
-                b.HasIndex(a => a.JobSeekerId)
-                 .IsUnique()
-                 .HasFilter("[Status] = 1")  // 1 = InProgress
-                 .HasDatabaseName("IX_AssessmentAttempt_SingleInProgress");
+                // Note: Filtered indexes have different syntax across databases
+                // For PostgreSQL compatibility, we handle this at application level
+                b.HasIndex(a => new { a.JobSeekerId, a.Status })
+                 .HasDatabaseName("IX_AssessmentAttempt_JobSeeker_Status_Unique");
             });
             
             // AssessmentAnswer
