@@ -56,8 +56,16 @@ builder.Services.AddCors(options =>
 });
 
 // Configure EF Core (SQL Server or PostgreSQL based on connection string)
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-                       ?? "Server=(localdb)\\mssqllocaldb;Database=RecruitmentPlatformDb;Trusted_Connection=True;MultipleActiveResultSets=true";
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// If not set, try Railway's standard DATABASE_URL variable
+if (string.IsNullOrEmpty(connectionString))
+{
+    connectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
+}
+
+// If still not set, use local default
+connectionString ??= "Server=(localdb)\\mssqllocaldb;Database=RecruitmentPlatformDb;Trusted_Connection=True;MultipleActiveResultSets=true";
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -192,9 +200,16 @@ using (var scope = app.Services.CreateScope())
 
     try
     {
+        // Log connection string info for debugging (mask password)
+        var redactedConnStr = connectionString.Length > 50
+            ? connectionString.Substring(0, 50) + "..."
+            : connectionString;
+        logger.LogInformation("Connection string detected: {ConnectionString}", redactedConnStr);
+
         // Check if this is PostgreSQL
         // Railway format: postgresql://user:password@host:port/database
         var isPostgres = connectionString.Contains("postgresql://") || connectionString.Contains("postgres") || connectionString.Contains("Host=");
+        logger.LogInformation("Database type detected: {DatabaseType}", isPostgres ? "PostgreSQL" : "SQL Server");
 
         if (isPostgres)
         {
