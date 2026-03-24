@@ -1575,7 +1575,7 @@ namespace RecruitmentPlatformAPI.Data.Migrations
 
                     b.ToTable("Certificates", t =>
                         {
-                            t.HasCheckConstraint("CK_Certificate_ExpirationDateAfterIssueDate", "ExpirationDate IS NULL OR IssueDate IS NULL OR ExpirationDate >= IssueDate");
+                            t.HasCheckConstraint("CK_Certificate_ExpirationDateAfterIssueDate", "\"ExpirationDate\" IS NULL OR \"IssueDate\" IS NULL OR \"ExpirationDate\" >= \"IssueDate\"");
                         });
                 });
 
@@ -1640,7 +1640,7 @@ namespace RecruitmentPlatformAPI.Data.Migrations
 
                     b.ToTable("Educations", t =>
                         {
-                            t.HasCheckConstraint("CK_Education_EndDateAfterStartDate", "EndDate IS NULL OR EndDate >= StartDate");
+                            t.HasCheckConstraint("CK_Education_EndDateAfterStartDate", "\"EndDate\" IS NULL OR \"EndDate\" >= \"StartDate\"");
                         });
                 });
 
@@ -1707,7 +1707,7 @@ namespace RecruitmentPlatformAPI.Data.Migrations
 
                     b.ToTable("Experiences", t =>
                         {
-                            t.HasCheckConstraint("CK_Experience_EndDateAfterStartDate", "EndDate IS NULL OR EndDate >= StartDate");
+                            t.HasCheckConstraint("CK_Experience_EndDateAfterStartDate", "\"EndDate\" IS NULL OR \"EndDate\" >= \"StartDate\"");
                         });
                 });
 

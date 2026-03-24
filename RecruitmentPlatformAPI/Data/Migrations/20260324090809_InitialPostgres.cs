@@ -341,7 +341,7 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Certificates", x => x.Id);
-                    table.CheckConstraint("CK_Certificate_ExpirationDateAfterIssueDate", "ExpirationDate IS NULL OR IssueDate IS NULL OR ExpirationDate >= IssueDate");
+                    table.CheckConstraint("CK_Certificate_ExpirationDateAfterIssueDate", "\"ExpirationDate\" IS NULL OR \"IssueDate\" IS NULL OR \"ExpirationDate\" >= \"IssueDate\"");
                     table.ForeignKey(
                         name: "FK_Certificates_JobSeekers_JobSeekerId",
                         column: x => x.JobSeekerId,
@@ -373,7 +373,7 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Educations", x => x.Id);
-                    table.CheckConstraint("CK_Education_EndDateAfterStartDate", "EndDate IS NULL OR EndDate >= StartDate");
+                    table.CheckConstraint("CK_Education_EndDateAfterStartDate", "\"EndDate\" IS NULL OR \"EndDate\" >= \"StartDate\"");
                     table.ForeignKey(
                         name: "FK_Educations_JobSeekers_JobSeekerId",
                         column: x => x.JobSeekerId,
@@ -406,7 +406,7 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Experiences", x => x.Id);
-                    table.CheckConstraint("CK_Experience_EndDateAfterStartDate", "EndDate IS NULL OR EndDate >= StartDate");
+                    table.CheckConstraint("CK_Experience_EndDateAfterStartDate", "\"EndDate\" IS NULL OR \"EndDate\" >= \"StartDate\"");
                     table.ForeignKey(
                         name: "FK_Experiences_JobSeekers_JobSeekerId",
                         column: x => x.JobSeekerId,

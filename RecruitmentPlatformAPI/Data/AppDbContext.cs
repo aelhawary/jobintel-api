@@ -103,7 +103,7 @@ namespace RecruitmentPlatformAPI.Data
                 // Check constraint: EndDate must be >= StartDate (database-agnostic)
                 b.ToTable(t => t.HasCheckConstraint(
                     "CK_Education_EndDateAfterStartDate",
-                    "EndDate IS NULL OR EndDate >= StartDate"
+                    "\"EndDate\" IS NULL OR \"EndDate\" >= \"StartDate\""
                 ));
 
                 // Index for querying non-deleted education entries
@@ -126,7 +126,7 @@ namespace RecruitmentPlatformAPI.Data
                 // Check constraint: EndDate must be >= StartDate
                 b.ToTable(t => t.HasCheckConstraint(
                     "CK_Experience_EndDateAfterStartDate",
-                    "EndDate IS NULL OR EndDate >= StartDate"
+                    "\"EndDate\" IS NULL OR \"EndDate\" >= \"StartDate\""
                 ));
                 
                 // Index for querying non-deleted experiences
@@ -189,7 +189,7 @@ namespace RecruitmentPlatformAPI.Data
                 // Check constraint: ExpirationDate must be >= IssueDate
                 b.ToTable(t => t.HasCheckConstraint(
                     "CK_Certificate_ExpirationDateAfterIssueDate",
-                    "ExpirationDate IS NULL OR IssueDate IS NULL OR ExpirationDate >= IssueDate"
+                    "\"ExpirationDate\" IS NULL OR \"IssueDate\" IS NULL OR \"ExpirationDate\" >= \"IssueDate\""
                 ));
 
                 // Index for querying non-deleted certificates
