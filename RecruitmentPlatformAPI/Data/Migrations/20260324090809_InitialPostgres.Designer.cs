@@ -2,9 +2,9 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RecruitmentPlatformAPI.Data;
 
 #nullable disable
@@ -12,8 +12,8 @@ using RecruitmentPlatformAPI.Data;
 namespace RecruitmentPlatformAPI.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260306155235_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260324090809_InitialPostgres")]
+    partial class InitialPostgres
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -21,35 +21,35 @@ namespace RecruitmentPlatformAPI.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "9.0.10")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("RecruitmentPlatformAPI.Models.Assessment.AssessmentAnswer", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("AnsweredAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("AssessmentAttemptId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<bool>("IsCorrect")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int>("QuestionId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("SelectedAnswerIndex")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TimeSpentSeconds")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -66,69 +66,71 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int>("JobSeekerId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("JobTitleId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<decimal?>("OverallScore")
                         .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<string>("QuestionIdsJson")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<int>("QuestionsAnswered")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("RetakeNumber")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("ScoreExpiresAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal?>("SoftSkillsScore")
                         .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                        .HasColumnType("numeric(5,2)");
 
                     b.Property<DateTime>("StartedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Status")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<decimal?>("TechnicalScore")
                         .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                        .HasColumnType("numeric(5,2)");
 
                     b.Property<int>("TimeLimitMinutes")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TotalQuestions")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("JobSeekerId")
-                        .IsUnique()
-                        .HasDatabaseName("IX_AssessmentAttempt_SingleInProgress")
-                        .HasFilter("[Status] = 1");
 
                     b.HasIndex("JobTitleId");
 
                     b.HasIndex("JobSeekerId", "IsActive")
                         .HasDatabaseName("IX_AssessmentAttempt_JobSeeker_Active");
+
+                    b.HasIndex("JobSeekerId", "Status")
+                        .HasDatabaseName("IX_AssessmentAttempt_JobSeeker_Status_Unique");
 
                     b.HasIndex("JobSeekerId", "Status", "StartedAt")
                         .HasDatabaseName("IX_AssessmentAttempt_JobSeeker_Status");
@@ -140,53 +142,53 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("Category")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("CorrectAnswerIndex")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Difficulty")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Explanation")
                         .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Options")
                         .IsRequired()
                         .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<string>("QuestionText")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<int>("RoleFamily")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("SeniorityLevel")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("SkillId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("TimePerQuestion")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -196,32 +198,1202 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                         .HasDatabaseName("IX_AssessmentQuestion_Filtering");
 
                     b.ToTable("AssessmentQuestion", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Category = 1,
+                            CorrectAnswerIndex = 0,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 1,
+                            Explanation = "REST is an architectural style for designing networked applications using HTTP requests.",
+                            IsActive = true,
+                            Options = "[\"Representational State Transfer\",\"Remote Execution Service Technology\",\"Reliable External System Transport\",\"Request-Response State Transition\"]",
+                            QuestionText = "What does REST stand for?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Category = 1,
+                            CorrectAnswerIndex = 0,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 1,
+                            Explanation = "GET is used to request data from a specified resource.",
+                            IsActive = true,
+                            Options = "[\"GET\",\"POST\",\"PUT\",\"DELETE\"]",
+                            QuestionText = "Which HTTP method is used to retrieve data from a server?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 1,
+                            Explanation = "Indexes improve query performance by allowing faster data lookup.",
+                            IsActive = true,
+                            Options = "[\"To enforce data constraints\",\"To speed up data retrieval\",\"To encrypt sensitive data\",\"To backup data automatically\"]",
+                            QuestionText = "What is the purpose of a database index?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Category = 1,
+                            CorrectAnswerIndex = 2,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 1,
+                            Explanation = "HTTP 200 OK indicates that the request has succeeded.",
+                            IsActive = true,
+                            Options = "[\"404\",\"500\",\"200\",\"301\"]",
+                            QuestionText = "What status code indicates a successful HTTP request?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 1,
+                            Explanation = "JSON (JavaScript Object Notation) is a lightweight data interchange format.",
+                            IsActive = true,
+                            Options = "[\"Styling web pages\",\"Data interchange between systems\",\"Database queries\",\"User authentication\"]",
+                            QuestionText = "What is JSON primarily used for?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "PUT replaces the entire resource, while PATCH applies partial modifications.",
+                            IsActive = true,
+                            Options = "[\"PUT creates, PATCH deletes\",\"PUT replaces entire resource, PATCH updates partial resource\",\"They are identical\",\"PUT is faster than PATCH\"]",
+                            QuestionText = "What is the difference between PUT and PATCH HTTP methods?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "Dependency injection is a pattern that allows dependencies to be provided rather than hard-coded.",
+                            IsActive = true,
+                            Options = "[\"A security vulnerability\",\"A design pattern for loose coupling\",\"A database optimization technique\",\"A type of API authentication\"]",
+                            QuestionText = "What is dependency injection?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Category = 1,
+                            CorrectAnswerIndex = 0,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "ACID properties ensure reliable database transactions.",
+                            IsActive = true,
+                            Options = "[\"Atomicity, Consistency, Isolation, Durability\",\"Authentication, Confidentiality, Integrity, Durability\",\"Automated, Consistent, Indexed, Distributed\",\"Access, Control, Identity, Data\"]",
+                            QuestionText = "What does ACID stand for in database transactions?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "Middleware functions process requests/responses in the application pipeline.",
+                            IsActive = true,
+                            Options = "[\"To store user sessions\",\"To process requests between client and server\",\"To render HTML templates\",\"To manage database connections only\"]",
+                            QuestionText = "What is the purpose of middleware in web applications?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "N+1 occurs when code executes N additional queries to fetch related data for N records.",
+                            IsActive = true,
+                            Options = "[\"A network latency issue\",\"Executing one query for the list plus one query per item\",\"A database connection pool exhaustion\",\"An SQL syntax error\"]",
+                            QuestionText = "What is the N+1 query problem?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Eventual consistency means replicas will eventually be consistent, but not immediately.",
+                            IsActive = true,
+                            Options = "[\"Data is always immediately consistent\",\"Given enough time, all replicas will converge\",\"Data is never consistent\",\"Only writes are consistent\"]",
+                            QuestionText = "What is eventual consistency?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 1,
+                            Explanation = "An API gateway acts as a single entry point for all API calls.",
+                            IsActive = true,
+                            Options = "[\"To store API documentation\",\"To serve as a single entry point for microservices\",\"To compile API code\",\"To test API endpoints\"]",
+                            QuestionText = "What is the purpose of an API gateway?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 1,
+                            Explanation = "Caching stores data temporarily to reduce latency and database load.",
+                            IsActive = true,
+                            Options = "[\"To encrypt data\",\"To store frequently accessed data for faster retrieval\",\"To validate user input\",\"To compress response data\"]",
+                            QuestionText = "What is caching used for in backend systems?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Category = 1,
+                            CorrectAnswerIndex = 0,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "CAP theorem states distributed systems can only guarantee 2 of the 3 properties.",
+                            IsActive = true,
+                            Options = "[\"A distributed system can have at most 2 of: Consistency, Availability, Partition tolerance\",\"A database optimization rule\",\"A caching strategy\",\"An API design principle\"]",
+                            QuestionText = "What is the CAP theorem?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Category = 1,
+                            CorrectAnswerIndex = 0,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "Horizontal scaling adds more instances, vertical scaling increases resources of existing instances.",
+                            IsActive = true,
+                            Options = "[\"Horizontal adds more machines, vertical adds more power to existing machines\",\"They are the same\",\"Horizontal is cheaper always\",\"Vertical is for databases only\"]",
+                            QuestionText = "What is the difference between horizontal and vertical scaling?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "Message queues enable asynchronous, decoupled communication between services.",
+                            IsActive = true,
+                            Options = "[\"Real-time chat only\",\"Asynchronous communication between services\",\"Database replication\",\"API versioning\"]",
+                            QuestionText = "What is a message queue used for?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 17,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "Sharding distributes data across multiple database instances for scalability.",
+                            IsActive = true,
+                            Options = "[\"Encrypting database fields\",\"Partitioning data across multiple databases\",\"Creating database backups\",\"Indexing database tables\"]",
+                            QuestionText = "What is database sharding?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 18,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Saga pattern manages distributed transactions through a sequence of local transactions.",
+                            IsActive = true,
+                            Options = "[\"A logging pattern\",\"A pattern for managing distributed transactions\",\"A caching strategy\",\"An API versioning approach\"]",
+                            QuestionText = "What is the Saga pattern in microservices?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 19,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Circuit breaker prevents repeated calls to a failing service, allowing recovery time.",
+                            IsActive = true,
+                            Options = "[\"A network security measure\",\"A pattern to prevent cascading failures in distributed systems\",\"A database constraint\",\"An authentication method\"]",
+                            QuestionText = "What is circuit breaker pattern?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 20,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "CQRS separates read and write operations for better scalability and performance.",
+                            IsActive = true,
+                            Options = "[\"A caching technique\",\"Separating read and write operations into different models\",\"A database type\",\"An API versioning strategy\"]",
+                            QuestionText = "What is CQRS (Command Query Responsibility Segregation)?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 21,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "Effective rate limiting considers multiple factors including user tiers and endpoint importance.",
+                            IsActive = true,
+                            Options = "[\"Only request count\",\"Request count, user tier, endpoint sensitivity, and time windows\",\"Only user authentication status\",\"Only server capacity\"]",
+                            QuestionText = "What factors would you consider when designing a rate limiting strategy?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 3,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 22,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "Event sourcing persists state changes as immutable events rather than current state.",
+                            IsActive = true,
+                            Options = "[\"Logging all events\",\"Storing state changes as a sequence of events\",\"A pub/sub mechanism\",\"An API documentation approach\"]",
+                            QuestionText = "What is event sourcing?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 3,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 23,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Handling high concurrency requires a combination of scaling techniques.",
+                            IsActive = true,
+                            Options = "[\"Use a single powerful server\",\"Use load balancing, caching, CDN, database sharding, and async processing\",\"Just increase database size\",\"Only add more API servers\"]",
+                            QuestionText = "How would you design a system to handle 1 million concurrent users?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 3,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 24,
+                            Category = 1,
+                            CorrectAnswerIndex = 0,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Optimistic locking checks for conflicts at commit time, pessimistic locks prevent conflicts.",
+                            IsActive = true,
+                            Options = "[\"Optimistic assumes no conflicts, pessimistic locks resources preemptively\",\"They are identical\",\"Optimistic is for reads, pessimistic for writes\",\"Optimistic is always faster\"]",
+                            QuestionText = "What is the difference between optimistic and pessimistic locking?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 3,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 25,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Effective cache invalidation combines TTL, pub/sub notifications, and versioning.",
+                            IsActive = true,
+                            Options = "[\"Clear all caches periodically\",\"Use TTL, pub/sub invalidation, and versioning strategies\",\"Never invalidate\",\"Only invalidate on server restart\"]",
+                            QuestionText = "How would you implement a distributed cache invalidation strategy?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 3,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 26,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Idempotent APIs handle retries safely without side effects.",
+                            IsActive = true,
+                            Options = "[\"Only status codes matter\",\"Idempotency keys, proper HTTP methods, and handling duplicate requests\",\"Only GET methods need to be idempotent\",\"Idempotency is not important\"]",
+                            QuestionText = "What considerations are important for designing idempotent APIs?",
+                            RoleFamily = 2,
+                            SeniorityLevel = 3,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 27,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 1,
+                            Explanation = "CSS (Cascading Style Sheets) is used to style HTML documents.",
+                            IsActive = true,
+                            Options = "[\"Computer Style Sheets\",\"Cascading Style Sheets\",\"Creative Style System\",\"Content Styling Standard\"]",
+                            QuestionText = "What does CSS stand for?",
+                            RoleFamily = 1,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 28,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 1,
+                            Explanation = "useState allows functional components to have state.",
+                            IsActive = true,
+                            Options = "[\"To make HTTP requests\",\"To manage component state\",\"To create routes\",\"To style components\"]",
+                            QuestionText = "What is the purpose of the 'useState' hook in React?",
+                            RoleFamily = 1,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 29,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 1,
+                            Explanation = "The DOM is a programming interface for HTML documents.",
+                            IsActive = true,
+                            Options = "[\"Data Object Model\",\"Document Object Model\",\"Digital Output Method\",\"Direct Object Manipulation\"]",
+                            QuestionText = "What is the DOM?",
+                            RoleFamily = 1,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 30,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 1,
+                            Explanation = "The alt attribute provides text description for screen readers and when images fail to load.",
+                            IsActive = true,
+                            Options = "[\"To make images load faster\",\"To provide alternative text for accessibility\",\"To set image dimensions\",\"To add image effects\"]",
+                            QuestionText = "What is the purpose of 'alt' attribute in images?",
+                            RoleFamily = 1,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 31,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 1,
+                            Explanation = "Responsive design ensures websites work well on all devices and screen sizes.",
+                            IsActive = true,
+                            Options = "[\"Fast-loading websites\",\"Design that adapts to different screen sizes\",\"Websites that respond quickly\",\"Design with animations\"]",
+                            QuestionText = "What is responsive design?",
+                            RoleFamily = 1,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 32,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "The Virtual DOM is React's strategy for efficient DOM manipulation.",
+                            IsActive = true,
+                            Options = "[\"A new browser feature\",\"A lightweight copy of the actual DOM for efficient updates\",\"A CSS framework\",\"A JavaScript library\"]",
+                            QuestionText = "What is the Virtual DOM?",
+                            RoleFamily = 1,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 33,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "Event bubbling means events triggered on nested elements propagate up the DOM tree.",
+                            IsActive = true,
+                            Options = "[\"A CSS animation\",\"Events propagating from child to parent elements\",\"A JavaScript error\",\"A browser bug\"]",
+                            QuestionText = "What is event bubbling?",
+                            RoleFamily = 1,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 34,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "'===' checks both value and type without coercion.",
+                            IsActive = true,
+                            Options = "[\"They are identical\",\"\\u0027==\\u0027 compares with type coercion, \\u0027===\\u0027 compares strictly\",\"\\u0027===\\u0027 is deprecated\",\"\\u0027==\\u0027 is for strings only\"]",
+                            QuestionText = "What is the difference between '==' and '===' in JavaScript?",
+                            RoleFamily = 1,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 35,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "A closure is a function that has access to variables from its outer scope.",
+                            IsActive = true,
+                            Options = "[\"A browser window closing\",\"A function that remembers its outer scope variables\",\"A way to end loops\",\"A CSS property\"]",
+                            QuestionText = "What is a closure in JavaScript?",
+                            RoleFamily = 1,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 36,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "useCallback memoizes callback functions to optimize performance.",
+                            IsActive = true,
+                            Options = "[\"To fetch data\",\"To memoize functions and prevent unnecessary re-renders\",\"To handle routing\",\"To manage global state\"]",
+                            QuestionText = "What is the purpose of useCallback in React?",
+                            RoleFamily = 1,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 37,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Tree shaking eliminates dead code from the final bundle.",
+                            IsActive = true,
+                            Options = "[\"A CSS animation\",\"Removing unused code during bundling\",\"A testing technique\",\"A debugging method\"]",
+                            QuestionText = "What is tree shaking?",
+                            RoleFamily = 1,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 38,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "Code splitting loads code chunks on demand for better performance.",
+                            IsActive = true,
+                            Options = "[\"Writing code in multiple files\",\"Loading code on demand to reduce initial bundle size\",\"A coding style\",\"Splitting CSS and JS\"]",
+                            QuestionText = "What is code splitting?",
+                            RoleFamily = 1,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 39,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "React.memo is a HOC that memoizes components based on props.",
+                            IsActive = true,
+                            Options = "[\"To store notes in components\",\"To memoize components and prevent unnecessary re-renders\",\"To manage memory\",\"To create memos\"]",
+                            QuestionText = "What is the purpose of React.memo?",
+                            RoleFamily = 1,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 40,
+                            Category = 1,
+                            CorrectAnswerIndex = 0,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "SSR renders HTML on the server, CSR renders in the client's browser.",
+                            IsActive = true,
+                            Options = "[\"SSR renders on server, CSR renders in browser\",\"They are identical\",\"SSR is faster always\",\"CSR is for mobile only\"]",
+                            QuestionText = "What is the difference between SSR and CSR?",
+                            RoleFamily = 1,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 41,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "Web Workers allow scripts to run in background threads without blocking the UI.",
+                            IsActive = true,
+                            Options = "[\"To style web pages\",\"To run scripts in background threads\",\"To handle HTTP requests\",\"To manage cookies\"]",
+                            QuestionText = "What is the purpose of Web Workers?",
+                            RoleFamily = 1,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 42,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Virtualization renders only visible items, dramatically improving performance for large lists.",
+                            IsActive = true,
+                            Options = "[\"Use more useState\",\"Implement virtualization/windowing techniques\",\"Add more CSS\",\"Use setTimeout\"]",
+                            QuestionText = "How would you optimize a large list rendering in React?",
+                            RoleFamily = 1,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 43,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Hydration makes server-rendered HTML interactive by attaching event handlers.",
+                            IsActive = true,
+                            Options = "[\"Adding water effects\",\"Attaching JavaScript event handlers to server-rendered HTML\",\"A CSS property\",\"A database technique\"]",
+                            QuestionText = "What is hydration in the context of SSR?",
+                            RoleFamily = 1,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 44,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "The Critical Rendering Path is the sequence from receiving HTML to displaying pixels.",
+                            IsActive = true,
+                            Options = "[\"The most important CSS rules\",\"The sequence of steps browser takes to render a page\",\"A JavaScript function\",\"A routing pattern\"]",
+                            QuestionText = "What is the Critical Rendering Path?",
+                            RoleFamily = 1,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 45,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Micro-frontends allow independent teams to develop and deploy separate frontend modules.",
+                            IsActive = true,
+                            Options = "[\"Use only one framework\",\"Use module federation, independent deployments, and shared dependencies\",\"Avoid using any frameworks\",\"Use iframes only\"]",
+                            QuestionText = "How would you implement a micro-frontend architecture?",
+                            RoleFamily = 1,
+                            SeniorityLevel = 3,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 46,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Large apps benefit from a layered approach combining different state management strategies.",
+                            IsActive = true,
+                            Options = "[\"Use only local state\",\"Combine local, global state, server state caching, and derived state appropriately\",\"Use only Redux\",\"Avoid state management\"]",
+                            QuestionText = "What strategies would you use for state management in a large application?",
+                            RoleFamily = 1,
+                            SeniorityLevel = 3,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 47,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Performance optimization requires profiling, identifying bottlenecks, and applying targeted fixes.",
+                            IsActive = true,
+                            Options = "[\"Add more components\",\"Profile, analyze renders, memoize, split code, lazy load, and optimize network\",\"Remove all styling\",\"Use class components only\"]",
+                            QuestionText = "How would you approach performance optimization for a slow React application?",
+                            RoleFamily = 1,
+                            SeniorityLevel = 3,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 48,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "GraphQL provides flexible queries while REST has fixed endpoints.",
+                            IsActive = true,
+                            Options = "[\"They are identical\",\"GraphQL allows clients to request specific data, REST returns fixed responses\",\"REST is newer than GraphQL\",\"GraphQL is only for databases\"]",
+                            QuestionText = "What is GraphQL and how does it differ from REST?",
+                            RoleFamily = 3,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 49,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "JWT (JSON Web Token) enables stateless authentication between client and server.",
+                            IsActive = true,
+                            Options = "[\"A JavaScript testing tool\",\"A stateless authentication token for API security\",\"A CSS framework\",\"A database type\"]",
+                            QuestionText = "What is a JWT and when would you use it?",
+                            RoleFamily = 3,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 50,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "CORS controls which origins can access resources from a different domain.",
+                            IsActive = true,
+                            Options = "[\"A CSS feature\",\"A security mechanism controlling cross-origin requests\",\"A JavaScript library\",\"A database constraint\"]",
+                            QuestionText = "What is CORS and why is it important?",
+                            RoleFamily = 3,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 51,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Real-time features typically use WebSockets or SSE for bi-directional or server-push communication.",
+                            IsActive = true,
+                            Options = "[\"Refresh the page frequently\",\"Use WebSockets, Server-Sent Events, or long polling\",\"Only use REST APIs\",\"Disable caching\"]",
+                            QuestionText = "How would you implement real-time features in a web application?",
+                            RoleFamily = 3,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 52,
+                            Category = 1,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Robust authentication requires multiple security layers and considerations.",
+                            IsActive = true,
+                            Options = "[\"Only password strength\",\"Secure storage, token management, MFA, session handling, and rate limiting\",\"Only using HTTPS\",\"Only email verification\"]",
+                            QuestionText = "What considerations are important when designing an authentication system?",
+                            RoleFamily = 3,
+                            SeniorityLevel = 3,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 53,
+                            Category = 2,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 1,
+                            Explanation = "Honesty and willingness to learn are valued traits in collaborative environments.",
+                            IsActive = true,
+                            Options = "[\"Pretend you know and try anyway\",\"Honestly say you\\u0027re unfamiliar but offer to learn together or find help\",\"Ignore the request\",\"Tell them to ask someone else\"]",
+                            QuestionText = "A colleague asks for help with a task you're unfamiliar with. What should you do?",
+                            RoleFamily = 9,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 54,
+                            Category = 2,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 1,
+                            Explanation = "Constructive criticism is an opportunity for growth when received with an open mind.",
+                            IsActive = true,
+                            Options = "[\"Get defensive and argue\",\"Listen carefully, ask clarifying questions, and use it to improve\",\"Ignore it completely\",\"Criticize the reviewer\\u0027s work in return\"]",
+                            QuestionText = "How should you handle constructive criticism of your work?",
+                            RoleFamily = 9,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 55,
+                            Category = 2,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 1,
+                            Explanation = "Effective communication adapts to the audience's level of understanding.",
+                            IsActive = true,
+                            Options = "[\"Use as much jargon as possible\",\"Use analogies and simple language avoiding technical terms\",\"Show them the code\",\"Tell them it\\u0027s too complex to explain\"]",
+                            QuestionText = "What is the best way to communicate a technical concept to a non-technical person?",
+                            RoleFamily = 9,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 56,
+                            Category = 2,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 1,
+                            Explanation = "Transparency and quick action when mistakes occur build trust and minimize impact.",
+                            IsActive = true,
+                            Options = "[\"Hide it and hope no one notices\",\"Inform your team immediately and work on a fix\",\"Blame someone else\",\"Wait until someone reports it\"]",
+                            QuestionText = "You realize you made a mistake in production code. What should you do first?",
+                            RoleFamily = 9,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 57,
+                            Category = 2,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "Effective prioritization considers multiple factors beyond perceived urgency.",
+                            IsActive = true,
+                            Options = "[\"Work on whatever is easiest first\",\"Assess impact, deadlines, and dependencies to determine true priorities\",\"Ask someone else to decide\",\"Work overtime on everything\"]",
+                            QuestionText = "How do you prioritize tasks when everything seems urgent?",
+                            RoleFamily = 9,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 58,
+                            Category = 2,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "Private, specific, and constructive feedback helps team members improve.",
+                            IsActive = true,
+                            Options = "[\"Rewrite their code without telling them\",\"Provide constructive feedback privately with specific suggestions\",\"Complain to the manager immediately\",\"Ignore it\"]",
+                            QuestionText = "A team member's code doesn't meet standards. How do you address this?",
+                            RoleFamily = 9,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 59,
+                            Category = 2,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "Breaking down large projects and acknowledging progress helps maintain motivation.",
+                            IsActive = true,
+                            Options = "[\"Just push through regardless of burnout\",\"Break into milestones, celebrate progress, and take regular breaks\",\"Complain frequently\",\"Switch to other projects\"]",
+                            QuestionText = "How do you stay motivated when working on a long, complex project?",
+                            RoleFamily = 9,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 60,
+                            Category = 2,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Respectful disagreement with reasoning contributes to better decisions.",
+                            IsActive = true,
+                            Options = "[\"Stay silent and follow orders\",\"Respectfully present your concerns with supporting reasoning in private\",\"Argue publicly in meetings\",\"Implement your approach anyway\"]",
+                            QuestionText = "You disagree with a technical decision made by a senior developer. What do you do?",
+                            RoleFamily = 9,
+                            SeniorityLevel = 1,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 61,
+                            Category = 2,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 1,
+                            Explanation = "Good code reviews balance quality enforcement with constructive learning.",
+                            IsActive = true,
+                            Options = "[\"Finding as many problems as possible\",\"Being constructive, specific, and focused on code quality and learning\",\"Approving everything quickly\",\"Only checking for syntax errors\"]",
+                            QuestionText = "What makes a good code review?",
+                            RoleFamily = 9,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 62,
+                            Category = 2,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 1,
+                            Explanation = "Direct, empathetic communication often resolves interpersonal difficulties.",
+                            IsActive = true,
+                            Options = "[\"Avoid them completely\",\"Try to understand their perspective and communicate directly about issues\",\"Complain to others\",\"Request a team change immediately\"]",
+                            QuestionText = "How do you handle working with a difficult team member?",
+                            RoleFamily = 9,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 63,
+                            Category = 2,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "Balancing debt and features requires continuous assessment and communication.",
+                            IsActive = true,
+                            Options = "[\"Always prioritize new features\",\"Assess impact, allocate regular time for debt, and communicate tradeoffs\",\"Never work on new features until debt is cleared\",\"Technical debt doesn\\u0027t matter\"]",
+                            QuestionText = "How do you balance technical debt against new feature development?",
+                            RoleFamily = 9,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 64,
+                            Category = 2,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "Proactive, supportive assistance helps team members without undermining their autonomy.",
+                            IsActive = true,
+                            Options = "[\"Wait for them to ask\",\"Offer help in a supportive, non-judgmental way\",\"Report them to the manager\",\"Take over their work\"]",
+                            QuestionText = "You notice a team member struggling but not asking for help. What do you do?",
+                            RoleFamily = 9,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 65,
+                            Category = 2,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "Managing scope creep requires documentation, impact assessment, and negotiation.",
+                            IsActive = true,
+                            Options = "[\"Accept all changes without question\",\"Document changes, assess impact, and negotiate timeline or resource adjustments\",\"Refuse all changes\",\"Work overtime to include everything\"]",
+                            QuestionText = "How do you handle scope creep in a project?",
+                            RoleFamily = 9,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 66,
+                            Category = 2,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Proactive, data-driven communication about constraints enables informed decisions.",
+                            IsActive = true,
+                            Options = "[\"Promise to meet it anyway\",\"Present data-driven concerns early with alternative proposals\",\"Miss the deadline and explain later\",\"Quit the project\"]",
+                            QuestionText = "A project deadline is clearly unrealistic. How do you handle this?",
+                            RoleFamily = 9,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 67,
+                            Category = 2,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Effective mentoring balances guidance with opportunities for independent growth.",
+                            IsActive = true,
+                            Options = "[\"Tell them exactly what to do\",\"Guide with questions, provide resources, give autonomy, and offer regular feedback\",\"Let them figure everything out alone\",\"Do their work for them\"]",
+                            QuestionText = "How do you mentor a junior developer effectively?",
+                            RoleFamily = 9,
+                            SeniorityLevel = 2,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 68,
+                            Category = 2,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "Influence without authority requires relationship building and persuasive communication.",
+                            IsActive = true,
+                            Options = "[\"Force your opinion\",\"Build relationships, present data, understand stakeholders, and find common ground\",\"Give up trying\",\"Escalate immediately\"]",
+                            QuestionText = "How do you influence decisions when you don't have direct authority?",
+                            RoleFamily = 9,
+                            SeniorityLevel = 3,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 69,
+                            Category = 2,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 2,
+                            Explanation = "Professional disagreement followed by committed execution maintains trust.",
+                            IsActive = true,
+                            Options = "[\"Comply silently\",\"Voice concerns diplomatically, disagree and commit if overruled\",\"Refuse to implement\",\"Undermine the decision quietly\"]",
+                            QuestionText = "How do you handle technical decisions you disagree with from leadership?",
+                            RoleFamily = 9,
+                            SeniorityLevel = 3,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 70,
+                            Category = 2,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Innovation requires psychological safety and dedicated time for experimentation.",
+                            IsActive = true,
+                            Options = "[\"Assign innovation tasks\",\"Create psychological safety, allocate time for experimentation, celebrate learning from failures\",\"Hire more people\",\"Wait for good ideas to emerge\"]",
+                            QuestionText = "How do you foster innovation in an engineering team?",
+                            RoleFamily = 9,
+                            SeniorityLevel = 3,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 71,
+                            Category = 2,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Declining performance requires diagnosis, support, and systemic improvements.",
+                            IsActive = true,
+                            Options = "[\"Work everyone harder\",\"Diagnose root causes, address issues individually and systemically, adjust processes\",\"Replace team members immediately\",\"Ignore it and hope it improves\"]",
+                            QuestionText = "How do you handle a situation where team performance is declining?",
+                            RoleFamily = 9,
+                            SeniorityLevel = 3,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 72,
+                            Category = 2,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Business cases for DevEx require quantified benefits and demonstrable outcomes.",
+                            IsActive = true,
+                            Options = "[\"Just request budget\",\"Quantify productivity gains, connect to business outcomes, and pilot small improvements\",\"Complain until approved\",\"Implement without approval\"]",
+                            QuestionText = "How do you make a case for investing in developer experience improvements?",
+                            RoleFamily = 9,
+                            SeniorityLevel = 3,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 73,
+                            Category = 2,
+                            CorrectAnswerIndex = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Difficulty = 3,
+                            Explanation = "Addressing departures requires understanding, respect, and knowledge transfer planning.",
+                            IsActive = true,
+                            Options = "[\"Let them go without discussion\",\"Understand their reasons, address what you can, plan for transitions respectfully\",\"Offer more money immediately\",\"Make them feel guilty\"]",
+                            QuestionText = "A key team member wants to leave. How do you approach this situation?",
+                            RoleFamily = 9,
+                            SeniorityLevel = 3,
+                            TimePerQuestion = 60,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        });
                 });
 
             modelBuilder.Entity("RecruitmentPlatformAPI.Models.Identity.EmailVerification", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsUsed")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("VerificationCode")
                         .IsRequired()
                         .HasMaxLength(6)
-                        .HasColumnType("nvarchar(6)");
+                        .HasColumnType("character varying(6)");
 
                     b.HasKey("Id");
 
@@ -234,26 +1406,26 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsUsed")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Token")
                         .IsRequired()
                         .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
+                        .HasColumnType("character varying(128)");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -266,70 +1438,70 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("AccountType")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("AuthProvider")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("character varying(255)");
 
                     b.Property<int>("FailedLoginAttempts")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsEmailVerified")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime?>("LastFailedLoginAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime?>("LastSuccessfulLoginAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("LockoutEnd")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LockoutReason")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("PasswordHash")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("ProfileCompletionStep")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("ProfilePictureUrl")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("ProviderUserId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -343,61 +1515,61 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ContentType")
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("DisplayOrder")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("ExpirationDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("FileName")
                         .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("character varying(150)");
 
                     b.Property<string>("FilePath")
                         .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
+                        .HasColumnType("character varying(300)");
 
                     b.Property<long?>("FileSizeBytes")
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime?>("IssueDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("IssuingOrganization")
                         .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("character varying(150)");
 
                     b.Property<int>("JobSeekerId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("StoredFileName")
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("character varying(150)");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -406,7 +1578,7 @@ namespace RecruitmentPlatformAPI.Data.Migrations
 
                     b.ToTable("Certificates", t =>
                         {
-                            t.HasCheckConstraint("CK_Certificate_ExpirationDateAfterIssueDate", "[ExpirationDate] IS NULL OR [IssueDate] IS NULL OR [ExpirationDate] >= [IssueDate]");
+                            t.HasCheckConstraint("CK_Certificate_ExpirationDateAfterIssueDate", "ExpirationDate IS NULL OR IssueDate IS NULL OR ExpirationDate >= IssueDate");
                         });
                 });
 
@@ -414,55 +1586,55 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Degree")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("DisplayOrder")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("EndDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("GradeOrGPA")
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Institution")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("character varying(150)");
 
                     b.Property<bool>("IsCurrent")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int>("JobSeekerId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Major")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("character varying(150)");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -471,7 +1643,7 @@ namespace RecruitmentPlatformAPI.Data.Migrations
 
                     b.ToTable("Educations", t =>
                         {
-                            t.HasCheckConstraint("CK_Education_EndDateAfterStartDate", "[EndDate] IS NULL OR [EndDate] >= [StartDate]");
+                            t.HasCheckConstraint("CK_Education_EndDateAfterStartDate", "EndDate IS NULL OR EndDate >= StartDate");
                         });
                 });
 
@@ -479,57 +1651,57 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CompanyName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("DisplayOrder")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("EmploymentType")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("EndDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsCurrent")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int>("JobSeekerId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("JobTitle")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Location")
                         .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("character varying(150)");
 
                     b.Property<string>("Responsibilities")
                         .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -538,7 +1710,7 @@ namespace RecruitmentPlatformAPI.Data.Migrations
 
                     b.ToTable("Experiences", t =>
                         {
-                            t.HasCheckConstraint("CK_Experience_EndDateAfterStartDate", "[EndDate] IS NULL OR [EndDate] >= [StartDate]");
+                            t.HasCheckConstraint("CK_Experience_EndDateAfterStartDate", "EndDate IS NULL OR EndDate >= StartDate");
                         });
                 });
 
@@ -546,61 +1718,61 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("AssessmentJobTitleId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Bio")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("City")
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int?>("CountryId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal?>("CurrentAssessmentScore")
                         .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                        .HasColumnType("numeric(5,2)");
 
                     b.Property<int?>("FirstLanguageId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("FirstLanguageProficiency")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int?>("JobTitleId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("LastAssessmentDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PhoneNumber")
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<int?>("SecondLanguageId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("SecondLanguageProficiency")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("YearsOfExperience")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -622,20 +1794,20 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("JobSeekerId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("SkillId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
@@ -651,44 +1823,44 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .HasMaxLength(1200)
-                        .HasColumnType("nvarchar(1200)");
+                        .HasColumnType("character varying(1200)");
 
                     b.Property<int>("DisplayOrder")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int>("JobSeekerId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("ProjectLink")
                         .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
+                        .HasColumnType("character varying(300)");
 
                     b.Property<string>("TechnologiesUsed")
                         .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
+                        .HasColumnType("character varying(300)");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("character varying(150)");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -702,64 +1874,60 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ContentType")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("FileName")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("character varying(150)");
 
                     b.Property<string>("FilePath")
                         .IsRequired()
                         .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
+                        .HasColumnType("character varying(300)");
 
                     b.Property<long>("FileSizeBytes")
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int>("JobSeekerId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("ParseStatus")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTime?>("ProcessedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("StoredFileName")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("JobSeekerId")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Resume_JobSeekerId_Active_Unique")
-                        .HasFilter("[IsDeleted] = 0");
-
                     b.HasIndex("JobSeekerId", "IsDeleted")
+                        .IsUnique()
                         .HasDatabaseName("IX_Resume_JobSeekerId_IsDeleted");
 
                     b.ToTable("Resumes");
@@ -769,38 +1937,38 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Behance")
                         .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
+                        .HasColumnType("character varying(300)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Dribbble")
                         .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
+                        .HasColumnType("character varying(300)");
 
                     b.Property<string>("Github")
                         .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
+                        .HasColumnType("character varying(300)");
 
                     b.Property<int>("JobSeekerId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("LinkedIn")
                         .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
+                        .HasColumnType("character varying(300)");
 
                     b.Property<string>("PersonalWebsite")
                         .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
+                        .HasColumnType("character varying(300)");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -814,48 +1982,48 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(1200)
-                        .HasColumnType("nvarchar(1200)");
+                        .HasColumnType("character varying(1200)");
 
                     b.Property<string>("EmploymentType")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Location")
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("MinYearsOfExperience")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("PostedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("RecruiterId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Requirements")
                         .IsRequired()
                         .HasMaxLength(1200)
-                        .HasColumnType("nvarchar(1200)");
+                        .HasColumnType("character varying(1200)");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("character varying(150)");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -868,15 +2036,15 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("JobId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("SkillId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -892,22 +2060,22 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("GeneratedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("JobId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("JobSeekerId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("MatchScore")
                         .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                        .HasColumnType("numeric(5,2)");
 
                     b.HasKey("Id");
 
@@ -923,54 +2091,54 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CompanyDescription")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("CompanyName")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("character varying(150)");
 
                     b.Property<string>("CompanySize")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Industry")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("LinkedIn")
                         .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
+                        .HasColumnType("character varying(300)");
 
                     b.Property<string>("Location")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("LogoUrl")
                         .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
+                        .HasColumnType("character varying(300)");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Website")
                         .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
+                        .HasColumnType("character varying(300)");
 
                     b.HasKey("Id");
 
@@ -984,37 +2152,37 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("IsoCode")
                         .IsRequired()
                         .HasMaxLength(2)
-                        .HasColumnType("nvarchar(2)");
+                        .HasColumnType("character varying(2)");
 
                     b.Property<string>("NameAr")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("PhoneCode")
                         .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
+                        .HasColumnType("character varying(10)");
 
                     b.Property<int>("SortOrder")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1745,27 +2913,27 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Category")
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int>("RoleFamily")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
@@ -2591,33 +3759,33 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("IsoCode")
                         .IsRequired()
                         .HasMaxLength(3)
-                        .HasColumnType("nvarchar(3)");
+                        .HasColumnType("character varying(3)");
 
                     b.Property<string>("NameAr")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("SortOrder")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -3133,17 +4301,17 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.HasKey("Id");
 

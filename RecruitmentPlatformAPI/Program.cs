@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 using System.Text;
 using RecruitmentPlatformAPI.Configuration;
 using RecruitmentPlatformAPI.Data;
-using RecruitmentPlatformAPI.Data.Seed;
 using RecruitmentPlatformAPI.Services.Auth;
 using RecruitmentPlatformAPI.Services.JobSeeker;
 using RecruitmentPlatformAPI.Services.Recruiter;
@@ -55,32 +55,10 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Configure EF Core (SQL Server or PostgreSQL based on connection string)
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-// If not set, try Railway's standard DATABASE_URL variable
-if (string.IsNullOrEmpty(connectionString))
-{
-    connectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
-}
-
-// If still not set, use local default
-connectionString ??= "Server=(localdb)\\mssqllocaldb;Database=RecruitmentPlatformDb;Trusted_Connection=True;MultipleActiveResultSets=true";
+var connectionString = ResolvePostgresConnectionString(builder.Configuration);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-{
-    // Detect PostgreSQL by connection string format
-    // Railway format: postgresql://user:password@host:port/database
-    // Local SQL Server format: Server=...
-    if (connectionString.Contains("postgresql://") || connectionString.Contains("postgres") || connectionString.Contains("Host="))
-    {
-        options.UseNpgsql(connectionString, b => b.MigrationsAssembly("RecruitmentPlatformAPI"));
-    }
-    else
-    {
-        options.UseSqlServer(connectionString, b => b.MigrationsAssembly("RecruitmentPlatformAPI"));
-    }
-});
+    options.UseNpgsql(connectionString, b => b.MigrationsAssembly("RecruitmentPlatformAPI")));
 
 // Configure JWT Settings
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
@@ -192,7 +170,7 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Auto-migrate/create database on startup (for cloud deployment)
+// Apply migrations on startup.
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -200,57 +178,14 @@ using (var scope = app.Services.CreateScope())
 
     try
     {
-        // Log connection string info for debugging (mask password)
-        var redactedConnStr = connectionString.Length > 50
-            ? connectionString.Substring(0, 50) + "..."
-            : connectionString;
-        logger.LogInformation("Connection string detected: {ConnectionString}", redactedConnStr);
-
-        // Check if this is PostgreSQL
-        // Railway format: postgresql://user:password@host:port/database
-        var isPostgres = connectionString.Contains("postgresql://") || connectionString.Contains("postgres") || connectionString.Contains("Host=");
-        logger.LogInformation("Database type detected: {DatabaseType}", isPostgres ? "PostgreSQL" : "SQL Server");
-
-        if (isPostgres)
-        {
-            // For PostgreSQL: Create database schema (migrations are SQL Server specific)
-            logger.LogInformation("PostgreSQL detected. Ensuring database is created...");
-            db.Database.EnsureCreated();
-
-            // Seed data if tables are empty (EnsureCreated doesn't run HasData)
-            if (!db.Countries.Any())
-            {
-                logger.LogInformation("Seeding reference data for PostgreSQL...");
-                db.Countries.AddRange(CountrySeed.GetCountries());
-                db.Languages.AddRange(LanguageSeed.GetLanguages());
-                db.JobTitles.AddRange(JobTitleSeed.GetJobTitles());
-                db.Skills.AddRange(SkillSeed.GetSkills());
-                db.AssessmentQuestions.AddRange(AssessmentQuestionSeed.GetQuestions());
-                db.SaveChanges();
-                logger.LogInformation("Reference data seeded successfully.");
-            }
-        }
-        else
-        {
-            // For SQL Server: Apply migrations
-            logger.LogInformation("SQL Server detected. Applying migrations...");
-            db.Database.Migrate();
-        }
-
-        logger.LogInformation("Database initialization completed successfully.");
+        logger.LogInformation("Applying PostgreSQL migrations...");
+        db.Database.Migrate();
+        logger.LogInformation("Database migration completed successfully.");
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "Database initialization failed. Attempting fallback...");
-        try
-        {
-            db.Database.EnsureCreated();
-            logger.LogInformation("Fallback database creation succeeded.");
-        }
-        catch (Exception fallbackEx)
-        {
-            logger.LogError(fallbackEx, "Fallback database creation also failed.");
-        }
+        logger.LogError(ex, "Database migration failed.");
+        throw;
     }
 }
 
@@ -270,4 +205,61 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static string ResolvePostgresConnectionString(IConfiguration configuration)
+{
+    var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+    if (!string.IsNullOrWhiteSpace(databaseUrl))
+    {
+        return ConvertDatabaseUrlToNpgsqlConnectionString(databaseUrl);
+    }
+
+    var configuredConnection = configuration.GetConnectionString("DefaultConnection");
+    if (!string.IsNullOrWhiteSpace(configuredConnection))
+    {
+        return ConvertDatabaseUrlToNpgsqlConnectionString(configuredConnection);
+    }
+
+    throw new InvalidOperationException(
+        "PostgreSQL connection is not configured. Set DATABASE_URL or ConnectionStrings:DefaultConnection.");
+}
+
+static string ConvertDatabaseUrlToNpgsqlConnectionString(string value)
+{
+    if (value.StartsWith("Host=", StringComparison.OrdinalIgnoreCase))
+    {
+        return value;
+    }
+
+    if (value.StartsWith("Server=", StringComparison.OrdinalIgnoreCase) ||
+        value.Contains("(localdb)", StringComparison.OrdinalIgnoreCase))
+    {
+        throw new InvalidOperationException(
+            "SQL Server-style connection string detected. Configure a PostgreSQL connection string or DATABASE_URL.");
+    }
+
+    if (!value.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) &&
+        !value.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+    {
+        throw new InvalidOperationException("Unsupported database URL format. Expected postgres:// or postgresql://");
+    }
+
+    var uri = new Uri(value);
+    var userInfo = uri.UserInfo.Split(':', 2);
+    var username = Uri.UnescapeDataString(userInfo[0]);
+    var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : string.Empty;
+    var database = uri.AbsolutePath.Trim('/');
+
+    var builder = new NpgsqlConnectionStringBuilder
+    {
+        Host = uri.Host,
+        Port = uri.IsDefaultPort ? 5432 : uri.Port,
+        Database = database,
+        Username = username,
+        Password = password,
+        SslMode = SslMode.Require
+    };
+
+    return builder.ConnectionString;
+}
 
