@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Npgsql;
 using System.Text;
 using RecruitmentPlatformAPI.Configuration;
 using RecruitmentPlatformAPI.Data;
@@ -55,10 +54,11 @@ builder.Services.AddCors(options =>
     });
 });
 
-var connectionString = ResolvePostgresConnectionString(builder.Configuration);
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? "Server=(localdb)\\mssqllocaldb;Database=RecruitmentPlatformDb;Trusted_Connection=True;MultipleActiveResultSets=true";
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString, b => b.MigrationsAssembly("RecruitmentPlatformAPI")));
+    options.UseSqlServer(connectionString, b => b.MigrationsAssembly("RecruitmentPlatformAPI")));
 
 // Configure JWT Settings
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
@@ -178,7 +178,7 @@ using (var scope = app.Services.CreateScope())
 
     try
     {
-        logger.LogInformation("Applying PostgreSQL migrations...");
+        logger.LogInformation("Applying SQL Server migrations...");
         db.Database.Migrate();
         logger.LogInformation("Database migration completed successfully.");
     }
@@ -205,61 +205,4 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
-static string ResolvePostgresConnectionString(IConfiguration configuration)
-{
-    var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-    if (!string.IsNullOrWhiteSpace(databaseUrl))
-    {
-        return ConvertDatabaseUrlToNpgsqlConnectionString(databaseUrl);
-    }
-
-    var configuredConnection = configuration.GetConnectionString("DefaultConnection");
-    if (!string.IsNullOrWhiteSpace(configuredConnection))
-    {
-        return ConvertDatabaseUrlToNpgsqlConnectionString(configuredConnection);
-    }
-
-    throw new InvalidOperationException(
-        "PostgreSQL connection is not configured. Set DATABASE_URL or ConnectionStrings:DefaultConnection.");
-}
-
-static string ConvertDatabaseUrlToNpgsqlConnectionString(string value)
-{
-    if (value.StartsWith("Host=", StringComparison.OrdinalIgnoreCase))
-    {
-        return value;
-    }
-
-    if (value.StartsWith("Server=", StringComparison.OrdinalIgnoreCase) ||
-        value.Contains("(localdb)", StringComparison.OrdinalIgnoreCase))
-    {
-        throw new InvalidOperationException(
-            "SQL Server-style connection string detected. Configure a PostgreSQL connection string or DATABASE_URL.");
-    }
-
-    if (!value.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) &&
-        !value.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
-    {
-        throw new InvalidOperationException("Unsupported database URL format. Expected postgres:// or postgresql://");
-    }
-
-    var uri = new Uri(value);
-    var userInfo = uri.UserInfo.Split(':', 2);
-    var username = Uri.UnescapeDataString(userInfo[0]);
-    var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : string.Empty;
-    var database = uri.AbsolutePath.Trim('/');
-
-    var builder = new NpgsqlConnectionStringBuilder
-    {
-        Host = uri.Host,
-        Port = uri.IsDefaultPort ? 5432 : uri.Port,
-        Database = database,
-        Username = username,
-        Password = password,
-        SslMode = SslMode.Require
-    };
-
-    return builder.ConnectionString;
-}
 
