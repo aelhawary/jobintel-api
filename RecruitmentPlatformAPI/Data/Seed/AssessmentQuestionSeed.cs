@@ -11,6 +11,20 @@ namespace RecruitmentPlatformAPI.Data.Seed
     {
         private static readonly DateTime SeedCreatedAt = new(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
+        // Skill IDs from SkillSeed.
+        private const int SkillJavaScript = 2;
+        private const int SkillReact = 11;
+        private const int SkillHtmlCss = 15;
+        private const int SkillAspNetCore = 17;
+        private const int SkillNodeJs = 18;
+        private const int SkillSqlServer = 23;
+        private const int SkillRestApis = 43;
+        private const int SkillGraphQl = 44;
+        private const int SkillAgileScrum = 45;
+        private const int SkillProblemSolving = 47;
+        private const int SkillCommunication = 48;
+        private const int SkillProjectManagement = 49;
+
         public static List<AssessmentQuestion> GetQuestions()
         {
             var questions = new List<AssessmentQuestion>();
@@ -582,7 +596,7 @@ namespace RecruitmentPlatformAPI.Data.Seed
                 QuestionText = questionText,
                 Category = category,
                 RoleFamily = roleFamily,
-                SkillId = skillId,
+                SkillId = skillId ?? ResolveSkillId(questionText, category, roleFamily),
                 Difficulty = difficulty,
                 SeniorityLevel = seniorityLevel,
                 Options = System.Text.Json.JsonSerializer.Serialize(options),
@@ -593,6 +607,78 @@ namespace RecruitmentPlatformAPI.Data.Seed
                 UpdatedAt = SeedCreatedAt,
                 Explanation = explanation
             };
+        }
+
+        private static int ResolveSkillId(string questionText, QuestionCategory category, JobTitleRoleFamily roleFamily)
+        {
+            var normalized = questionText.ToLowerInvariant();
+
+            if (category == QuestionCategory.SoftSkill)
+            {
+                if (normalized.Contains("communicat") || normalized.Contains("criticism") || normalized.Contains("non-technical"))
+                {
+                    return SkillCommunication;
+                }
+
+                if (normalized.Contains("project") || normalized.Contains("scope") || normalized.Contains("deadline"))
+                {
+                    return SkillProjectManagement;
+                }
+
+                if (normalized.Contains("agile") || normalized.Contains("scrum") || normalized.Contains("code review") || normalized.Contains("mentor") || normalized.Contains("team"))
+                {
+                    return SkillAgileScrum;
+                }
+
+                return SkillProblemSolving;
+            }
+
+            if (normalized.Contains("graphql"))
+            {
+                return SkillGraphQl;
+            }
+
+            if (normalized.Contains("sql") || normalized.Contains("database") || normalized.Contains("index") || normalized.Contains("acid") || normalized.Contains("shard") || normalized.Contains("locking"))
+            {
+                return SkillSqlServer;
+            }
+
+            if (normalized.Contains("jwt") || normalized.Contains("http") || normalized.Contains("rest") || normalized.Contains("api") || normalized.Contains("cors") || normalized.Contains("idempotent"))
+            {
+                return SkillRestApis;
+            }
+
+            if (roleFamily == JobTitleRoleFamily.Frontend)
+            {
+                if (normalized.Contains("css") || normalized.Contains("dom") || normalized.Contains("responsive") || normalized.Contains("alt"))
+                {
+                    return SkillHtmlCss;
+                }
+
+                if (normalized.Contains("javascript") || normalized.Contains("closure") || normalized.Contains("event bubbling") || normalized.Contains("web workers"))
+                {
+                    return SkillJavaScript;
+                }
+
+                return SkillReact;
+            }
+
+            if (roleFamily == JobTitleRoleFamily.FullStack)
+            {
+                if (normalized.Contains("real-time") || normalized.Contains("websocket") || normalized.Contains("long polling") || normalized.Contains("server-sent"))
+                {
+                    return SkillNodeJs;
+                }
+
+                return SkillRestApis;
+            }
+
+            if (roleFamily == JobTitleRoleFamily.Backend)
+            {
+                return SkillAspNetCore;
+            }
+
+            return SkillRestApis;
         }
     }
 }

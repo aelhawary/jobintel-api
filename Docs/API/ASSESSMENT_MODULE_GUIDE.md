@@ -36,6 +36,9 @@ The Assessment Module is a skill verification system that allows **Job Seekers**
 - **45-minute time limit** per assessment
 - **Role-targeted questions** based on job title
 - **Seniority-adjusted difficulty** based on years of experience
+- **Parallel v2 mode** (`/api/assessment/v2/*`) for claimed-skills validation
+- **Skill-based v2 scoring** (technical total, soft-skills total, and per-skill breakdown)
+- **Skill selection requirement in v2** (must claim at least one skill before start)
 - **60-day cooldown** between attempts
 - **18-month score validity**
 - **Exam mode** - no feedback during test, full results after completion
@@ -559,6 +562,26 @@ When an assessment completes:
 | `POST` | `/api/assessment/abandon` | Abandon attempt |
 | `GET` | `/api/assessment/history` | Get all attempts |
 | `GET` | `/api/assessment/result/{id}` | Get detailed result |
+
+### Parallel v2 Endpoints
+
+The module also exposes a parallel v2 API surface under `/api/assessment/v2/*`:
+
+- `GET /api/assessment/v2/eligibility`
+- `POST /api/assessment/v2/start`
+- `GET /api/assessment/v2/current`
+- `GET /api/assessment/v2/question`
+- `POST /api/assessment/v2/answer`
+- `POST /api/assessment/v2/complete`
+- `POST /api/assessment/v2/abandon`
+- `GET /api/assessment/v2/history`
+- `GET /api/assessment/v2/result/{attemptId}`
+
+v2 preserves exam mode but changes targeting and scoring:
+
+- Questions are selected to validate claimed skills (with role compatibility and fallback coverage).
+- Starting v2 requires at least one claimed skill on profile.
+- Results include technical total score, soft-skills score, and per-skill score breakdown.
 
 ### Authentication
 

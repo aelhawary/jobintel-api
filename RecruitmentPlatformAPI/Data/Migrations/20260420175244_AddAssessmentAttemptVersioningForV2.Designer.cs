@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RecruitmentPlatformAPI.Data;
 
@@ -11,9 +12,11 @@ using RecruitmentPlatformAPI.Data;
 namespace RecruitmentPlatformAPI.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260420175244_AddAssessmentAttemptVersioningForV2")]
+    partial class AddAssessmentAttemptVersioningForV2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -130,11 +133,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("JobSeekerId")
-                        .IsUnique()
-                        .HasDatabaseName("UX_AssessmentAttempt_JobSeeker_InProgress")
-                        .HasFilter("[Status] = 1");
-
                     b.HasIndex("JobTitleId");
 
                     b.HasIndex("JobSeekerId", "IsActive")
@@ -195,7 +193,7 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                     b.Property<int>("SeniorityLevel")
                         .HasColumnType("int");
 
-                    b.Property<int>("SkillId")
+                    b.Property<int?>("SkillId")
                         .HasColumnType("int");
 
                     b.Property<int?>("TimePerQuestion")
@@ -227,7 +225,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What does REST stand for?",
                             RoleFamily = 2,
                             SeniorityLevel = 1,
-                            SkillId = 43,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -244,7 +241,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "Which HTTP method is used to retrieve data from a server?",
                             RoleFamily = 2,
                             SeniorityLevel = 1,
-                            SkillId = 43,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -261,7 +257,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is the purpose of a database index?",
                             RoleFamily = 2,
                             SeniorityLevel = 1,
-                            SkillId = 23,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -278,7 +273,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What status code indicates a successful HTTP request?",
                             RoleFamily = 2,
                             SeniorityLevel = 1,
-                            SkillId = 43,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -295,7 +289,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is JSON primarily used for?",
                             RoleFamily = 2,
                             SeniorityLevel = 1,
-                            SkillId = 17,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -312,7 +305,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is the difference between PUT and PATCH HTTP methods?",
                             RoleFamily = 2,
                             SeniorityLevel = 1,
-                            SkillId = 43,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -329,7 +321,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is dependency injection?",
                             RoleFamily = 2,
                             SeniorityLevel = 1,
-                            SkillId = 17,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -346,7 +337,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What does ACID stand for in database transactions?",
                             RoleFamily = 2,
                             SeniorityLevel = 1,
-                            SkillId = 23,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -363,7 +353,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is the purpose of middleware in web applications?",
                             RoleFamily = 2,
                             SeniorityLevel = 1,
-                            SkillId = 17,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -380,7 +369,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is the N+1 query problem?",
                             RoleFamily = 2,
                             SeniorityLevel = 1,
-                            SkillId = 17,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -397,7 +385,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is eventual consistency?",
                             RoleFamily = 2,
                             SeniorityLevel = 1,
-                            SkillId = 17,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -414,7 +401,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is the purpose of an API gateway?",
                             RoleFamily = 2,
                             SeniorityLevel = 2,
-                            SkillId = 43,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -431,7 +417,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is caching used for in backend systems?",
                             RoleFamily = 2,
                             SeniorityLevel = 2,
-                            SkillId = 17,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -448,7 +433,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is the CAP theorem?",
                             RoleFamily = 2,
                             SeniorityLevel = 2,
-                            SkillId = 17,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -465,7 +449,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is the difference between horizontal and vertical scaling?",
                             RoleFamily = 2,
                             SeniorityLevel = 2,
-                            SkillId = 17,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -482,7 +465,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is a message queue used for?",
                             RoleFamily = 2,
                             SeniorityLevel = 2,
-                            SkillId = 17,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -499,7 +481,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is database sharding?",
                             RoleFamily = 2,
                             SeniorityLevel = 2,
-                            SkillId = 23,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -516,7 +497,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is the Saga pattern in microservices?",
                             RoleFamily = 2,
                             SeniorityLevel = 2,
-                            SkillId = 17,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -533,7 +513,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is circuit breaker pattern?",
                             RoleFamily = 2,
                             SeniorityLevel = 2,
-                            SkillId = 17,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -550,7 +529,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is CQRS (Command Query Responsibility Segregation)?",
                             RoleFamily = 2,
                             SeniorityLevel = 2,
-                            SkillId = 17,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -567,7 +545,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What factors would you consider when designing a rate limiting strategy?",
                             RoleFamily = 2,
                             SeniorityLevel = 3,
-                            SkillId = 17,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -584,7 +561,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is event sourcing?",
                             RoleFamily = 2,
                             SeniorityLevel = 3,
-                            SkillId = 17,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -601,7 +577,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "How would you design a system to handle 1 million concurrent users?",
                             RoleFamily = 2,
                             SeniorityLevel = 3,
-                            SkillId = 17,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -618,7 +593,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is the difference between optimistic and pessimistic locking?",
                             RoleFamily = 2,
                             SeniorityLevel = 3,
-                            SkillId = 23,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -635,7 +609,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "How would you implement a distributed cache invalidation strategy?",
                             RoleFamily = 2,
                             SeniorityLevel = 3,
-                            SkillId = 17,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -652,7 +625,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What considerations are important for designing idempotent APIs?",
                             RoleFamily = 2,
                             SeniorityLevel = 3,
-                            SkillId = 43,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -669,7 +641,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What does CSS stand for?",
                             RoleFamily = 1,
                             SeniorityLevel = 1,
-                            SkillId = 15,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -686,7 +657,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is the purpose of the 'useState' hook in React?",
                             RoleFamily = 1,
                             SeniorityLevel = 1,
-                            SkillId = 11,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -703,7 +673,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is the DOM?",
                             RoleFamily = 1,
                             SeniorityLevel = 1,
-                            SkillId = 15,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -720,7 +689,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is the purpose of 'alt' attribute in images?",
                             RoleFamily = 1,
                             SeniorityLevel = 1,
-                            SkillId = 15,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -737,7 +705,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is responsive design?",
                             RoleFamily = 1,
                             SeniorityLevel = 1,
-                            SkillId = 15,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -754,7 +721,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is the Virtual DOM?",
                             RoleFamily = 1,
                             SeniorityLevel = 1,
-                            SkillId = 15,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -771,7 +737,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is event bubbling?",
                             RoleFamily = 1,
                             SeniorityLevel = 1,
-                            SkillId = 2,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -788,7 +753,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is the difference between '==' and '===' in JavaScript?",
                             RoleFamily = 1,
                             SeniorityLevel = 1,
-                            SkillId = 2,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -805,7 +769,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is a closure in JavaScript?",
                             RoleFamily = 1,
                             SeniorityLevel = 1,
-                            SkillId = 2,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -822,7 +785,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is the purpose of useCallback in React?",
                             RoleFamily = 1,
                             SeniorityLevel = 1,
-                            SkillId = 11,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -839,7 +801,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is tree shaking?",
                             RoleFamily = 1,
                             SeniorityLevel = 1,
-                            SkillId = 11,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -856,7 +817,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is code splitting?",
                             RoleFamily = 1,
                             SeniorityLevel = 2,
-                            SkillId = 11,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -873,7 +833,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is the purpose of React.memo?",
                             RoleFamily = 1,
                             SeniorityLevel = 2,
-                            SkillId = 11,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -890,7 +849,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is the difference between SSR and CSR?",
                             RoleFamily = 1,
                             SeniorityLevel = 2,
-                            SkillId = 11,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -907,7 +865,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is the purpose of Web Workers?",
                             RoleFamily = 1,
                             SeniorityLevel = 2,
-                            SkillId = 2,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -924,7 +881,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "How would you optimize a large list rendering in React?",
                             RoleFamily = 1,
                             SeniorityLevel = 2,
-                            SkillId = 11,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -941,7 +897,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is hydration in the context of SSR?",
                             RoleFamily = 1,
                             SeniorityLevel = 2,
-                            SkillId = 11,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -958,7 +913,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is the Critical Rendering Path?",
                             RoleFamily = 1,
                             SeniorityLevel = 2,
-                            SkillId = 11,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -975,7 +929,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "How would you implement a micro-frontend architecture?",
                             RoleFamily = 1,
                             SeniorityLevel = 3,
-                            SkillId = 11,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -992,7 +945,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What strategies would you use for state management in a large application?",
                             RoleFamily = 1,
                             SeniorityLevel = 3,
-                            SkillId = 11,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1009,7 +961,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "How would you approach performance optimization for a slow React application?",
                             RoleFamily = 1,
                             SeniorityLevel = 3,
-                            SkillId = 11,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1026,7 +977,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is GraphQL and how does it differ from REST?",
                             RoleFamily = 3,
                             SeniorityLevel = 1,
-                            SkillId = 44,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1043,7 +993,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is a JWT and when would you use it?",
                             RoleFamily = 3,
                             SeniorityLevel = 1,
-                            SkillId = 43,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1060,7 +1009,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is CORS and why is it important?",
                             RoleFamily = 3,
                             SeniorityLevel = 2,
-                            SkillId = 43,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1077,7 +1025,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "How would you implement real-time features in a web application?",
                             RoleFamily = 3,
                             SeniorityLevel = 2,
-                            SkillId = 18,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1094,7 +1041,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What considerations are important when designing an authentication system?",
                             RoleFamily = 3,
                             SeniorityLevel = 3,
-                            SkillId = 43,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1111,7 +1057,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "A colleague asks for help with a task you're unfamiliar with. What should you do?",
                             RoleFamily = 9,
                             SeniorityLevel = 1,
-                            SkillId = 47,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1128,7 +1073,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "How should you handle constructive criticism of your work?",
                             RoleFamily = 9,
                             SeniorityLevel = 1,
-                            SkillId = 48,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1145,7 +1089,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What is the best way to communicate a technical concept to a non-technical person?",
                             RoleFamily = 9,
                             SeniorityLevel = 1,
-                            SkillId = 48,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1162,7 +1105,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "You realize you made a mistake in production code. What should you do first?",
                             RoleFamily = 9,
                             SeniorityLevel = 1,
-                            SkillId = 47,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1179,7 +1121,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "How do you prioritize tasks when everything seems urgent?",
                             RoleFamily = 9,
                             SeniorityLevel = 1,
-                            SkillId = 47,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1196,7 +1137,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "A team member's code doesn't meet standards. How do you address this?",
                             RoleFamily = 9,
                             SeniorityLevel = 1,
-                            SkillId = 45,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1213,7 +1153,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "How do you stay motivated when working on a long, complex project?",
                             RoleFamily = 9,
                             SeniorityLevel = 1,
-                            SkillId = 49,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1230,7 +1169,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "You disagree with a technical decision made by a senior developer. What do you do?",
                             RoleFamily = 9,
                             SeniorityLevel = 1,
-                            SkillId = 47,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1247,7 +1185,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "What makes a good code review?",
                             RoleFamily = 9,
                             SeniorityLevel = 2,
-                            SkillId = 45,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1264,7 +1201,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "How do you handle working with a difficult team member?",
                             RoleFamily = 9,
                             SeniorityLevel = 2,
-                            SkillId = 45,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1281,7 +1217,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "How do you balance technical debt against new feature development?",
                             RoleFamily = 9,
                             SeniorityLevel = 2,
-                            SkillId = 47,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1298,7 +1233,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "You notice a team member struggling but not asking for help. What do you do?",
                             RoleFamily = 9,
                             SeniorityLevel = 2,
-                            SkillId = 45,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1315,7 +1249,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "How do you handle scope creep in a project?",
                             RoleFamily = 9,
                             SeniorityLevel = 2,
-                            SkillId = 49,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1332,7 +1265,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "A project deadline is clearly unrealistic. How do you handle this?",
                             RoleFamily = 9,
                             SeniorityLevel = 2,
-                            SkillId = 49,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1349,7 +1281,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "How do you mentor a junior developer effectively?",
                             RoleFamily = 9,
                             SeniorityLevel = 2,
-                            SkillId = 45,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1366,7 +1297,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "How do you influence decisions when you don't have direct authority?",
                             RoleFamily = 9,
                             SeniorityLevel = 3,
-                            SkillId = 47,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1383,7 +1313,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "How do you handle technical decisions you disagree with from leadership?",
                             RoleFamily = 9,
                             SeniorityLevel = 3,
-                            SkillId = 47,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1400,7 +1329,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "How do you foster innovation in an engineering team?",
                             RoleFamily = 9,
                             SeniorityLevel = 3,
-                            SkillId = 45,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1417,7 +1345,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "How do you handle a situation where team performance is declining?",
                             RoleFamily = 9,
                             SeniorityLevel = 3,
-                            SkillId = 45,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1434,7 +1361,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "How do you make a case for investing in developer experience improvements?",
                             RoleFamily = 9,
                             SeniorityLevel = 3,
-                            SkillId = 47,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         },
@@ -1451,7 +1377,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                             QuestionText = "A key team member wants to leave. How do you approach this situation?",
                             RoleFamily = 9,
                             SeniorityLevel = 3,
-                            SkillId = 45,
                             TimePerQuestion = 60,
                             UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         });
@@ -4750,8 +4675,7 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                     b.HasOne("RecruitmentPlatformAPI.Models.Reference.Skill", "Skill")
                         .WithMany()
                         .HasForeignKey("SkillId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Skill");
                 });

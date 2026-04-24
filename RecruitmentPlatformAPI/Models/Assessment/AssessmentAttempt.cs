@@ -91,6 +91,20 @@ namespace RecruitmentPlatformAPI.Models.Assessment
         [MaxLength(500)]
         public string? QuestionIdsJson { get; set; }
 
+        /// <summary>
+        /// Assessment algorithm version.
+        /// 1 = legacy role-based flow, 2 = claimed-skills validation flow.
+        /// </summary>
+        [Required]
+        public int AlgorithmVersion { get; set; } = 1;
+
+        /// <summary>
+        /// JSON array snapshot of claimed skill IDs used for this attempt.
+        /// This freezes the targeting context even if profile skills change later.
+        /// </summary>
+        [MaxLength(1000)]
+        public string? ClaimedSkillIdsJson { get; set; }
+
         // Navigation properties
         public JobSeekerModel JobSeeker { get; set; } = null!;
         public JobTitle JobTitle { get; set; } = null!;

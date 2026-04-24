@@ -6,6 +6,7 @@ using RecruitmentPlatformAPI.Models.Recruiter;
 using RecruitmentPlatformAPI.Models.Reference;
 using RecruitmentPlatformAPI.Models.Jobs;
 using RecruitmentPlatformAPI.Models.Assessment;
+using RecruitmentPlatformAPI.Enums;
 
 namespace RecruitmentPlatformAPI.Data
 {
@@ -383,6 +384,12 @@ namespace RecruitmentPlatformAPI.Data
                 b.Property(a => a.OverallScore).HasPrecision(5, 2);
                 b.Property(a => a.TechnicalScore).HasPrecision(5, 2);
                 b.Property(a => a.SoftSkillsScore).HasPrecision(5, 2);
+
+                b.Property(a => a.AlgorithmVersion)
+                 .HasDefaultValue(1);
+
+                b.Property(a => a.ClaimedSkillIdsJson)
+                 .HasMaxLength(1000);
                 
                 // Relationships
                 b.HasOne(a => a.JobSeeker)
@@ -401,6 +408,15 @@ namespace RecruitmentPlatformAPI.Data
                 
                 b.HasIndex(a => new { a.JobSeekerId, a.Status, a.StartedAt })
                  .HasDatabaseName("IX_AssessmentAttempt_JobSeeker_Status");
+
+                b.HasIndex(a => new { a.JobSeekerId, a.AlgorithmVersion, a.Status, a.StartedAt })
+                 .HasDatabaseName("IX_AssessmentAttempt_JobSeeker_Version_Status");
+
+                // Enforce at most one in-progress attempt per job seeker across all versions.
+                b.HasIndex(a => a.JobSeekerId)
+                 .HasDatabaseName("UX_AssessmentAttempt_JobSeeker_InProgress")
+                 .IsUnique()
+                 .HasFilter($"[{nameof(AssessmentAttempt.Status)}] = {(int)AssessmentStatus.InProgress}");
                 
                 // Ensure only one in-progress assessment per job seeker at a time.
                 // Application logic enforces the in-progress constraint.

@@ -26,9 +26,9 @@ namespace RecruitmentPlatformAPI.Models.Assessment
         public JobTitleRoleFamily RoleFamily { get; set; }
         
         /// <summary>
-        /// For technical questions only (nullable for soft skills)
+        /// Canonical skill associated with the question and used for scoring.
         /// </summary>
-        public int? SkillId { get; set; }
+        public int SkillId { get; set; }
         
         [Required]
         public QuestionDifficulty Difficulty { get; set; }

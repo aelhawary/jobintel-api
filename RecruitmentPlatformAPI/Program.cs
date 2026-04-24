@@ -130,6 +130,7 @@ builder.Services.AddScoped<IJobService, JobService>();
 builder.Services.AddScoped<ICertificateService, CertificateService>();
 builder.Services.AddScoped<IJobSeekerSkillService, JobSeekerSkillService>();
 builder.Services.AddScoped<IAssessmentService, AssessmentService>();
+builder.Services.AddScoped<IAssessmentV2Service, AssessmentV2Service>();
 
 // Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();

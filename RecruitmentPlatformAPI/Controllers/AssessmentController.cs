@@ -17,13 +17,16 @@ namespace RecruitmentPlatformAPI.Controllers
     public class AssessmentController : ControllerBase
     {
         private readonly IAssessmentService _assessmentService;
+        private readonly IAssessmentV2Service _assessmentV2Service;
         private readonly ILogger<AssessmentController> _logger;
 
         public AssessmentController(
             IAssessmentService assessmentService,
+            IAssessmentV2Service assessmentV2Service,
             ILogger<AssessmentController> logger)
         {
             _assessmentService = assessmentService;
+            _assessmentV2Service = assessmentV2Service;
             _logger = logger;
         }
 
@@ -248,6 +251,218 @@ namespace RecruitmentPlatformAPI.Controllers
             }
 
             return Ok(new ApiResponse<AssessmentResultResponseDto>(result));
+        }
+
+        /// <summary>
+        /// Check eligibility for claimed-skills validation assessment (v2)
+        /// </summary>
+        [HttpGet("v2/eligibility")]
+        [ProducesResponseType(typeof(ApiResponse<EligibilityV2ResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> CheckEligibilityV2()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+            {
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+            }
+
+            var result = await _assessmentV2Service.CheckEligibilityAsync(userId);
+            return Ok(new ApiResponse<EligibilityV2ResponseDto>(result));
+        }
+
+        /// <summary>
+        /// Start a new claimed-skills validation assessment (v2)
+        /// </summary>
+        [HttpPost("v2/start")]
+        [ProducesResponseType(typeof(ApiResponse<StartAssessmentV2ResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> StartAssessmentV2()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+            {
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+            }
+
+            var result = await _assessmentV2Service.StartAssessmentAsync(userId);
+            if (result == null)
+            {
+                return BadRequest(new ApiErrorResponse("Cannot start v2 assessment. Please check your eligibility and claimed skills first."));
+            }
+
+            _logger.LogInformation("V2 assessment started for user {UserId}, attempt {AttemptId}", userId, result.AttemptId);
+            return Ok(new ApiResponse<StartAssessmentV2ResponseDto>(result, "Assessment v2 started successfully"));
+        }
+
+        /// <summary>
+        /// Get current in-progress assessment status for v2
+        /// </summary>
+        [HttpGet("v2/current")]
+        [ProducesResponseType(typeof(ApiResponse<AssessmentStatusResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetCurrentStatusV2()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+            {
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+            }
+
+            var result = await _assessmentV2Service.GetCurrentStatusAsync(userId);
+            if (result == null)
+            {
+                return NotFound(new ApiErrorResponse("No v2 assessment in progress"));
+            }
+
+            return Ok(new ApiResponse<AssessmentStatusResponseDto>(result));
+        }
+
+        /// <summary>
+        /// Get the next unanswered question for v2
+        /// </summary>
+        [HttpGet("v2/question")]
+        [ProducesResponseType(typeof(ApiResponse<QuestionResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetNextQuestionV2()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+            {
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+            }
+
+            var result = await _assessmentV2Service.GetNextQuestionAsync(userId);
+            if (result == null)
+            {
+                return NotFound(new ApiErrorResponse("No more questions or v2 assessment not found"));
+            }
+
+            return Ok(new ApiResponse<QuestionResponseDto>(result));
+        }
+
+        /// <summary>
+        /// Submit an answer for v2
+        /// </summary>
+        [HttpPost("v2/answer")]
+        [ProducesResponseType(typeof(ApiResponse<SubmitAnswerResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> SubmitAnswerV2([FromBody] SubmitAnswerRequestDto dto)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+            {
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var result = await _assessmentV2Service.SubmitAnswerAsync(userId, dto);
+            if (result == null)
+            {
+                return BadRequest(new ApiErrorResponse("Failed to submit answer for v2 assessment. Assessment may have expired or question is invalid."));
+            }
+
+            return Ok(new ApiResponse<SubmitAnswerResponseDto>(result));
+        }
+
+        /// <summary>
+        /// Complete v2 assessment and get skill-based results
+        /// </summary>
+        [HttpPost("v2/complete")]
+        [ProducesResponseType(typeof(ApiResponse<AssessmentResultV2ResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> CompleteAssessmentV2()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+            {
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+            }
+
+            var result = await _assessmentV2Service.CompleteAssessmentAsync(userId);
+            if (result == null)
+            {
+                return BadRequest(new ApiErrorResponse("Failed to complete v2 assessment. No v2 assessment in progress."));
+            }
+
+            _logger.LogInformation("V2 assessment completed for user {UserId}, score {Score}", userId, result.OverallScore);
+            return Ok(new ApiResponse<AssessmentResultV2ResponseDto>(result, "Assessment v2 completed successfully"));
+        }
+
+        /// <summary>
+        /// Abandon v2 assessment
+        /// </summary>
+        [HttpPost("v2/abandon")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> AbandonAssessmentV2()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+            {
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+            }
+
+            var result = await _assessmentV2Service.AbandonAssessmentAsync(userId);
+            if (!result)
+            {
+                return BadRequest(new ApiErrorResponse("Failed to abandon v2 assessment. No v2 assessment in progress."));
+            }
+
+            _logger.LogInformation("V2 assessment abandoned for user {UserId}", userId);
+            return Ok(new ApiResponse<bool>(true, "Assessment v2 abandoned successfully"));
+        }
+
+        /// <summary>
+        /// Get v2 assessment history
+        /// </summary>
+        [HttpGet("v2/history")]
+        [ProducesResponseType(typeof(ApiResponse<AssessmentHistoryResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetHistoryV2()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+            {
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+            }
+
+            var result = await _assessmentV2Service.GetHistoryAsync(userId);
+            return Ok(new ApiResponse<AssessmentHistoryResponseDto>(result));
+        }
+
+        /// <summary>
+        /// Get detailed v2 result for a specific attempt
+        /// </summary>
+        [HttpGet("v2/result/{attemptId}")]
+        [ProducesResponseType(typeof(ApiResponse<AssessmentResultV2ResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetResultV2(int attemptId)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+            {
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+            }
+
+            var result = await _assessmentV2Service.GetResultAsync(userId, attemptId);
+            if (result == null)
+            {
+                return NotFound(new ApiErrorResponse("V2 assessment result not found or not completed yet"));
+            }
+
+            return Ok(new ApiResponse<AssessmentResultV2ResponseDto>(result));
         }
 
         private int GetCurrentUserId()
