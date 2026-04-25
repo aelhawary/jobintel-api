@@ -12,8 +12,8 @@ using RecruitmentPlatformAPI.Data;
 namespace RecruitmentPlatformAPI.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260424145156_RequireSkillIdForAssessmentQuestions")]
-    partial class RequireSkillIdForAssessmentQuestions
+    [Migration("20260424191501_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
