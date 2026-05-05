@@ -3,6 +3,8 @@ using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
 using RecruitmentPlatformAPI.Configuration;
+using System.Text;
+using System.Text.Json;
 
 namespace RecruitmentPlatformAPI.Services.Auth
 {
@@ -10,21 +12,91 @@ namespace RecruitmentPlatformAPI.Services.Auth
     {
         private readonly ILogger<EmailService> _logger;
         private readonly EmailSettings _emailSettings;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public EmailService(ILogger<EmailService> logger, IOptions<EmailSettings> emailSettings)
+        public EmailService(ILogger<EmailService> logger, IOptions<EmailSettings> emailSettings, IHttpClientFactory httpClientFactory)
         {
             _logger = logger;
             _emailSettings = emailSettings.Value;
+            _httpClientFactory = httpClientFactory;
+        }
+
+        /// <summary>
+        /// Unified email sender: uses Brevo HTTP API when UseHttpApi is true, otherwise SMTP.
+        /// </summary>
+        private async Task<bool> SendEmailAsync(string toEmail, string toName, string subject, string htmlBody, string textBody)
+        {
+            if (_emailSettings.UseHttpApi)
+                return await SendViaHttpApiAsync(toEmail, toName, subject, htmlBody, textBody);
+            return await SendViaSmtpAsync(toEmail, toName, subject, htmlBody, textBody);
+        }
+
+        private async Task<bool> SendViaHttpApiAsync(string toEmail, string toName, string subject, string htmlBody, string textBody)
+        {
+            try
+            {
+                _logger.LogInformation($"Sending email via Brevo HTTP API to: {toEmail}");
+                var client = _httpClientFactory.CreateClient();
+                var requestBody = new
+                {
+                    sender = new { name = _emailSettings.SenderName, email = _emailSettings.SenderEmail },
+                    to = new[] { new { email = toEmail, name = toName } },
+                    subject = subject,
+                    htmlContent = htmlBody,
+                    textContent = textBody
+                };
+                var json = JsonSerializer.Serialize(requestBody);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var request = new HttpRequestMessage(HttpMethod.Post, "https://api.brevo.com/v3/smtp/email");
+                request.Headers.Add("api-key", _emailSettings.BrevoApiKey);
+                request.Content = content;
+                var response = await client.SendAsync(request);
+                var responseBody = await response.Content.ReadAsStringAsync();
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger.LogInformation($"Email sent successfully via Brevo HTTP API to: {toEmail}");
+                    return true;
+                }
+                _logger.LogError($"Brevo HTTP API failed. Status: {response.StatusCode}. Response: {responseBody}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Failed to send email via Brevo HTTP API to {toEmail}. Error: {ex.Message}");
+                return false;
+            }
+        }
+
+        private async Task<bool> SendViaSmtpAsync(string toEmail, string toName, string subject, string htmlBody, string textBody)
+        {
+            try
+            {
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress(_emailSettings.SenderName, _emailSettings.SenderEmail));
+                message.To.Add(new MailboxAddress(toName, toEmail));
+                message.Subject = subject;
+                message.Body = new BodyBuilder { HtmlBody = htmlBody, TextBody = textBody }.ToMessageBody();
+                using var client = new SmtpClient();
+                _logger.LogInformation($"Connecting to SMTP server: {_emailSettings.SmtpServer}:{_emailSettings.SmtpPort}");
+                await client.ConnectAsync(_emailSettings.SmtpServer, _emailSettings.SmtpPort, _emailSettings.EnableSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.None);
+                await client.AuthenticateAsync(_emailSettings.SenderEmail, _emailSettings.SenderPassword);
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
+                _logger.LogInformation($"Email sent successfully via SMTP to: {toEmail}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Failed to send email via SMTP to {toEmail}. Server: {_emailSettings.SmtpServer}:{_emailSettings.SmtpPort}. Error: {ex.Message}");
+                return false;
+            }
         }
 
         public async Task<bool> SendVerificationEmailAsync(string email, string firstName, string verificationCode)
         {
             try
             {
-                var message = new MimeMessage();
-                message.From.Add(new MailboxAddress(_emailSettings.SenderName, _emailSettings.SenderEmail));
-                message.To.Add(new MailboxAddress(firstName, email));
-                message.Subject = "Welcome to JobIntel! Verify Your Email 🎯";
+                var subject = "Welcome to JobIntel! Verify Your Email 🎯";
 
                 var bodyBuilder = new BodyBuilder
                 {
@@ -90,28 +162,11 @@ The JobIntel Team
 © {DateTime.Now.Year} JobIntel. All rights reserved."
                 };
 
-                message.Body = bodyBuilder.ToMessageBody();
-
-                using var client = new SmtpClient();
-                
-                // Connect to SMTP server
-                await client.ConnectAsync(_emailSettings.SmtpServer, _emailSettings.SmtpPort, _emailSettings.EnableSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.None);
-                
-                // Authenticate
-                await client.AuthenticateAsync(_emailSettings.SenderEmail, _emailSettings.SenderPassword);
-                
-                // Send email
-                await client.SendAsync(message);
-                
-                // Disconnect
-                await client.DisconnectAsync(true);
-
-                _logger.LogInformation($"Verification email sent successfully to: {email}");
-                return true;
+                return await SendEmailAsync(email, firstName, subject, bodyBuilder.HtmlBody, bodyBuilder.TextBody);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Failed to send verification email to {email}: {ex.Message}");
+                _logger.LogError(ex, $"Failed to send verification email to {email}: {ex.Message}");
                 return false;
             }
         }
@@ -120,10 +175,7 @@ The JobIntel Team
         {
             try
             {
-                var message = new MimeMessage();
-                message.From.Add(new MailboxAddress(_emailSettings.SenderName, _emailSettings.SenderEmail));
-                message.To.Add(new MailboxAddress(firstName, email));
-                message.Subject = "🎉 Welcome to JobIntel - Your Account is Active!";
+                var subject = "🎉 Welcome to JobIntel - Your Account is Active!";
 
                 var bodyBuilder = new BodyBuilder
                 {
@@ -210,21 +262,11 @@ The JobIntel Team
 © {DateTime.Now.Year} JobIntel. All rights reserved."
                 };
 
-                message.Body = bodyBuilder.ToMessageBody();
-
-                using var client = new SmtpClient();
-                
-                await client.ConnectAsync(_emailSettings.SmtpServer, _emailSettings.SmtpPort, _emailSettings.EnableSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.None);
-                await client.AuthenticateAsync(_emailSettings.SenderEmail, _emailSettings.SenderPassword);
-                await client.SendAsync(message);
-                await client.DisconnectAsync(true);
-
-                _logger.LogInformation($"Welcome email sent successfully to: {email}");
-                return true;
+                return await SendEmailAsync(email, firstName, subject, bodyBuilder.HtmlBody, bodyBuilder.TextBody);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Failed to send welcome email to {email}: {ex.Message}");
+                _logger.LogError(ex, $"Failed to send welcome email to {email}: {ex.Message}");
                 return false;
             }
         }
@@ -258,10 +300,7 @@ The JobIntel Team
         {
             try
             {
-                var message = new MimeMessage();
-                message.From.Add(new MailboxAddress(_emailSettings.SenderName, _emailSettings.SenderEmail));
-                message.To.Add(new MailboxAddress(firstName, email));
-                message.Subject = "🔒 Reset Your JobIntel Password";
+                var subject = "🔒 Reset Your JobIntel Password";
 
                 // Build the reset link URL
                 var resetLink = $"{_emailSettings.FrontendUrl}/reset-password?token={resetToken}";
@@ -356,21 +395,11 @@ The JobIntel Team
 © {DateTime.Now.Year} JobIntel. All rights reserved."
                 };
 
-                message.Body = bodyBuilder.ToMessageBody();
-
-                using var client = new SmtpClient();
-                
-                await client.ConnectAsync(_emailSettings.SmtpServer, _emailSettings.SmtpPort, _emailSettings.EnableSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.None);
-                await client.AuthenticateAsync(_emailSettings.SenderEmail, _emailSettings.SenderPassword);
-                await client.SendAsync(message);
-                await client.DisconnectAsync(true);
-
-                _logger.LogInformation($"Password reset link sent successfully to: {email}");
-                return true;
+                return await SendEmailAsync(email, firstName, subject, bodyBuilder.HtmlBody, bodyBuilder.TextBody);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Failed to send password reset link to {email}: {ex.Message}");
+                _logger.LogError(ex, $"Failed to send password reset link to {email}: {ex.Message}");
                 return false;
             }
         }
@@ -379,10 +408,7 @@ The JobIntel Team
         {
             try
             {
-                var message = new MimeMessage();
-                message.From.Add(new MailboxAddress(_emailSettings.SenderName, _emailSettings.SenderEmail));
-                message.To.Add(new MailboxAddress(firstName, email));
-                message.Subject = "🔒 Security Alert: Account Temporarily Locked";
+                var subject = "🔒 Security Alert: Account Temporarily Locked";
 
                 // Calculate remaining time
                 var remainingTime = lockoutEnd - DateTime.UtcNow;
@@ -475,21 +501,11 @@ The JobIntel Security Team
 © {DateTime.Now.Year} JobIntel. All rights reserved."
                 };
 
-                message.Body = bodyBuilder.ToMessageBody();
-
-                using var client = new SmtpClient();
-                
-                await client.ConnectAsync(_emailSettings.SmtpServer, _emailSettings.SmtpPort, _emailSettings.EnableSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.None);
-                await client.AuthenticateAsync(_emailSettings.SenderEmail, _emailSettings.SenderPassword);
-                await client.SendAsync(message);
-                await client.DisconnectAsync(true);
-
-                _logger.LogInformation($"Account locked notification sent successfully to: {email}");
-                return true;
+                return await SendEmailAsync(email, firstName, subject, bodyBuilder.HtmlBody, bodyBuilder.TextBody);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Failed to send account locked notification to {email}: {ex.Message}");
+                _logger.LogError(ex, $"Failed to send account locked notification to {email}: {ex.Message}");
                 return false;
             }
         }

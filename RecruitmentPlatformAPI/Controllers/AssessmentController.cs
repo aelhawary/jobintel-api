@@ -321,6 +321,54 @@ namespace RecruitmentPlatformAPI.Controllers
         }
 
         /// <summary>
+        /// Get v2 question status overview (answered vs not answered)
+        /// </summary>
+        [HttpGet("v2/questions")]
+        [ProducesResponseType(typeof(ApiResponse<List<AssessmentQuestionStatusDto>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetQuestionStatusesV2()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+            {
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+            }
+
+            var result = await _assessmentV2Service.GetQuestionStatusesAsync(userId);
+            if (result == null)
+            {
+                return NotFound(new ApiErrorResponse("No v2 assessment in progress"));
+            }
+
+            return Ok(new ApiResponse<List<AssessmentQuestionStatusDto>>(result));
+        }
+
+        /// <summary>
+        /// Get a specific question by number for v2
+        /// </summary>
+        [HttpGet("v2/question/{questionNumber:int}")]
+        [ProducesResponseType(typeof(ApiResponse<QuestionResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetQuestionByNumberV2(int questionNumber)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+            {
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+            }
+
+            var result = await _assessmentV2Service.GetQuestionByNumberAsync(userId, questionNumber);
+            if (result == null)
+            {
+                return NotFound(new ApiErrorResponse("Question not found or v2 assessment not in progress"));
+            }
+
+            return Ok(new ApiResponse<QuestionResponseDto>(result));
+        }
+
+        /// <summary>
         /// Get the next unanswered question for v2
         /// </summary>
         [HttpGet("v2/question")]
@@ -396,6 +444,31 @@ namespace RecruitmentPlatformAPI.Controllers
 
             _logger.LogInformation("V2 assessment completed for user {UserId}, score {Score}", userId, result.OverallScore);
             return Ok(new ApiResponse<AssessmentResultV2ResponseDto>(result, "Assessment v2 completed successfully"));
+        }
+
+        /// <summary>
+        /// Submit v2 assessment (finalize and score)
+        /// </summary>
+        [HttpPost("v2/submit")]
+        [ProducesResponseType(typeof(ApiResponse<AssessmentResultV2ResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> SubmitAssessmentV2()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+            {
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+            }
+
+            var result = await _assessmentV2Service.CompleteAssessmentAsync(userId);
+            if (result == null)
+            {
+                return BadRequest(new ApiErrorResponse("Failed to submit v2 assessment. No v2 assessment in progress."));
+            }
+
+            _logger.LogInformation("V2 assessment submitted for user {UserId}, score {Score}", userId, result.OverallScore);
+            return Ok(new ApiResponse<AssessmentResultV2ResponseDto>(result, "Assessment v2 submitted successfully"));
         }
 
         /// <summary>

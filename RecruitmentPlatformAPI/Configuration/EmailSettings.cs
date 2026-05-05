@@ -14,5 +14,15 @@ namespace RecruitmentPlatformAPI.Configuration {
         /// Frontend URL for password reset links (e.g., http://localhost:3000)
         /// </summary>
         public string FrontendUrl { get; set; } = "http://localhost:3000";
+        /// <summary>
+        /// When true, use Brevo HTTP API (port 443) instead of SMTP (port 587).
+        /// Required for hosts like MonsterASP that block outbound SMTP.
+        /// </summary>
+        public bool UseHttpApi { get; set; } = false;
+        /// <summary>
+        /// Brevo API key for HTTP API email sending.
+        /// Generate from: Brevo Dashboard → Settings → SMTP &amp; API → API Keys tab
+        /// </summary>
+        public string BrevoApiKey { get; set; } = string.Empty;
     }
 }

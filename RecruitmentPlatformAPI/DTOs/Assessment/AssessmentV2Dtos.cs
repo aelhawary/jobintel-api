@@ -75,7 +75,7 @@ namespace RecruitmentPlatformAPI.DTOs.Assessment
         public string Status { get; set; } = string.Empty;
 
         /// <summary>
-        /// Overall score across all answered questions.
+        /// Overall score across all questions (unanswered count as incorrect).
         /// </summary>
         public decimal OverallScore { get; set; }
 
@@ -167,7 +167,10 @@ namespace RecruitmentPlatformAPI.DTOs.Assessment
 
         public List<string> Options { get; set; } = new();
 
-        public int SelectedAnswerIndex { get; set; }
+        /// <summary>
+        /// Selected answer index, or null if unanswered.
+        /// </summary>
+        public int? SelectedAnswerIndex { get; set; }
 
         public int CorrectAnswerIndex { get; set; }
 
@@ -180,6 +183,22 @@ namespace RecruitmentPlatformAPI.DTOs.Assessment
         public int SkillId { get; set; }
 
         public string SkillName { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Lightweight question status entry for v2 navigation.
+    /// </summary>
+    public class AssessmentQuestionStatusDto
+    {
+        /// <summary>
+        /// Question number in the attempt (1-based).
+        /// </summary>
+        public int QuestionNumber { get; set; }
+
+        /// <summary>
+        /// Whether the question has an answer saved.
+        /// </summary>
+        public bool IsAnswered { get; set; }
     }
 
     /// <summary>

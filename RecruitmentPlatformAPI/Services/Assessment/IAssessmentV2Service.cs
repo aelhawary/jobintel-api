@@ -13,7 +13,11 @@ namespace RecruitmentPlatformAPI.Services.Assessment
 
         Task<AssessmentStatusResponseDto?> GetCurrentStatusAsync(int userId);
 
+        Task<List<AssessmentQuestionStatusDto>?> GetQuestionStatusesAsync(int userId);
+
         Task<QuestionResponseDto?> GetNextQuestionAsync(int userId);
+
+        Task<QuestionResponseDto?> GetQuestionByNumberAsync(int userId, int questionNumber);
 
         Task<SubmitAnswerResponseDto?> SubmitAnswerAsync(int userId, SubmitAnswerRequestDto dto);
 

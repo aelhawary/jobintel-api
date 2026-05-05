@@ -46,6 +46,9 @@ builder.Services.AddCors(options =>
             if (uri.Host.EndsWith(".ngrok-free.app")) return true;
             if (uri.Host.EndsWith(".ngrok.io")) return true;
 
+            // Allow MonsterASP hosting
+            if (uri.Host.EndsWith(".runasp.net")) return true;
+
             return false;
         })
         .AllowAnyMethod()
@@ -113,6 +116,9 @@ builder.Services.AddAuthentication(options =>
         }
     };
 });
+
+// Register HttpClient for Brevo HTTP API email sending
+builder.Services.AddHttpClient();
 
 // Register services
 builder.Services.AddScoped<IAuthService, AuthService>();

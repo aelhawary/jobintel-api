@@ -237,6 +237,11 @@ namespace RecruitmentPlatformAPI.DTOs.Assessment
         public List<string> Options { get; set; } = new();
 
         /// <summary>
+        /// Previously selected answer index, if any
+        /// </summary>
+        public int? SelectedAnswerIndex { get; set; }
+
+        /// <summary>
         /// Time allowed for this question in seconds
         /// </summary>
         public int TimeAllowedSeconds { get; set; }
@@ -448,9 +453,9 @@ namespace RecruitmentPlatformAPI.DTOs.Assessment
         public List<string> Options { get; set; } = new();
 
         /// <summary>
-        /// Index of the user's selected answer
+        /// Index of the user's selected answer (null if unanswered)
         /// </summary>
-        public int SelectedAnswerIndex { get; set; }
+        public int? SelectedAnswerIndex { get; set; }
 
         /// <summary>
         /// Index of the correct answer

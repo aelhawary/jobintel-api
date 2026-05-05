@@ -299,13 +299,12 @@ namespace RecruitmentPlatformAPI.Services.Assessment
 
                 var now = DateTime.UtcNow;
                 var isExpired = now > attempt.ExpiresAt;
-                var timeRemaining = isExpired ? 0 : (int)(attempt.ExpiresAt - now).TotalSeconds;
-
-                if (isExpired && attempt.Status == AssessmentStatus.InProgress)
+                if (isExpired)
                 {
-                    attempt.Status = AssessmentStatus.Expired;
-                    await _context.SaveChangesAsync();
+                    await AutoSubmitIfExpiredAsync(jobSeeker, attempt, now);
                 }
+
+                var timeRemaining = isExpired ? 0 : (int)(attempt.ExpiresAt - now).TotalSeconds;
 
                 return new AssessmentStatusResponseDto
                 {
@@ -332,6 +331,118 @@ namespace RecruitmentPlatformAPI.Services.Assessment
 
         #endregion
 
+        #region Question Overview
+
+        public async Task<List<AssessmentQuestionStatusDto>?> GetQuestionStatusesAsync(int userId)
+        {
+            try
+            {
+                var jobSeeker = await GetJobSeekerByUserIdAsync(userId);
+                if (jobSeeker == null) return null;
+
+                var attempt = await _context.AssessmentAttempts
+                    .Include(a => a.Answers)
+                    .FirstOrDefaultAsync(a => a.JobSeekerId == jobSeeker.Id
+                                           && a.Status == AssessmentStatus.InProgress
+                                           && a.AlgorithmVersion == V2AlgorithmVersion);
+
+                if (attempt == null) return null;
+
+                var now = DateTime.UtcNow;
+                if (now > attempt.ExpiresAt)
+                {
+                    await AutoSubmitIfExpiredAsync(jobSeeker, attempt, now);
+                    return null;
+                }
+
+                var questionIds = ParseQuestionIdsJson(attempt.QuestionIdsJson);
+                var answeredQuestionIds = attempt.Answers.Select(a => a.QuestionId).ToHashSet();
+
+                var statuses = new List<AssessmentQuestionStatusDto>(questionIds.Count);
+                for (var i = 0; i < questionIds.Count; i++)
+                {
+                    statuses.Add(new AssessmentQuestionStatusDto
+                    {
+                        QuestionNumber = i + 1,
+                        IsAnswered = answeredQuestionIds.Contains(questionIds[i])
+                    });
+                }
+
+                return statuses;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting v2 question statuses for user {UserId}", userId);
+                return null;
+            }
+        }
+
+        public async Task<QuestionResponseDto?> GetQuestionByNumberAsync(int userId, int questionNumber)
+        {
+            try
+            {
+                if (questionNumber <= 0)
+                {
+                    return null;
+                }
+
+                var jobSeeker = await GetJobSeekerByUserIdAsync(userId);
+                if (jobSeeker == null) return null;
+
+                var attempt = await _context.AssessmentAttempts
+                    .Include(a => a.Answers)
+                    .FirstOrDefaultAsync(a => a.JobSeekerId == jobSeeker.Id
+                                           && a.Status == AssessmentStatus.InProgress
+                                           && a.AlgorithmVersion == V2AlgorithmVersion);
+
+                if (attempt == null) return null;
+
+                var now = DateTime.UtcNow;
+                if (now > attempt.ExpiresAt)
+                {
+                    await AutoSubmitIfExpiredAsync(jobSeeker, attempt, now);
+                    return null;
+                }
+
+                var questionIds = ParseQuestionIdsJson(attempt.QuestionIdsJson);
+                if (questionNumber > questionIds.Count)
+                {
+                    return null;
+                }
+
+                var questionId = questionIds[questionNumber - 1];
+                var question = await _context.AssessmentQuestions
+                    .FirstOrDefaultAsync(q => q.Id == questionId);
+
+                if (question == null) return null;
+
+                var options = JsonSerializer.Deserialize<List<string>>(question.Options) ?? new List<string>();
+                var timeRemaining = (int)(attempt.ExpiresAt - now).TotalSeconds;
+                var existingAnswer = attempt.Answers.FirstOrDefault(a => a.QuestionId == questionId);
+
+                return new QuestionResponseDto
+                {
+                    QuestionId = question.Id,
+                    QuestionNumber = questionNumber,
+                    TotalQuestions = attempt.TotalQuestions,
+                    QuestionText = question.QuestionText,
+                    Category = question.Category.ToString(),
+                    Difficulty = question.Difficulty.ToString(),
+                    Options = options,
+                    SelectedAnswerIndex = existingAnswer?.SelectedAnswerIndex,
+                    TimeAllowedSeconds = question.TimePerQuestion ?? AssessmentSettings.DefaultTimePerQuestionSeconds,
+                    TimeRemainingInAssessmentSeconds = Math.Max(0, timeRemaining)
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting v2 question {QuestionNumber} for user {UserId}", questionNumber, userId);
+                return null;
+            }
+        }
+
+        #endregion
+
         #region Question Flow
 
         public async Task<QuestionResponseDto?> GetNextQuestionAsync(int userId)
@@ -352,12 +463,11 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                 var now = DateTime.UtcNow;
                 if (now > attempt.ExpiresAt)
                 {
-                    attempt.Status = AssessmentStatus.Expired;
-                    await _context.SaveChangesAsync();
+                    await AutoSubmitIfExpiredAsync(jobSeeker, attempt, now);
                     return null;
                 }
 
-                var questionIds = JsonSerializer.Deserialize<List<int>>(attempt.QuestionIdsJson ?? "[]") ?? new List<int>();
+                var questionIds = ParseQuestionIdsJson(attempt.QuestionIdsJson);
                 var answeredQuestionIds = attempt.Answers.Select(a => a.QuestionId).ToHashSet();
 
                 int? nextQuestionId = null;
@@ -394,6 +504,7 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     Category = question.Category.ToString(),
                     Difficulty = question.Difficulty.ToString(),
                     Options = options,
+                    SelectedAnswerIndex = null,
                     TimeAllowedSeconds = question.TimePerQuestion ?? AssessmentSettings.DefaultTimePerQuestionSeconds,
                     TimeRemainingInAssessmentSeconds = Math.Max(0, timeRemaining)
                 };
@@ -423,39 +534,45 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                 var now = DateTime.UtcNow;
                 if (now > attempt.ExpiresAt)
                 {
-                    attempt.Status = AssessmentStatus.Expired;
-                    await _context.SaveChangesAsync();
+                    await AutoSubmitIfExpiredAsync(jobSeeker, attempt, now);
                     return null;
                 }
 
-                var questionIds = JsonSerializer.Deserialize<List<int>>(attempt.QuestionIdsJson ?? "[]") ?? new List<int>();
+                var questionIds = ParseQuestionIdsJson(attempt.QuestionIdsJson);
                 if (!questionIds.Contains(dto.QuestionId))
                 {
                     _logger.LogWarning("Question {QuestionId} not part of v2 attempt {AttemptId}", dto.QuestionId, attempt.Id);
                     return null;
                 }
 
-                if (attempt.Answers.Any(a => a.QuestionId == dto.QuestionId))
-                {
-                    _logger.LogWarning("Question {QuestionId} already answered in v2 attempt {AttemptId}", dto.QuestionId, attempt.Id);
-                    return null;
-                }
-
                 var question = await _context.AssessmentQuestions.FindAsync(dto.QuestionId);
                 if (question == null) return null;
 
-                var answer = new AssessmentAnswer
+                var existingAnswer = attempt.Answers.FirstOrDefault(a => a.QuestionId == dto.QuestionId);
+                if (existingAnswer != null)
                 {
-                    AssessmentAttemptId = attempt.Id,
-                    QuestionId = dto.QuestionId,
-                    SelectedAnswerIndex = dto.SelectedAnswerIndex,
-                    IsCorrect = dto.SelectedAnswerIndex == question.CorrectAnswerIndex,
-                    TimeSpentSeconds = dto.TimeSpentSeconds,
-                    AnsweredAt = now
-                };
+                    existingAnswer.SelectedAnswerIndex = dto.SelectedAnswerIndex;
+                    existingAnswer.IsCorrect = dto.SelectedAnswerIndex == question.CorrectAnswerIndex;
+                    existingAnswer.TimeSpentSeconds = dto.TimeSpentSeconds;
+                    existingAnswer.AnsweredAt = now;
+                }
+                else
+                {
+                    var answer = new AssessmentAnswer
+                    {
+                        AssessmentAttemptId = attempt.Id,
+                        QuestionId = dto.QuestionId,
+                        SelectedAnswerIndex = dto.SelectedAnswerIndex,
+                        IsCorrect = dto.SelectedAnswerIndex == question.CorrectAnswerIndex,
+                        TimeSpentSeconds = dto.TimeSpentSeconds,
+                        AnsweredAt = now
+                    };
 
-                _context.AssessmentAnswers.Add(answer);
-                attempt.QuestionsAnswered++;
+                    _context.AssessmentAnswers.Add(answer);
+                    attempt.Answers.Add(answer);
+                    attempt.QuestionsAnswered++;
+                }
+
                 await _context.SaveChangesAsync();
 
                 var timeRemaining = (int)(attempt.ExpiresAt - now).TotalSeconds;
@@ -497,96 +614,8 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                                            && a.AlgorithmVersion == V2AlgorithmVersion);
 
                 if (attempt == null) return null;
-
                 var now = DateTime.UtcNow;
-                var isExpired = now > attempt.ExpiresAt;
-                if (isExpired)
-                {
-                    attempt.Status = AssessmentStatus.Expired;
-                    await _context.SaveChangesAsync();
-                }
-
-                var answeredQuestionIds = attempt.Answers.Select(a => a.QuestionId).ToList();
-                var questions = await _context.AssessmentQuestions
-                    .Where(q => answeredQuestionIds.Contains(q.Id))
-                    .ToDictionaryAsync(q => q.Id);
-
-                var claimedSkillIds = ParseIdsJson(attempt.ClaimedSkillIdsJson);
-
-                var usedSkillIds = questions.Values.Select(GetEffectiveSkillId).Distinct().ToList();
-                var allSkillIds = usedSkillIds.Concat(claimedSkillIds).Distinct().ToList();
-
-                var skillNames = await _context.Skills
-                    .Where(s => allSkillIds.Contains(s.Id))
-                    .ToDictionaryAsync(s => s.Id, s => s.Name);
-
-                var (overall, technical, softSkill, stats, skillScores, _) =
-                    BuildSkillScores(attempt.Answers.ToList(), questions, skillNames, claimedSkillIds, includeQuestionResults: false);
-
-                attempt.OverallScore = overall;
-                attempt.TechnicalScore = technical;
-                attempt.SoftSkillsScore = softSkill;
-                attempt.Status = isExpired ? AssessmentStatus.Expired : AssessmentStatus.Completed;
-                attempt.CompletedAt = now;
-                attempt.ScoreExpiresAt = isExpired
-                    ? null
-                    : now.AddMonths(AssessmentSettings.ScoreValidityMonths);
-
-                if (!isExpired)
-                {
-                    var previousActiveAttempts = await _context.AssessmentAttempts
-                        .Where(a => a.JobSeekerId == jobSeeker.Id && a.IsActive && a.Id != attempt.Id)
-                        .ToListAsync();
-
-                    foreach (var previousActive in previousActiveAttempts)
-                    {
-                        previousActive.IsActive = false;
-                    }
-
-                    attempt.IsActive = true;
-
-                    jobSeeker.CurrentAssessmentScore = overall;
-                    jobSeeker.AssessmentJobTitleId = attempt.JobTitleId;
-                }
-                else
-                {
-                    attempt.IsActive = false;
-                }
-
-                jobSeeker.LastAssessmentDate = now;
-
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation(
-                    "V2 assessment completed for user {UserId}, attempt {AttemptId}, overall {OverallScore}",
-                    userId,
-                    attempt.Id,
-                    overall);
-
-                var timeTaken = (int)(now - attempt.StartedAt).TotalMinutes;
-
-                return new AssessmentResultV2ResponseDto
-                {
-                    AttemptId = attempt.Id,
-                    Status = attempt.Status.ToString(),
-                    OverallScore = overall,
-                    TechnicalSkillsTotalScore = technical,
-                    SoftSkillsScore = softSkill,
-                    TotalQuestions = attempt.TotalQuestions,
-                    CorrectAnswers = stats.TotalCorrect,
-                    TechnicalCorrect = stats.TechnicalCorrect,
-                    TechnicalTotal = stats.TechnicalTotal,
-                    SoftSkillCorrect = stats.SoftSkillCorrect,
-                    SoftSkillTotal = stats.SoftSkillTotal,
-                    StartedAt = attempt.StartedAt,
-                    CompletedAt = attempt.CompletedAt,
-                    TimeTakenMinutes = timeTaken,
-                    ScoreExpiresAt = attempt.ScoreExpiresAt,
-                    JobTitle = attempt.JobTitle?.Title ?? "Unknown",
-                    PerformanceLevel = GetPerformanceLevel(overall),
-                    IsPassing = overall >= AssessmentSettings.MinimumPassingScore,
-                    SkillScores = skillScores
-                };
+                return await FinalizeAttemptAsync(jobSeeker, attempt, now, includeQuestionResults: false);
             }
             catch (Exception ex)
             {
@@ -702,13 +731,18 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     return null;
                 }
 
-                var questionIds = attempt.Answers.Select(a => a.QuestionId).ToList();
-                var questions = await _context.AssessmentQuestions
+                var questionIds = ParseQuestionIdsJson(attempt.QuestionIdsJson);
+                var questionMap = await _context.AssessmentQuestions
                     .Where(q => questionIds.Contains(q.Id))
                     .ToDictionaryAsync(q => q.Id);
 
+                var orderedQuestions = questionIds
+                    .Select(id => questionMap.GetValueOrDefault(id))
+                    .OfType<AssessmentQuestion>()
+                    .ToList();
+
                 var claimedSkillIds = ParseIdsJson(attempt.ClaimedSkillIdsJson);
-                var usedSkillIds = questions.Values.Select(GetEffectiveSkillId).Distinct().ToList();
+                var usedSkillIds = orderedQuestions.Select(GetEffectiveSkillId).Distinct().ToList();
                 var allSkillIds = usedSkillIds.Concat(claimedSkillIds).Distinct().ToList();
 
                 var skillNames = await _context.Skills
@@ -716,7 +750,7 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     .ToDictionaryAsync(s => s.Id, s => s.Name);
 
                 var (overall, technical, softSkill, stats, skillScores, questionResults) =
-                    BuildSkillScores(attempt.Answers.ToList(), questions, skillNames, claimedSkillIds, includeQuestionResults: true);
+                    BuildSkillScores(attempt.Answers.ToList(), orderedQuestions, skillNames, claimedSkillIds, includeQuestionResults: true);
 
                 var timeTaken = attempt.CompletedAt.HasValue
                     ? (int)(attempt.CompletedAt.Value - attempt.StartedAt).TotalMinutes
@@ -766,6 +800,103 @@ namespace RecruitmentPlatformAPI.Services.Assessment
             }
 
             return await _context.JobSeekers.FirstOrDefaultAsync(js => js.UserId == userId);
+        }
+
+        private async Task<bool> AutoSubmitIfExpiredAsync(JobSeekerModel jobSeeker, AssessmentAttempt attempt, DateTime now)
+        {
+            if (attempt.Status != AssessmentStatus.InProgress || now <= attempt.ExpiresAt)
+            {
+                return false;
+            }
+
+            await FinalizeAttemptAsync(jobSeeker, attempt, now, includeQuestionResults: false);
+            return true;
+        }
+
+        private async Task<AssessmentResultV2ResponseDto> FinalizeAttemptAsync(
+            JobSeekerModel jobSeeker,
+            AssessmentAttempt attempt,
+            DateTime now,
+            bool includeQuestionResults)
+        {
+            await _context.Entry(attempt).Collection(a => a.Answers).LoadAsync();
+            await _context.Entry(attempt).Reference(a => a.JobTitle).LoadAsync();
+
+            var questionIds = ParseQuestionIdsJson(attempt.QuestionIdsJson);
+            var questionMap = await _context.AssessmentQuestions
+                .Where(q => questionIds.Contains(q.Id))
+                .ToDictionaryAsync(q => q.Id);
+
+            var orderedQuestions = questionIds
+                .Select(id => questionMap.GetValueOrDefault(id))
+                .OfType<AssessmentQuestion>()
+                .ToList();
+
+            var claimedSkillIds = ParseIdsJson(attempt.ClaimedSkillIdsJson);
+            var usedSkillIds = orderedQuestions.Select(GetEffectiveSkillId).Distinct().ToList();
+            var allSkillIds = usedSkillIds.Concat(claimedSkillIds).Distinct().ToList();
+
+            var skillNames = await _context.Skills
+                .Where(s => allSkillIds.Contains(s.Id))
+                .ToDictionaryAsync(s => s.Id, s => s.Name);
+
+            var (overall, technical, softSkill, stats, skillScores, questionResults) =
+                BuildSkillScores(attempt.Answers.ToList(), orderedQuestions, skillNames, claimedSkillIds, includeQuestionResults);
+
+            attempt.OverallScore = overall;
+            attempt.TechnicalScore = technical;
+            attempt.SoftSkillsScore = softSkill;
+            attempt.Status = AssessmentStatus.Completed;
+            attempt.CompletedAt = now;
+            attempt.ScoreExpiresAt = now.AddMonths(AssessmentSettings.ScoreValidityMonths);
+
+            var previousActiveAttempts = await _context.AssessmentAttempts
+                .Where(a => a.JobSeekerId == jobSeeker.Id && a.IsActive && a.Id != attempt.Id)
+                .ToListAsync();
+
+            foreach (var previousActive in previousActiveAttempts)
+            {
+                previousActive.IsActive = false;
+            }
+
+            attempt.IsActive = true;
+            jobSeeker.CurrentAssessmentScore = overall;
+            jobSeeker.AssessmentJobTitleId = attempt.JobTitleId;
+            jobSeeker.LastAssessmentDate = now;
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "V2 assessment completed for user {UserId}, attempt {AttemptId}, overall {OverallScore}",
+                jobSeeker.UserId,
+                attempt.Id,
+                overall);
+
+            var timeTaken = (int)(now - attempt.StartedAt).TotalMinutes;
+
+            return new AssessmentResultV2ResponseDto
+            {
+                AttemptId = attempt.Id,
+                Status = attempt.Status.ToString(),
+                OverallScore = overall,
+                TechnicalSkillsTotalScore = technical,
+                SoftSkillsScore = softSkill,
+                TotalQuestions = attempt.TotalQuestions,
+                CorrectAnswers = stats.TotalCorrect,
+                TechnicalCorrect = stats.TechnicalCorrect,
+                TechnicalTotal = stats.TechnicalTotal,
+                SoftSkillCorrect = stats.SoftSkillCorrect,
+                SoftSkillTotal = stats.SoftSkillTotal,
+                StartedAt = attempt.StartedAt,
+                CompletedAt = attempt.CompletedAt,
+                TimeTakenMinutes = timeTaken,
+                ScoreExpiresAt = attempt.ScoreExpiresAt,
+                JobTitle = attempt.JobTitle?.Title ?? "Unknown",
+                PerformanceLevel = GetPerformanceLevel(overall),
+                IsPassing = overall >= AssessmentSettings.MinimumPassingScore,
+                SkillScores = skillScores,
+                QuestionResults = questionResults
+            };
         }
 
         private async Task<List<(int SkillId, string SkillName)>> GetClaimedSkillsAsync(int jobSeekerId)
@@ -979,13 +1110,18 @@ namespace RecruitmentPlatformAPI.Services.Assessment
 
         private (decimal Overall, decimal Technical, decimal SoftSkill, ScoreStats Stats, List<SkillScoreDto> SkillScores, List<QuestionResultV2Dto>? QuestionResults) BuildSkillScores(
             List<AssessmentAnswer> answers,
-            Dictionary<int, AssessmentQuestion> questions,
+            List<AssessmentQuestion> questions,
             Dictionary<int, string> skillNames,
             List<int> claimedSkillIds,
             bool includeQuestionResults)
         {
             var claimedSkillSet = claimedSkillIds.ToHashSet();
             var buckets = new Dictionary<int, SkillBucket>();
+
+            var answersByQuestionId = answers
+                .GroupBy(a => a.QuestionId)
+                .Select(g => g.First())
+                .ToDictionary(a => a.QuestionId);
 
             var technicalCorrect = 0;
             var technicalTotal = 0;
@@ -994,13 +1130,8 @@ namespace RecruitmentPlatformAPI.Services.Assessment
 
             List<QuestionResultV2Dto>? questionResults = includeQuestionResults ? new List<QuestionResultV2Dto>() : null;
 
-            foreach (var answer in answers)
+            foreach (var question in questions)
             {
-                if (!questions.TryGetValue(answer.QuestionId, out var question))
-                {
-                    continue;
-                }
-
                 var effectiveSkillId = GetEffectiveSkillId(question);
                 if (!buckets.TryGetValue(effectiveSkillId, out var bucket))
                 {
@@ -1013,7 +1144,10 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                 }
 
                 bucket.TotalQuestions++;
-                if (answer.IsCorrect)
+
+                var hasAnswer = answersByQuestionId.TryGetValue(question.Id, out var answer);
+                var isCorrect = hasAnswer && answer!.IsCorrect;
+                if (isCorrect)
                 {
                     bucket.CorrectAnswers++;
                 }
@@ -1021,7 +1155,7 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                 if (question.Category == QuestionCategory.Technical)
                 {
                     technicalTotal++;
-                    if (answer.IsCorrect)
+                    if (isCorrect)
                     {
                         technicalCorrect++;
                     }
@@ -1029,7 +1163,7 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                 else
                 {
                     softSkillTotal++;
-                    if (answer.IsCorrect)
+                    if (isCorrect)
                     {
                         softSkillCorrect++;
                     }
@@ -1045,11 +1179,11 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                         Category = question.Category.ToString(),
                         Difficulty = question.Difficulty.ToString(),
                         Options = options,
-                        SelectedAnswerIndex = answer.SelectedAnswerIndex,
+                        SelectedAnswerIndex = hasAnswer ? answer!.SelectedAnswerIndex : null,
                         CorrectAnswerIndex = question.CorrectAnswerIndex,
-                        IsCorrect = answer.IsCorrect,
+                        IsCorrect = isCorrect,
                         Explanation = question.Explanation,
-                        TimeSpentSeconds = answer.TimeSpentSeconds,
+                        TimeSpentSeconds = hasAnswer ? answer!.TimeSpentSeconds : 0,
                         SkillId = effectiveSkillId,
                         SkillName = skillNames.GetValueOrDefault(effectiveSkillId, $"Skill #{effectiveSkillId}")
                     });
@@ -1071,7 +1205,7 @@ namespace RecruitmentPlatformAPI.Services.Assessment
             }
 
             var totalCorrect = technicalCorrect + softSkillCorrect;
-            var totalAnswered = technicalTotal + softSkillTotal;
+            var totalQuestions = technicalTotal + softSkillTotal;
 
             var technicalScore = technicalTotal > 0
                 ? (decimal)technicalCorrect / technicalTotal * 100
@@ -1081,8 +1215,8 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                 ? (decimal)softSkillCorrect / softSkillTotal * 100
                 : 0;
 
-            var overallScore = totalAnswered > 0
-                ? (decimal)totalCorrect / totalAnswered * 100
+            var overallScore = totalQuestions > 0
+                ? (decimal)totalCorrect / totalQuestions * 100
                 : 0;
 
             var skillScores = buckets.Values
@@ -1129,6 +1263,11 @@ namespace RecruitmentPlatformAPI.Services.Assessment
         private static List<int> ParseIdsJson(string? json)
         {
             return JsonSerializer.Deserialize<List<int>>(json ?? "[]")?.Distinct().ToList() ?? new List<int>();
+        }
+
+        private static List<int> ParseQuestionIdsJson(string? json)
+        {
+            return JsonSerializer.Deserialize<List<int>>(json ?? "[]") ?? new List<int>();
         }
 
         private static string GetPerformanceLevel(decimal score)
