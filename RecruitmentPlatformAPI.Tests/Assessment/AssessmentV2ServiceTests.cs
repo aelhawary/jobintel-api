@@ -223,6 +223,100 @@ public class AssessmentV2ServiceTests
     }
 
     [Fact]
+    public async Task GetQuestionStatuses_ReturnsAnsweredFlags()
+    {
+        using var ctx = CreateContext();
+        await SeedEligibleJobSeekerAsync(ctx, includeClaimedSkill: true);
+        await SeedMinimalQuestionSetAsync(ctx);
+
+        var service = MakeService(ctx);
+        var started = await service.StartAssessmentAsync(UserId);
+        Assert.NotNull(started);
+
+        var statuses = await service.GetQuestionStatusesAsync(UserId);
+        Assert.NotNull(statuses);
+        Assert.Equal(started!.TotalQuestions, statuses!.Count);
+        Assert.All(statuses, s => Assert.False(s.IsAnswered));
+
+        var question = await service.GetQuestionByNumberAsync(UserId, 1);
+        Assert.NotNull(question);
+
+        await service.SubmitAnswerAsync(UserId, new SubmitAnswerRequestDto
+        {
+            QuestionId = question!.QuestionId,
+            SelectedAnswerIndex = 0,
+            TimeSpentSeconds = 12
+        });
+
+        var updated = await service.GetQuestionStatusesAsync(UserId);
+        Assert.NotNull(updated);
+        Assert.Equal(started.TotalQuestions, updated!.Count);
+        Assert.True(updated[0].IsAnswered);
+    }
+
+    [Fact]
+    public async Task GetQuestionByNumber_ReturnsSelectedAnswerWhenAnswered()
+    {
+        using var ctx = CreateContext();
+        await SeedEligibleJobSeekerAsync(ctx, includeClaimedSkill: true);
+        await SeedMinimalQuestionSetAsync(ctx);
+
+        var service = MakeService(ctx);
+        var started = await service.StartAssessmentAsync(UserId);
+        Assert.NotNull(started);
+
+        var question = await service.GetQuestionByNumberAsync(UserId, 1);
+        Assert.NotNull(question);
+
+        await service.SubmitAnswerAsync(UserId, new SubmitAnswerRequestDto
+        {
+            QuestionId = question!.QuestionId,
+            SelectedAnswerIndex = 2,
+            TimeSpentSeconds = 10
+        });
+
+        var revisited = await service.GetQuestionByNumberAsync(UserId, 1);
+        Assert.NotNull(revisited);
+        Assert.Equal(2, revisited!.SelectedAnswerIndex);
+    }
+
+    [Fact]
+    public async Task SubmitAnswer_Overwrite_DoesNotIncreaseAnsweredCount()
+    {
+        using var ctx = CreateContext();
+        await SeedEligibleJobSeekerAsync(ctx, includeClaimedSkill: true);
+        await SeedMinimalQuestionSetAsync(ctx);
+
+        var service = MakeService(ctx);
+        var started = await service.StartAssessmentAsync(UserId);
+        Assert.NotNull(started);
+
+        var question = await service.GetQuestionByNumberAsync(UserId, 1);
+        Assert.NotNull(question);
+
+        var first = await service.SubmitAnswerAsync(UserId, new SubmitAnswerRequestDto
+        {
+            QuestionId = question!.QuestionId,
+            SelectedAnswerIndex = 0,
+            TimeSpentSeconds = 11
+        });
+
+        var second = await service.SubmitAnswerAsync(UserId, new SubmitAnswerRequestDto
+        {
+            QuestionId = question!.QuestionId,
+            SelectedAnswerIndex = 1,
+            TimeSpentSeconds = 9
+        });
+
+        Assert.NotNull(first);
+        Assert.NotNull(second);
+        Assert.Equal(first!.QuestionsAnswered, second!.QuestionsAnswered);
+
+        var savedAnswer = await ctx.AssessmentAnswers.SingleAsync();
+        Assert.Equal(1, savedAnswer.SelectedAnswerIndex);
+    }
+
+    [Fact]
     public async Task StartAssessment_WhenV1InProgressExists_ReturnsNull()
     {
         using var ctx = CreateContext();
@@ -302,6 +396,66 @@ public class AssessmentV2ServiceTests
     }
 
     [Fact]
+    public async Task CompleteAssessment_PartialSubmissionCountsUnansweredAsIncorrect()
+    {
+        using var ctx = CreateContext();
+        await SeedEligibleJobSeekerAsync(ctx, includeClaimedSkill: true);
+        await SeedMinimalQuestionSetAsync(ctx);
+
+        var service = MakeService(ctx);
+        var started = await service.StartAssessmentAsync(UserId);
+        Assert.NotNull(started);
+
+        var question = await service.GetQuestionByNumberAsync(UserId, 1);
+        Assert.NotNull(question);
+
+        await service.SubmitAnswerAsync(UserId, new SubmitAnswerRequestDto
+        {
+            QuestionId = question!.QuestionId,
+            SelectedAnswerIndex = 0,
+            TimeSpentSeconds = 6
+        });
+
+        var completed = await service.CompleteAssessmentAsync(UserId);
+        Assert.NotNull(completed);
+        Assert.Equal(started!.TotalQuestions, completed!.TotalQuestions);
+        Assert.Equal(33.33m, completed.OverallScore);
+        Assert.Equal(completed.TotalQuestions, completed.TechnicalTotal + completed.SoftSkillTotal);
+    }
+
+    [Fact]
+    public async Task GetResult_AfterPartialCompletion_IncludesUnansweredQuestions()
+    {
+        using var ctx = CreateContext();
+        await SeedEligibleJobSeekerAsync(ctx, includeClaimedSkill: true);
+        await SeedMinimalQuestionSetAsync(ctx);
+
+        var service = MakeService(ctx);
+        var started = await service.StartAssessmentAsync(UserId);
+        Assert.NotNull(started);
+
+        var question = await service.GetQuestionByNumberAsync(UserId, 1);
+        Assert.NotNull(question);
+
+        await service.SubmitAnswerAsync(UserId, new SubmitAnswerRequestDto
+        {
+            QuestionId = question!.QuestionId,
+            SelectedAnswerIndex = 0,
+            TimeSpentSeconds = 7
+        });
+
+        var completed = await service.CompleteAssessmentAsync(UserId);
+        Assert.NotNull(completed);
+
+        var result = await service.GetResultAsync(UserId, completed!.AttemptId);
+        Assert.NotNull(result);
+        Assert.NotNull(result!.QuestionResults);
+        Assert.Equal(started!.TotalQuestions, result.QuestionResults!.Count);
+        Assert.Contains(result.QuestionResults, qr => qr.SelectedAnswerIndex == null);
+        Assert.Contains(result.QuestionResults, qr => !qr.IsCorrect);
+    }
+
+    [Fact]
     public async Task GetResult_AfterCompletion_IncludesQuestionResults()
     {
         using var ctx = CreateContext();
@@ -338,13 +492,13 @@ public class AssessmentV2ServiceTests
 
         Assert.NotNull(result);
         Assert.NotNull(result!.QuestionResults);
-        Assert.Equal(answered, result.QuestionResults!.Count);
+        Assert.Equal(started!.TotalQuestions, result.QuestionResults!.Count);
         Assert.All(result.QuestionResults, qr => Assert.True(qr.IsCorrect));
         Assert.Contains(result.QuestionResults, qr => qr.SkillId == ClaimedTechnicalSkillId);
     }
 
     [Fact]
-    public async Task CompleteAssessment_ExpiredAttempt_DoesNotBecomeActive()
+    public async Task CompleteAssessment_ExpiredAttempt_BecomesCompletedAndActive()
     {
         using var ctx = CreateContext();
         await SeedEligibleJobSeekerAsync(ctx, includeClaimedSkill: true);
@@ -360,14 +514,38 @@ public class AssessmentV2ServiceTests
 
         var completed = await service.CompleteAssessmentAsync(UserId);
         Assert.NotNull(completed);
-        Assert.Equal(AssessmentStatus.Expired.ToString(), completed!.Status);
+        Assert.Equal(AssessmentStatus.Completed.ToString(), completed!.Status);
 
         var savedAttempt = await ctx.AssessmentAttempts.SingleAsync(a => a.Id == started.AttemptId);
         var jobSeeker = await ctx.JobSeekers.SingleAsync(j => j.Id == JobSeekerId);
 
-        Assert.Equal(AssessmentStatus.Expired, savedAttempt.Status);
-        Assert.False(savedAttempt.IsActive);
-        Assert.Null(savedAttempt.ScoreExpiresAt);
-        Assert.Null(jobSeeker.CurrentAssessmentScore);
+        Assert.Equal(AssessmentStatus.Completed, savedAttempt.Status);
+        Assert.True(savedAttempt.IsActive);
+        Assert.NotNull(savedAttempt.ScoreExpiresAt);
+        Assert.Equal(0m, jobSeeker.CurrentAssessmentScore);
+    }
+
+    [Fact]
+    public async Task GetCurrentStatus_ExpiredAttempt_AutoSubmitsAsCompleted()
+    {
+        using var ctx = CreateContext();
+        await SeedEligibleJobSeekerAsync(ctx, includeClaimedSkill: true);
+        await SeedMinimalQuestionSetAsync(ctx);
+
+        var service = MakeService(ctx);
+        var started = await service.StartAssessmentAsync(UserId);
+        Assert.NotNull(started);
+
+        var attempt = await ctx.AssessmentAttempts.SingleAsync(a => a.Id == started!.AttemptId);
+        attempt.ExpiresAt = DateTime.UtcNow.AddMinutes(-1);
+        await ctx.SaveChangesAsync();
+
+        var status = await service.GetCurrentStatusAsync(UserId);
+        Assert.NotNull(status);
+        Assert.Equal(AssessmentStatus.Completed.ToString(), status!.Status);
+
+        var savedAttempt = await ctx.AssessmentAttempts.SingleAsync(a => a.Id == started.AttemptId);
+        Assert.Equal(AssessmentStatus.Completed, savedAttempt.Status);
+        Assert.True(savedAttempt.IsActive);
     }
 }
