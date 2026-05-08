@@ -1,8 +1,7 @@
-# Assessment Module - Comprehensive Technical Guide
+# Assessment Module — Comprehensive Technical Guide
 
-**Version:** 1.0
-**Last Updated:** March 2026
-**Author:** JobIntel Backend Team
+**Last Updated:** May 2026  
+**Base URL:** `api/assessment`
 
 ---
 
@@ -28,70 +27,66 @@
 
 ## 1. Overview
 
-The Assessment Module is a skill verification system that allows **Job Seekers** to take standardized quizzes to validate their technical and soft skills. The assessment produces a normalized score (0-100) that becomes part of the candidate's profile, helping recruiters evaluate candidates more effectively.
+The Assessment Module is a skill-verification system that lets **Job Seekers** take targeted quizzes to validate their technical and soft skills. Questions are drawn from the candidate's claimed-skill profile and filtered by role family and seniority level. The resulting score (0–100) is attached to the candidate's public profile for recruiter visibility.
 
 ### Key Features
 
-- **30-question assessments** (21 technical + 9 soft skills)
-- **45-minute time limit** per assessment
-- **Role-targeted questions** based on job title
-- **Seniority-adjusted difficulty** based on years of experience
-- **Parallel v2 mode** (`/api/assessment/v2/*`) for claimed-skills validation
-- **Skill-based v2 scoring** (technical total, soft-skills total, and per-skill breakdown)
-- **Skill selection requirement in v2** (must claim at least one skill before start)
-- **60-day cooldown** between attempts
-- **18-month score validity**
-- **Exam mode** - no feedback during test, full results after completion
+| Feature | Detail |
+|---|---|
+| 30-question assessments | 21 technical + 9 soft-skill questions |
+| 45-minute time limit | Hard expiry, auto-submitted on next request |
+| Claimed-skill targeting | Questions matched to the job seeker's stated skills |
+| Per-skill allocation | Start response shows how questions are distributed per skill |
+| Flexible navigation | Jump to any question by 1-based number at any time |
+| Draft answer overwrite | Re-answer any question before submitting; answered count unchanged |
+| Partial submission | Call `POST /complete` at any time; unanswered questions count as incorrect |
+| Auto-submit on expiry | Expired attempts are finalised on the next API call |
+| 60-day cooldown | Between attempts (applies after completion, abandonment, or expiry) |
+| 18-month score validity | Scores expire and the cycle can restart |
+| Exam mode | No correctness feedback during the test |
+| Full review results | `/result/{id}` returns correct answers, explanations, and per-skill breakdown |
 
 ---
 
 ## 2. Purpose and Business Value
 
 ### For Job Seekers
-- **Skill Verification**: Prove competency beyond resume claims
-- **Profile Enhancement**: Stand out with verified assessment scores
-- **Self-Assessment**: Identify strength and improvement areas
-- **Competitive Edge**: Higher scores increase visibility to recruiters
+- **Skill Verification** — prove competency beyond resume claims
+- **Profile Enhancement** — stand out with a verified assessment score
+- **Self-Assessment** — identify strengths and improvement areas
 
 ### For Recruiters
-- **Objective Screening**: Filter candidates by verified skill scores
-- **Quality Assurance**: Reduce interview time with pre-validated skills
-- **Role Matching**: Scores aligned to specific job families (Backend, Frontend, etc.)
-- **Risk Reduction**: Quantified skill levels reduce hiring mistakes
-
-### Platform Value
-- **Trust Building**: Assessments add credibility to the platform
-- **Engagement**: Encourages active participation and profile completion
-- **Data Quality**: Structured skill data improves matching algorithms
+- **Objective Screening** — filter candidates by verified skill scores
+- **Role Matching** — scores are scoped to specific role families (Backend, Frontend, etc.)
+- **Risk Reduction** — quantified skill levels reduce costly mis-hires
 
 ---
 
 ## 3. Architecture
 
-### Component Overview
+### Component Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        AssessmentController                         │
-│         (API Layer - Route handling, Auth, Response formatting)     │
+│                      AssessmentController                           │
+│         (11 routes, auth, request/response formatting)              │
 └─────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
+                                   │
+                                   ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        IAssessmentService                           │
-│           (Business Logic - Eligibility, Scoring, Flow)             │
+│                       IAssessmentService                            │
+│       (eligibility, question selection, scoring, finalization)      │
 └─────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
+                                   │
+                                   ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                          AppDbContext                               │
-│              (Data Access - EF Core, SQL Server)                    │
+│                   (EF Core, SQL Server)                             │
 └─────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
+                                   │
+                                   ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│                         Database Tables                             │
-│   AssessmentQuestion │ AssessmentAttempt │ AssessmentAnswer         │
+│   AssessmentQuestion  │  AssessmentAttempt  │  AssessmentAnswer     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -100,116 +95,110 @@ The Assessment Module is a skill verification system that allows **Job Seekers**
 ```
 RecruitmentPlatformAPI/
 ├── Controllers/
-│   └── AssessmentController.cs          # 9 API endpoints
+│   └── AssessmentController.cs          # 11 endpoints, single service injection
 ├── Services/
 │   └── Assessment/
-│       ├── IAssessmentService.cs        # Service interface
-│       └── AssessmentService.cs         # Business logic (~850 lines)
+│       ├── IAssessmentService.cs        # Service contract (11 methods)
+│       └── AssessmentService.cs        # Full implementation (~1,200 lines)
 ├── DTOs/
 │   └── Assessment/
-│       └── AssessmentDtos.cs            # Request/Response DTOs
+│       └── AssessmentDtos.cs            # All request/response DTOs
 ├── Models/
 │   └── Assessment/
-│       ├── AssessmentQuestion.cs        # Question entity
-│       ├── AssessmentAttempt.cs         # Attempt tracking entity
-│       └── AssessmentAnswer.cs          # Answer recording entity
+│       ├── AssessmentQuestion.cs
+│       ├── AssessmentAttempt.cs
+│       └── AssessmentAnswer.cs
 ├── Enums/
-│   ├── AssessmentStatus.cs              # InProgress, Completed, etc.
+│   ├── AssessmentStatus.cs              # InProgress, Completed, Abandoned, Expired
 │   ├── QuestionCategory.cs              # Technical, SoftSkill
 │   ├── QuestionDifficulty.cs            # Easy, Medium, Hard
 │   └── ExperienceSeniorityLevel.cs      # Junior, Mid, Senior
 ├── Configuration/
-│   └── AssessmentSettings.cs            # Constants and thresholds
+│   └── AssessmentSettings.cs            # All tuneable constants
 └── Data/
     └── Seed/
-        └── AssessmentQuestionSeed.cs    # 73 seed questions
+        └── AssessmentQuestionSeed.cs    # Seed question bank
 ```
 
 ---
 
 ## 4. Database Schema
 
-### Entity Relationship Diagram
+### AssessmentQuestion
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                      AssessmentQuestion                          │
-├──────────────────────────────────────────────────────────────────┤
-│ Id (PK)              │ int                                       │
-│ QuestionText         │ nvarchar(500)                             │
-│ Category             │ int (Technical=1, SoftSkill=2)            │
-│ RoleFamily           │ int (Backend=2, Frontend=1, etc.)         │
-│ SkillId (FK)         │ int? (nullable for soft skills)           │
-│ Difficulty           │ int (Easy=1, Medium=2, Hard=3)            │
-│ SeniorityLevel       │ int (Junior=1, Mid=2, Senior=3)           │
-│ Options              │ nvarchar(1000) (JSON array)               │
-│ CorrectAnswerIndex   │ int (0-3)                                 │
-│ TimePerQuestion      │ int? (seconds, default 60)                │
-│ IsActive             │ bit                                       │
-│ Explanation          │ nvarchar(1000)                            │
-│ CreatedAt            │ datetime2                                 │
-│ UpdatedAt            │ datetime2                                 │
-└──────────────────────────────────────────────────────────────────┘
-          │
-          │ (questions selected per attempt)
-          ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                      AssessmentAttempt                           │
-├──────────────────────────────────────────────────────────────────┤
-│ Id (PK)              │ int                                       │
-│ JobSeekerId (FK)     │ int                                       │
-│ JobTitleId (FK)      │ int (snapshot at assessment time)         │
-│ OverallScore         │ decimal(5,2)?                             │
-│ TechnicalScore       │ decimal(5,2)?                             │
-│ SoftSkillsScore      │ decimal(5,2)?                             │
-│ Status               │ int (InProgress=1, Completed=2, etc.)     │
-│ StartedAt            │ datetime2                                 │
-│ CompletedAt          │ datetime2?                                │
-│ TimeLimitMinutes     │ int (default 45)                          │
-│ TotalQuestions       │ int                                       │
-│ QuestionsAnswered    │ int                                       │
-│ ExpiresAt            │ datetime2                                 │
-│ ScoreExpiresAt       │ datetime2?                                │
-│ IsActive             │ bit (only one active per job seeker)      │
-│ RetakeNumber         │ int (1st, 2nd, 3rd attempt)               │
-│ QuestionIdsJson      │ nvarchar(500) (ordered question list)     │
-└──────────────────────────────────────────────────────────────────┘
-          │
-          │ 1:N
-          ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                      AssessmentAnswer                            │
-├──────────────────────────────────────────────────────────────────┤
-│ Id (PK)              │ int                                       │
-│ AssessmentAttemptId  │ int (FK)                                  │
-│ QuestionId           │ int (FK)                                  │
-│ SelectedAnswerIndex  │ int (0-3)                                 │
-│ IsCorrect            │ bit                                       │
-│ TimeSpentSeconds     │ int                                       │
-│ AnsweredAt           │ datetime2                                 │
-└──────────────────────────────────────────────────────────────────┘
-```
+| Column | Type | Notes |
+|---|---|---|
+| `Id` | int PK | |
+| `QuestionText` | nvarchar(500) | |
+| `Category` | int | Technical = 1, SoftSkill = 2 |
+| `RoleFamily` | int | Backend, Frontend, FullStack, Other, etc. |
+| `SkillId` | int FK | Required — all questions are attributed to a skill |
+| `Difficulty` | int | Easy = 1, Medium = 2, Hard = 3 |
+| `SeniorityLevel` | int | Junior = 1, Mid = 2, Senior = 3 |
+| `Options` | nvarchar(1000) | JSON array of 4 strings |
+| `CorrectAnswerIndex` | int | 0–3 |
+| `TimePerQuestion` | int? | Seconds; falls back to `AssessmentSettings.DefaultTimePerQuestionSeconds` |
+| `IsActive` | bit | Inactive questions are excluded from selection |
+| `Explanation` | nvarchar(1000) | Shown after completion |
+| `CreatedAt` | datetime2 | |
+| `UpdatedAt` | datetime2 | |
+
+### AssessmentAttempt
+
+| Column | Type | Notes |
+|---|---|---|
+| `Id` | int PK | |
+| `JobSeekerId` | int FK | |
+| `JobTitleId` | int FK | Snapshot of job title at start time |
+| `OverallScore` | decimal(5,2)? | Set on completion |
+| `TechnicalScore` | decimal(5,2)? | Set on completion |
+| `SoftSkillsScore` | decimal(5,2)? | Set on completion |
+| `Status` | int | InProgress=1, Completed=2, Abandoned=3, Expired=4 |
+| `StartedAt` | datetime2 | |
+| `CompletedAt` | datetime2? | |
+| `TimeLimitMinutes` | int | Default 45 |
+| `TotalQuestions` | int | |
+| `QuestionsAnswered` | int | Incremented on first answer; unaffected by overwrites |
+| `ExpiresAt` | datetime2 | StartedAt + TimeLimitMinutes |
+| `ScoreExpiresAt` | datetime2? | CompletedAt + ScoreValidityMonths |
+| `IsActive` | bit | True on the most recent completed attempt only |
+| `RetakeNumber` | int | 1 on first attempt, increments per attempt |
+| `QuestionIdsJson` | nvarchar(500) | Ordered JSON int array — frozen at start |
+| `ClaimedSkillIdsJson` | nvarchar(1000) | Snapshot of claimed skill IDs at start |
+| `AlgorithmVersion` | int | Always 2 for current attempts |
+
+### AssessmentAnswer
+
+| Column | Type | Notes |
+|---|---|---|
+| `Id` | int PK | |
+| `AssessmentAttemptId` | int FK | |
+| `QuestionId` | int FK | |
+| `SelectedAnswerIndex` | int | 0–3; updated in place on overwrite |
+| `IsCorrect` | bit | Re-evaluated on each overwrite |
+| `TimeSpentSeconds` | int | Updated on each overwrite |
+| `AnsweredAt` | datetime2 | Updated on each overwrite |
 
 ### Key Indexes
 
 ```sql
--- Efficient question filtering
+-- Efficient question filtering during selection
 IX_AssessmentQuestion_Filtering
   ON AssessmentQuestion(RoleFamily, Category, Difficulty, SeniorityLevel, IsActive)
 
--- Find active attempts for a job seeker
+-- Fast active-attempt lookup
 IX_AssessmentAttempt_JobSeeker_Active
   ON AssessmentAttempt(JobSeekerId, IsActive)
 
--- Query attempts by status
+-- History queries
 IX_AssessmentAttempt_JobSeeker_Status
   ON AssessmentAttempt(JobSeekerId, Status, StartedAt)
 
--- Enforce single in-progress assessment
-IX_AssessmentAttempt_SingleInProgress (UNIQUE, FILTERED)
+-- Enforce single in-progress attempt per job seeker (unique filtered)
+UX_AssessmentAttempt_JobSeeker_InProgress
   ON AssessmentAttempt(JobSeekerId) WHERE Status = 1
 
--- Prevent duplicate answers
+-- Prevent duplicate answers per attempt
 IX_AssessmentAnswer_Attempt_Question (UNIQUE)
   ON AssessmentAnswer(AssessmentAttemptId, QuestionId)
 ```
@@ -218,332 +207,259 @@ IX_AssessmentAnswer_Attempt_Question (UNIQUE)
 
 ## 5. Configuration
 
-All assessment parameters are centralized in `AssessmentSettings.cs`:
+All assessment parameters are centralised in `AssessmentSettings.cs`:
 
 ```csharp
 public static class AssessmentSettings
 {
-    // Timing
-    public const int CooldownDays = 60;              // Days between attempts
-    public const int ScoreValidityMonths = 18;       // How long scores are valid
-    public const int DefaultTimeLimitMinutes = 45;   // Total assessment time
-    public const int DefaultTimePerQuestionSeconds = 60;
+    public const int CooldownDays                  = 60;    // Days between attempts
+    public const int ScoreValidityMonths           = 18;    // Months a score remains valid
+    public const int DefaultTimeLimitMinutes       = 45;    // Total exam time
+    public const int DefaultTimePerQuestionSeconds = 60;    // Per-question guidance time
 
-    // Question Distribution
-    public const int TotalQuestionsPerAssessment = 30;
-    public const int TechnicalQuestionsCount = 21;   // 70% of questions
-    public const int SoftSkillQuestionsCount = 9;    // 30% of questions
+    public const int TotalQuestionsPerAssessment   = 30;
+    public const int TechnicalQuestionsCount       = 21;    // 70 % of total
+    public const int SoftSkillQuestionsCount       = 9;     // 30 % of total
 
-    // Scoring Weights
-    public const decimal TechnicalWeight = 0.70m;    // 70% of final score
-    public const decimal SoftSkillWeight = 0.30m;    // 30% of final score
-
-    // Thresholds
-    public const decimal MinimumPassingScore = 50.0m;
+    public const decimal MinimumPassingScore       = 50.0m;
 }
 ```
 
-### Why These Values?
-
 | Setting | Value | Rationale |
-|---------|-------|-----------|
-| **60-day cooldown** | Prevents gaming the system; allows genuine skill improvement |
-| **18-month validity** | Skills evolve; ensures scores reflect current abilities |
-| **45-minute limit** | Long enough for thoughtful answers; short enough to maintain focus |
-| **70/30 technical/soft split** | Technical skills are primary; soft skills differentiate candidates |
-| **50% passing score** | Floor for "verified" status; still shows competency |
+|---|---|---|
+| 60-day cooldown | Prevents gaming; allows genuine improvement |
+| 18-month validity | Skills evolve; keeps scores current |
+| 45-minute limit | Long enough for thoughtful answers, short enough to maintain focus |
+| 70/30 split | Technical skills are primary; soft skills differentiate candidates |
+| 50 % passing | Minimum floor for "verified" status |
 
 ---
 
 ## 6. Eligibility System
 
-Before starting an assessment, the system verifies multiple conditions:
-
-### Eligibility Checks (in order)
+### Checks (evaluated in order)
 
 ```
-1. ROLE CHECK
-   └── User must be a JobSeeker (not Recruiter)
-
-2. PROFILE EXISTENCE
-   └── JobSeeker record must exist in database
-
-3. PROFILE COMPLETION
-   └── ProfileCompletionStep must be >= 4 (completed wizard)
-
-4. JOB TITLE SET
-   └── JobTitleId must be populated (for question targeting)
-
-5. NO IN-PROGRESS ASSESSMENT
-   └── Cannot have Status = InProgress attempt
-
-6. COOLDOWN PERIOD
-   └── LastAssessmentDate + 60 days must be in the past
+1. ACCOUNT TYPE        → Must be JobSeeker
+2. PROFILE EXISTS      → JobSeeker record must exist
+3. PROFILE COMPLETE    → ProfileCompletionStep ≥ 4
+4. JOB TITLE SET       → JobTitleId must be populated
+5. CLAIMED SKILLS      → At least one skill on the profile
+6. NO IN-PROGRESS      → No attempt with Status = InProgress
+7. COOLDOWN CLEAR      → LastAssessmentDate + 60 days in the past
 ```
 
-### Eligibility Response DTO
+If all checks pass, `isEligible = true` and the response also includes the current
+active score and the claimed-skills snapshot.
+
+### Eligibility Response
 
 ```json
 {
-  "isEligible": false,
-  "reason": "Please wait 45 days before taking another assessment",
+  "isEligible": true,
+  "reason": null,
   "hasCompletedProfile": true,
   "hasJobTitle": true,
+  "hasClaimedSkills": true,
+  "claimedSkillsCount": 3,
+  "claimedSkills": [
+    { "skillId": 101, "skillName": "ASP.NET Core" },
+    { "skillId": 202, "skillName": "Entity Framework" }
+  ],
   "hasInProgressAssessment": false,
-  "isInCooldownPeriod": true,
-  "cooldownEndsAt": "2026-05-15T10:30:00Z",
-  "daysUntilEligible": 45,
-  "previousAttempts": 2,
-  "currentScore": 78.50,
+  "isInCooldownPeriod": false,
+  "cooldownEndsAt": null,
+  "daysUntilEligible": null,
+  "previousAttempts": 1,
+  "currentScore": 72.50,
   "scoreExpiresAt": "2027-09-15T10:30:00Z"
 }
 ```
 
-### Decision Flow
+When not eligible, `isEligible = false` and `reason` contains a human-readable explanation.
+
+### Decision Flowchart
 
 ```
-                    ┌─────────────────┐
-                    │ Check Eligibility│
-                    └────────┬────────┘
-                             │
-                    ┌────────▼────────┐
-                    │ Is JobSeeker?   │───No──→ "Only job seekers can take assessments"
-                    └────────┬────────┘
-                             │Yes
-                    ┌────────▼────────┐
-                    │ Profile Step≥4? │───No──→ "Please complete your profile"
-                    └────────┬────────┘
-                             │Yes
-                    ┌────────▼────────┐
-                    │ Has Job Title?  │───No──→ "Please set your job title"
-                    └────────┬────────┘
-                             │Yes
-                    ┌────────▼────────┐
-                    │ In-Progress?    │───Yes─→ "Complete or abandon current assessment"
-                    └────────┬────────┘
-                             │No
-                    ┌────────▼────────┐
-                    │ In Cooldown?    │───Yes─→ "Wait N days before retaking"
-                    └────────┬────────┘
-                             │No
-                    ┌────────▼────────┐
-                    │   ELIGIBLE ✓    │
-                    └─────────────────┘
+Check Eligibility
+      │
+      ├─ Not JobSeeker?          → "Only job seekers can take assessments"
+      ├─ Profile step < 4?       → "Please complete your profile"
+      ├─ No job title?           → "Please set your job title"
+      ├─ No claimed skills?      → "Please select at least one skill"
+      ├─ Assessment in progress? → "Complete or abandon current assessment"
+      ├─ In cooldown?            → "Please wait N days before retaking"
+      │
+      └─ ELIGIBLE ✓
 ```
 
 ---
 
 ## 7. Question Selection Algorithm
 
-The algorithm selects questions tailored to the job seeker's **role family** and **seniority level**.
+Questions are chosen to cover the job seeker's claimed skills as broadly as possible.
 
-### Step 1: Determine Seniority from Experience
+### Step 1 — Derive seniority from experience
 
 ```csharp
-SeniorityLevel = YearsOfExperience switch
+SeniorityLevel = yearsOfExperience switch
 {
-    null or <= 2  => Junior,   // 0-2 years
-    >= 3 and <= 5 => Mid,      // 3-5 years
-    _             => Senior    // 6+ years
+    null or <= 2  => Junior,
+    >= 3 and <= 5 => Mid,
+    _             => Senior
 };
 ```
 
-### Step 2: Define Difficulty Distribution
+### Step 2 — Build question pools
 
-The distribution varies by seniority to match expected competency levels:
+- **Technical pool**: active technical questions with a compatible role family  
+  (same role family as the job seeker, or either side is `FullStack`).
+- **Soft-skill pool**: all active soft-skill questions (role-independent).
 
-| Seniority | Easy | Medium | Hard | Total |
-|-----------|------|--------|------|-------|
-| **Junior** | 10 | 8 | 3 | 21 technical |
-| | 4 | 4 | 1 | 9 soft skill |
-| **Mid** | 5 | 11 | 5 | 21 technical |
-| | 2 | 5 | 2 | 9 soft skill |
-| **Senior** | 3 | 8 | 10 | 21 technical |
-| | 1 | 4 | 4 | 9 soft skill |
+### Step 3 — Distribute by claimed skill coverage
 
-### Step 3: Select Technical Questions
+1. Distribute the target count evenly across distinct claimed skills;  
+   remainder questions are assigned round-robin.
+2. For each skill, prefer questions matching the derived seniority level.
+3. If a skill has fewer questions than required, fall back to any seniority
+   for that skill.
+4. If the pool is still short, fill from role-compatible questions regardless
+   of skill match.
 
-```
-For each difficulty (Easy, Medium, Hard):
-    1. Query questions WHERE:
-       - Category = Technical
-       - RoleFamily = JobSeeker's RoleFamily (e.g., Backend)
-       - SeniorityLevel = Calculated Seniority
-       - Difficulty = Current Difficulty Level
-       - IsActive = true
-    2. Shuffle results
-    3. Take required count
-```
+Soft-skill questions follow the same logic against any claimed soft skills;
+if none are claimed, questions are drawn from the general soft-skill pool.
 
-### Step 4: Fallback for Insufficient Questions
+### Step 4 — Finalise and persist
 
-If not enough questions match the exact criteria:
+- Combine technical and soft-skill selections, deduplicate, then shuffle.
+- Persist `QuestionIdsJson` (ordered, frozen) and `ClaimedSkillIdsJson`
+  (snapshot) on the `AssessmentAttempt`.
 
-```
-Query questions WHERE:
-    - Category = Technical
-    - RoleFamily = JobSeeker's RoleFamily
-    - IsActive = true
-    - NOT already selected
-
-Take remaining needed to reach 21 technical questions
-```
-
-### Step 5: Select Soft Skill Questions
-
-Soft skills are **not role-specific** (apply to all roles):
-
-```
-For each difficulty level:
-    Select from Category = SoftSkill
-    Matching SeniorityLevel
-    (RoleFamily not filtered for soft skills)
-```
-
-### Step 6: Final Shuffle and Store
-
-```csharp
-// Combine all selected questions
-var allQuestionIds = technicalIds.Concat(softSkillIds);
-
-// Shuffle to randomize order
-var shuffled = allQuestionIds.OrderBy(_ => Guid.NewGuid()).ToList();
-
-// Store in attempt for consistent ordering
-attempt.QuestionIdsJson = JsonSerializer.Serialize(shuffled);
-```
-
-### Why Store Question IDs?
-
-The `QuestionIdsJson` field ensures:
-1. **Consistent ordering** - Same question sequence on page refresh
-2. **Validation** - Verify submitted answers belong to this attempt
-3. **Reproducibility** - Reconstruct exact assessment for auditing
+**Why persist question IDs?**  
+Freezing the list ensures consistent question order across page refreshes,
+validates that submitted answers belong to this attempt, and enables
+exact reconstruction for audit or review.
 
 ---
 
 ## 8. Assessment Flow
 
-### Complete User Journey
+### Full Lifecycle
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         ASSESSMENT LIFECYCLE                            │
-└─────────────────────────────────────────────────────────────────────────┘
-
 [1] PRE-ASSESSMENT
-    │
-    ├── GET /eligibility    → Check if user can start
-    │   └── Returns: { isEligible: true/false, reason, currentScore, etc. }
-    │
-    └── POST /start         → Begin assessment
-        └── Creates AssessmentAttempt with Status = InProgress
-        └── Selects and stores questions
-        └── Returns: { attemptId, totalQuestions, timeLimitMinutes, expiresAt }
+    GET  /eligibility     → Check requirements and claimed skills
+    POST /start           → Create attempt; receive attemptId, expiresAt,
+                            skillAllocations
 
 [2] DURING ASSESSMENT (45-minute window)
-    │
-    ├── GET /current        → Check progress (optional, for reconnect)
-    │   └── Returns: { status, questionsAnswered, timeRemaining, progress% }
-    │
-    ├── GET /question       → Get next unanswered question
-    │   └── Returns: { questionId, questionText, options[], category, difficulty }
-    │   └── Returns null when all answered
-    │
-    └── POST /answer        → Submit answer (repeat 30 times)
-        └── Request: { questionId, selectedAnswerIndex, timeSpentSeconds }
-        └── Response: { success, questionsAnswered, questionsRemaining, progress% }
-        └── NO correctness feedback (exam mode)
+    GET  /current         → Resume / reconnect; get remaining time
+    GET  /questions       → Load overview panel (answered flags per question)
+    GET  /question/{n}    → Fetch question n (returns selectedAnswerIndex
+                            if previously answered)
+    GET  /question        → Fetch next unanswered question
+    POST /answer          → Save or overwrite an answer (no correctness shown)
 
 [3] COMPLETION
-    │
-    ├── POST /complete      → Finish and calculate scores
-    │   └── Calculates TechnicalScore, SoftSkillsScore, OverallScore
-    │   └── Sets Status = Completed
-    │   └── Updates JobSeeker.CurrentAssessmentScore
-    │   └── Returns full results with per-question breakdown
-    │
-    └── POST /abandon       → Give up (alternative path)
-        └── Sets Status = Abandoned
-        └── Still triggers 60-day cooldown
+    POST /complete        → Finalise; receive overall score and skill breakdown
+                            (no question-level detail here — use /result/{id})
+    POST /abandon         → Give up; triggers 60-day cooldown
 
 [4] POST-ASSESSMENT
-    │
-    ├── GET /history        → View all past attempts
-    │   └── Returns: { attempts[], totalAttempts, bestScore, currentActiveScore }
-    │
-    └── GET /result/{id}    → View detailed result for specific attempt
-        └── Returns: { scores, questionResults[] with correct answers }
+    GET  /history         → All past attempts with scores
+    GET  /result/{id}     → Full review: per-question breakdown with correct
+                            answers, explanations, and skill attribution
 ```
 
-### Time Expiration Handling
+### Auto-Submit on Expiry
 
-The assessment expires automatically after 45 minutes:
+There is no background job. Expiry is handled **lazily** on the next incoming
+request:
 
-```csharp
-// Calculated at start
-attempt.ExpiresAt = DateTime.UtcNow.AddMinutes(45);
-
-// Checked on every request
-if (DateTime.UtcNow > attempt.ExpiresAt)
-{
-    attempt.Status = AssessmentStatus.Expired;
-    await _context.SaveChangesAsync();
-    return null; // or appropriate error
-}
+```
+Request arrives for any assessment endpoint
+      │
+      └─ now > attempt.ExpiresAt?
+              │
+              Yes → FinalizeAttemptAsync() runs synchronously
+                    attempt.Status = Completed
+                    Scores are calculated and persisted
+                    GetCurrentStatus → returns Completed status
+                    GetNextQuestion  → returns null
 ```
 
-**Important**: There is no background job for expiration. Expiration is checked **lazily** when the user makes a request. This simplifies infrastructure and handles the common case where users simply close the browser.
+This keeps infrastructure simple and handles the common case of users
+simply closing the browser. The attempt is still queryable via `/result/{id}`
+after auto-submit.
 
 ---
 
 ## 9. Scoring System
 
-### Score Calculation Formula
+### Formula
+
+Scores are computed as simple ratios over the question counts for each category.
+Because the technical/soft split is fixed at 21/9, this is mathematically
+equivalent to a 70/30 weighted average.
 
 ```
-TechnicalScore = (TechnicalCorrect / TechnicalTotal) × 100
-SoftSkillScore = (SoftSkillCorrect / SoftSkillTotal) × 100
-
-OverallScore = (TechnicalScore × 0.70) + (SoftSkillScore × 0.30)
+TechnicalScore  = (technicalCorrect  / technicalTotal)  × 100
+SoftSkillsScore = (softSkillCorrect  / softSkillTotal)   × 100
+OverallScore    = (totalCorrect      / totalQuestions)   × 100
 ```
 
-### Example Calculation
+Unanswered questions count as incorrect in all three calculations.  
+All scores are rounded to 2 decimal places.
+
+### Example
 
 ```
-Scenario: User answers 15/21 technical, 7/9 soft skills
+Answers: 15 / 21 technical correct, 7 / 9 soft-skill correct
 
-TechnicalScore = (15 / 21) × 100 = 71.43%
-SoftSkillScore = (7 / 9) × 100 = 77.78%
-
-OverallScore = (71.43 × 0.70) + (77.78 × 0.30)
-             = 50.00 + 23.33
-             = 73.33%
+TechnicalScore  = 15 / 21 × 100 = 71.43
+SoftSkillsScore =  7 /  9 × 100 = 77.78
+OverallScore    = 22 / 30 × 100 = 73.33
 ```
 
-### Performance Levels
+### Performance Bands
 
-```csharp
-PerformanceLevel = OverallScore switch
+| Score | Level |
+|---|---|
+| ≥ 90 | Excellent |
+| ≥ 75 | Good |
+| ≥ 50 | Average |
+| < 50 | Needs Improvement |
+
+Passing threshold: **50 %** (`AssessmentSettings.MinimumPassingScore`).
+
+### Per-Skill Breakdown
+
+In addition to the category totals, every completed attempt carries a
+`skillScores` list — one entry per skill that appeared in the question set,
+plus any claimed skills that had no questions (score = 0). Each entry includes:
+
+```json
 {
-    >= 90 => "Excellent",      // Top tier
-    >= 75 => "Good",           // Above average
-    >= 50 => "Average",        // Passing
-    _     => "Needs Improvement" // Below passing
-};
+  "skillId": 101,
+  "skillName": "ASP.NET Core",
+  "category": "Technical",
+  "correctAnswers": 6,
+  "totalQuestions": 8,
+  "score": 75.00,
+  "isClaimedSkill": true
+}
 ```
 
 ### Score Persistence
 
-When an assessment completes:
+On completion the service:
 
-1. **AssessmentAttempt** is updated with scores
-2. **Previous active attempt** is marked `IsActive = false`
-3. **Current attempt** is marked `IsActive = true`
-4. **JobSeeker** denormalized fields are updated:
-   - `CurrentAssessmentScore = OverallScore`
-   - `LastAssessmentDate = Now`
-   - `AssessmentJobTitleId = Attempt.JobTitleId`
+1. Writes `OverallScore`, `TechnicalScore`, `SoftSkillsScore` to the attempt.
+2. Sets `ScoreExpiresAt = CompletedAt + 18 months`.
+3. Sets all other completed attempts for this job seeker to `IsActive = false`.
+4. Sets the current attempt to `IsActive = true`.
+5. Denormalises onto `JobSeeker`: `CurrentAssessmentScore`, `LastAssessmentDate`,
+   `AssessmentJobTitleId`.
 
 ---
 
@@ -551,54 +467,28 @@ When an assessment completes:
 
 ### Endpoint Summary
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
+| Method | Route | Description |
+|---|---|---|
 | `GET` | `/api/assessment/eligibility` | Check if user can start |
-| `POST` | `/api/assessment/start` | Start new assessment |
+| `POST` | `/api/assessment/start` | Start new attempt |
 | `GET` | `/api/assessment/current` | Get in-progress status |
-| `GET` | `/api/assessment/question` | Get next question |
-| `POST` | `/api/assessment/answer` | Submit answer |
-| `POST` | `/api/assessment/complete` | Finish and get score |
-| `POST` | `/api/assessment/abandon` | Abandon attempt |
-| `GET` | `/api/assessment/history` | Get all attempts |
-| `GET` | `/api/assessment/result/{id}` | Get detailed result |
+| `GET` | `/api/assessment/questions` | Overview panel (answered flags) |
+| `GET` | `/api/assessment/question/{number}` | Get question by 1-based number |
+| `GET` | `/api/assessment/question` | Get next unanswered question |
+| `POST` | `/api/assessment/answer` | Save or overwrite an answer |
+| `POST` | `/api/assessment/complete` | Finalise and receive scores |
+| `POST` | `/api/assessment/abandon` | Abandon in-progress attempt |
+| `GET` | `/api/assessment/history` | All past attempts |
+| `GET` | `/api/assessment/result/{attemptId}` | Full review for completed attempt |
 
-### Parallel v2 Endpoints
+**Authentication:** all endpoints require `Authorization: Bearer <jwt_token>` with JobSeeker role.
 
-The module also exposes a parallel v2 API surface under `/api/assessment/v2/*`:
+---
 
-- `GET /api/assessment/v2/eligibility`
-- `POST /api/assessment/v2/start`
-- `GET /api/assessment/v2/current`
-- `GET /api/assessment/v2/question`
-- `POST /api/assessment/v2/answer`
-- `POST /api/assessment/v2/complete`
-- `POST /api/assessment/v2/abandon`
-- `GET /api/assessment/v2/history`
-- `GET /api/assessment/v2/result/{attemptId}`
+### GET /eligibility
 
-v2 preserves exam mode but changes targeting and scoring:
-
-- Questions are selected to validate claimed skills (with role compatibility and fallback coverage).
-- Starting v2 requires at least one claimed skill on profile.
-- Results include technical total score, soft-skills score, and per-skill score breakdown.
-
-### Authentication
-
-All endpoints require JWT Bearer token with JobSeeker role:
-
-```http
-Authorization: Bearer <jwt_token>
-```
-
-### Detailed Endpoint Documentation
-
-#### GET /eligibility
-
-Check if the authenticated user can start an assessment.
-
-**Response 200:**
 ```json
+// 200 OK
 {
   "success": true,
   "data": {
@@ -606,23 +496,39 @@ Check if the authenticated user can start an assessment.
     "reason": null,
     "hasCompletedProfile": true,
     "hasJobTitle": true,
+    "hasClaimedSkills": true,
+    "claimedSkillsCount": 2,
+    "claimedSkills": [
+      { "skillId": 101, "skillName": "ASP.NET Core" }
+    ],
     "hasInProgressAssessment": false,
     "isInCooldownPeriod": false,
     "cooldownEndsAt": null,
     "daysUntilEligible": null,
-    "previousAttempts": 1,
-    "currentScore": 72.50,
-    "scoreExpiresAt": "2027-09-15T10:30:00Z"
+    "previousAttempts": 0,
+    "currentScore": null,
+    "scoreExpiresAt": null
   }
 }
 ```
 
-#### POST /start
+---
 
-Start a new assessment. Fails if not eligible.
+### POST /start
 
-**Response 200:**
+Optional request body:
+
 ```json
+{
+  "skillIds": [101, 202]
+}
+```
+
+Omitting the body (or `skillIds`) causes the server to snapshot all skills
+from the job-seeker profile. Provided IDs are validated for ownership.
+
+```json
+// 200 OK
 {
   "success": true,
   "message": "Assessment started successfully",
@@ -632,95 +538,163 @@ Start a new assessment. Fails if not eligible.
     "technicalQuestions": 21,
     "softSkillQuestions": 9,
     "timeLimitMinutes": 45,
-    "startedAt": "2026-03-22T14:00:00Z",
-    "expiresAt": "2026-03-22T14:45:00Z",
+    "startedAt": "2026-05-08T10:00:00Z",
+    "expiresAt": "2026-05-08T10:45:00Z",
     "jobTitle": "Senior Backend Developer",
     "roleFamily": "Backend",
     "seniorityLevel": "Senior",
-    "retakeNumber": 2
+    "retakeNumber": 1,
+    "claimedSkillsCount": 2,
+    "skillAllocations": [
+      {
+        "skillId": 101,
+        "skillName": "ASP.NET Core",
+        "technicalQuestions": 11,
+        "softSkillQuestions": 5,
+        "totalQuestions": 16
+      },
+      {
+        "skillId": 202,
+        "skillName": "Entity Framework",
+        "technicalQuestions": 10,
+        "softSkillQuestions": 4,
+        "totalQuestions": 14
+      }
+    ]
   }
 }
-```
 
-**Response 400:**
-```json
+// 400 Bad Request — not eligible or concurrent start
 {
   "success": false,
-  "message": "Cannot start assessment. Please check your eligibility first."
+  "message": "Cannot start assessment. Check eligibility and claimed skills."
 }
 ```
 
-#### GET /question
+---
 
-Get the next unanswered question in sequence.
+### GET /current
 
-**Response 200:**
+Returns in-progress status. If the attempt has expired, it is auto-submitted
+before the response is returned and `status` will read `"Completed"`.
+
 ```json
+// 200 OK
+{
+  "success": true,
+  "data": {
+    "attemptId": 42,
+    "status": "InProgress",
+    "totalQuestions": 30,
+    "questionsAnswered": 12,
+    "questionsRemaining": 18,
+    "startedAt": "2026-05-08T10:00:00Z",
+    "expiresAt": "2026-05-08T10:45:00Z",
+    "timeRemainingSeconds": 1980,
+    "progressPercentage": 40.0,
+    "isExpired": false
+  }
+}
+
+// 404 — no in-progress attempt
+```
+
+---
+
+### GET /questions
+
+Returns the answered/unanswered flag for every question. Use this to drive
+the navigation overview panel.
+
+```json
+// 200 OK
+{
+  "success": true,
+  "data": [
+    { "questionNumber": 1, "isAnswered": true },
+    { "questionNumber": 2, "isAnswered": false },
+    { "questionNumber": 3, "isAnswered": true }
+  ]
+}
+
+// 404 — no in-progress attempt (auto-submitted if expired)
+```
+
+---
+
+### GET /question/{number} and GET /question
+
+`GET /question/{number}` — fetch question at the given 1-based position.  
+`GET /question` — fetch the next unanswered question.
+
+If the question has a saved answer, `selectedAnswerIndex` is populated,
+enabling in-exam review and answer changes.
+
+```json
+// 200 OK
 {
   "success": true,
   "data": {
     "questionId": 15,
-    "questionNumber": 5,
+    "questionNumber": 7,
     "totalQuestions": 30,
     "questionText": "What is the time complexity of binary search?",
     "category": "Technical",
     "difficulty": "Medium",
-    "options": [
-      "O(n)",
-      "O(log n)",
-      "O(n²)",
-      "O(1)"
-    ],
+    "options": ["O(n)", "O(log n)", "O(n²)", "O(1)"],
+    "selectedAnswerIndex": 1,
     "timeAllowedSeconds": 60,
-    "timeRemainingInAssessmentSeconds": 2340
+    "timeRemainingInAssessmentSeconds": 1940
   }
 }
+
+// 404 — question number out of range, all questions answered (GET /question),
+//        or no in-progress attempt
 ```
 
-**Response 404:** (all questions answered or no active assessment)
+---
+
+### POST /answer
+
+Saves a new answer or overwrites an existing one.  
+**Overwriting does not change `questionsAnswered`.** No correctness
+information is returned while the assessment is in progress.
+
 ```json
-{
-  "success": false,
-  "message": "No more questions or assessment not found"
-}
-```
-
-#### POST /answer
-
-Submit an answer for a question.
-
-**Request:**
-```json
+// Request
 {
   "questionId": 15,
   "selectedAnswerIndex": 1,
-  "timeSpentSeconds": 45
+  "timeSpentSeconds": 42
 }
-```
 
-**Response 200:**
-```json
+// 200 OK
 {
   "success": true,
   "data": {
     "success": true,
-    "questionsAnswered": 5,
-    "questionsRemaining": 25,
+    "questionsAnswered": 7,
+    "questionsRemaining": 23,
     "isAssessmentComplete": false,
-    "timeRemainingSeconds": 2295,
-    "progressPercentage": 16.7
+    "timeRemainingSeconds": 1898,
+    "progressPercentage": 23.3
   }
 }
+
+// 400 — questionId not part of this attempt, or attempt expired
 ```
 
-**Note:** No `isCorrect` field - this is exam mode!
+---
 
-#### POST /complete
+### POST /complete
 
-Complete the assessment and get results.
+Finalises the attempt and calculates scores.  
+Partial completion is supported — unanswered questions count as incorrect.  
+Returns scores and per-skill breakdown. **Does not include per-question detail.**
+Use `GET /result/{attemptId}` for the full review.
 
-**Response 200:**
 ```json
+// 200 OK
 {
   "success": true,
   "message": "Assessment completed successfully",
@@ -728,7 +702,7 @@ Complete the assessment and get results.
     "attemptId": 42,
     "status": "Completed",
     "overallScore": 73.33,
-    "technicalScore": 71.43,
+    "technicalSkillsTotalScore": 71.43,
     "softSkillsScore": 77.78,
     "totalQuestions": 30,
     "correctAnswers": 22,
@@ -736,13 +710,108 @@ Complete the assessment and get results.
     "technicalTotal": 21,
     "softSkillCorrect": 7,
     "softSkillTotal": 9,
-    "startedAt": "2026-03-22T14:00:00Z",
-    "completedAt": "2026-03-22T14:32:15Z",
+    "startedAt": "2026-05-08T10:00:00Z",
+    "completedAt": "2026-05-08T10:32:15Z",
     "timeTakenMinutes": 32,
-    "scoreExpiresAt": "2027-09-22T14:32:15Z",
+    "scoreExpiresAt": "2027-11-08T10:32:15Z",
     "jobTitle": "Senior Backend Developer",
     "performanceLevel": "Good",
     "isPassing": true,
+    "skillScores": [
+      {
+        "skillId": 101,
+        "skillName": "ASP.NET Core",
+        "category": "Technical",
+        "correctAnswers": 9,
+        "totalQuestions": 11,
+        "score": 81.82,
+        "isClaimedSkill": true
+      }
+    ],
+    "questionResults": null
+  }
+}
+
+// 400 — no in-progress attempt
+```
+
+---
+
+### POST /abandon
+
+Marks the attempt as `Abandoned` and starts the 60-day cooldown.
+
+```json
+// 200 OK
+{ "success": true, "data": true, "message": "Assessment abandoned successfully" }
+
+// 400 — no in-progress attempt
+```
+
+---
+
+### GET /history
+
+```json
+// 200 OK
+{
+  "success": true,
+  "data": {
+    "totalAttempts": 2,
+    "bestScore": 73.33,
+    "currentActiveScore": 73.33,
+    "attempts": [
+      {
+        "attemptId": 42,
+        "status": "Completed",
+        "overallScore": 73.33,
+        "jobTitle": "Senior Backend Developer",
+        "startedAt": "2026-05-08T10:00:00Z",
+        "completedAt": "2026-05-08T10:32:15Z",
+        "retakeNumber": 1,
+        "isActive": true,
+        "isScoreExpired": false,
+        "performanceLevel": "Good"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### GET /result/{attemptId}
+
+Full review mode. Only available for completed or abandoned attempts —
+returns 404 if the attempt is still `InProgress`.
+
+`QuestionResultDto` includes `skillId` and `skillName` so the frontend can
+group results by skill.
+
+```json
+// 200 OK — same shape as POST /complete, but questionResults is populated
+{
+  "success": true,
+  "data": {
+    "attemptId": 42,
+    "status": "Completed",
+    "overallScore": 73.33,
+    "technicalSkillsTotalScore": 71.43,
+    "softSkillsScore": 77.78,
+    "totalQuestions": 30,
+    "correctAnswers": 22,
+    "technicalCorrect": 15,
+    "technicalTotal": 21,
+    "softSkillCorrect": 7,
+    "softSkillTotal": 9,
+    "startedAt": "2026-05-08T10:00:00Z",
+    "completedAt": "2026-05-08T10:32:15Z",
+    "timeTakenMinutes": 32,
+    "scoreExpiresAt": "2027-11-08T10:32:15Z",
+    "jobTitle": "Senior Backend Developer",
+    "performanceLevel": "Good",
+    "isPassing": true,
+    "skillScores": [ /* ... */ ],
     "questionResults": [
       {
         "questionId": 15,
@@ -753,302 +822,219 @@ Complete the assessment and get results.
         "selectedAnswerIndex": 1,
         "correctAnswerIndex": 1,
         "isCorrect": true,
-        "explanation": "Binary search divides the search space in half...",
-        "timeSpentSeconds": 45
+        "explanation": "Binary search halves the search space on each step, giving O(log n).",
+        "timeSpentSeconds": 42,
+        "skillId": 101,
+        "skillName": "ASP.NET Core"
       }
-      // ... more questions
+      // ... one entry per question; selectedAnswerIndex is null for unanswered
     ]
   }
 }
+
+// 404 — attempt not found, not owned by user, or still InProgress
 ```
-
-#### GET /result/{attemptId}
-
-Get detailed results for a past attempt. Only shows completed/abandoned/expired attempts.
-
-**Response 200:** Same format as POST /complete
-
-**Response 404:** Attempt not found or still in progress
 
 ---
 
 ## 11. Exam Mode Design
 
-### Philosophy
-
-The assessment uses **"exam mode"** - no immediate feedback during the test. This design choice was deliberate:
-
-### Benefits of Exam Mode
-
-1. **Prevents Gaming**: Users can't use feedback to guess answers
-2. **Realistic Testing**: Mirrors real exam conditions
-3. **Consistent Experience**: All users face same uncertainty
-4. **Score Validity**: Results reflect actual knowledge, not iterative guessing
-
-### What Users See During Test
+No correctness feedback is given during the test. After `POST /answer` the
+response only confirms the answer was recorded and reports progress:
 
 ```
-After submitting answer:
-┌────────────────────────────────────────┐
-│ ✓ Answer recorded                      │
-│ Progress: 5/30 (16.7%)                 │
-│ Time remaining: 38:15                  │
-│                                        │
-│       [Continue to Next Question]      │
-└────────────────────────────────────────┘
+✓ Answer saved (7 / 30 · 23.3 %)
+  Time remaining: 31:38
 ```
 
-### What Users See After Completion
+Full details — correct answers, explanations, per-skill scores — are available
+only after calling `POST /complete` (scores) or `GET /result/{id}` (full review).
 
-```
-Assessment Complete!
-
-Overall Score: 73.33% (Good)
-Technical: 71.43% (15/21 correct)
-Soft Skills: 77.78% (7/9 correct)
-
-┌─ Question 1 ─────────────────────────┐
-│ What is the time complexity of...    │
-│                                      │
-│ ○ O(n)                               │
-│ ● O(log n)  ← Your answer ✓ Correct  │
-│ ○ O(n²)                              │
-│ ○ O(1)                               │
-│                                      │
-│ Explanation: Binary search divides...│
-└──────────────────────────────────────┘
-```
+This design prevents iterative guessing and ensures scores reflect genuine knowledge.
 
 ---
 
 ## 12. State Machine
 
-### Assessment Status Transitions
+### Status Transitions
 
 ```
-                    ┌───────────────┐
-                    │   (initial)   │
-                    └───────┬───────┘
-                            │ POST /start
-                            ▼
-                    ┌───────────────┐
-          ┌────────│  InProgress   │────────┐
-          │        └───────┬───────┘        │
-          │                │                │
-    POST /abandon    POST /complete    Time expires
-          │                │                │
-          ▼                ▼                ▼
-    ┌───────────┐    ┌───────────┐    ┌───────────┐
-    │ Abandoned │    │ Completed │    │  Expired  │
-    └───────────┘    └───────────┘    └───────────┘
-         │                │                │
-         └────────────────┴────────────────┘
-                          │
-                   60-day cooldown
-                          │
-                          ▼
-                   Can start new
-                   assessment
+                    ┌─────────────┐
+                    │   (start)   │
+                    └──────┬──────┘
+                           │ POST /start
+                           ▼
+                    ┌─────────────┐
+          ┌────────│  InProgress  │────────┐
+          │        └──────┬──────┘        │
+          │               │               │
+    POST /abandon   POST /complete   Timer expires
+          │               │         (auto-submit)
+          ▼               ▼               ▼
+    ┌──────────┐   ┌──────────┐   ┌──────────────┐
+    │ Abandoned│   │ Completed│   │ Completed    │
+    └──────────┘   └──────────┘   │(via auto-    │
+         │              │         │ submit)      │
+         └──────┬────── ┴ ────────┴──────────────┘
+                │
+         60-day cooldown
+                │
+         Can start again
 ```
+
+> **Note on expiry:** The `Expired` enum value (4) exists but is not written by
+> the service. Timed-out attempts are always finalised as `Completed` by the
+> auto-submit path. The `Expired` value is reserved for possible future use.
 
 ### Status Definitions
 
-| Status | Value | Description |
-|--------|-------|-------------|
-| `InProgress` | 1 | Currently taking the assessment |
-| `Completed` | 2 | All questions answered, scores calculated |
-| `Abandoned` | 3 | User explicitly gave up |
-| `Expired` | 4 | Time ran out before completion |
+| Status | Int | Description |
+|---|---|---|
+| `InProgress` | 1 | Currently in-flight |
+| `Completed` | 2 | Scores calculated and persisted |
+| `Abandoned` | 3 | Explicitly abandoned by the user |
+| `Expired` | 4 | Reserved; not written by current service |
 
 ### Constraints
 
-- Only **one InProgress** assessment per job seeker (enforced by unique filtered index)
-- Only **one IsActive** completed assessment per job seeker (managed by service logic)
-- **All terminal states** (Completed, Abandoned, Expired) trigger the 60-day cooldown
+- **One in-progress per job seeker** — enforced by the `UX_AssessmentAttempt_JobSeeker_InProgress` unique filtered index.
+- **One active completed per job seeker** — managed by the service on finalisation.
+- **All terminal paths** (complete, abandon, auto-submit) set `LastAssessmentDate` and start the cooldown.
 
 ---
 
 ## 13. Error Handling
 
-### Service Layer Patterns
+### Controller Pattern
 
 ```csharp
-public async Task<SomeDto?> SomeOperationAsync(int userId)
-{
-    try
-    {
-        // 1. Validate user and role
-        var user = await _context.Users.FindAsync(userId);
-        if (user?.AccountType != AccountType.JobSeeker)
-            return null;
-
-        // 2. Get domain entity
-        var jobSeeker = await _context.JobSeekers
-            .FirstOrDefaultAsync(js => js.UserId == userId);
-        if (jobSeeker == null)
-            return null;
-
-        // 3. Business logic with validation
-        // ...
-
-        // 4. Log success
-        _logger.LogInformation("Operation succeeded for user {UserId}", userId);
-        return result;
-    }
-    catch (Exception ex)
-    {
-        // 5. Log error with context
-        _logger.LogError(ex, "Error in operation for user {UserId}", userId);
-        return null;
-    }
-}
-```
-
-### Controller Layer Patterns
-
-```csharp
-var result = await _assessmentService.SomeOperationAsync(userId);
-
+var result = await _assessmentService.SomeMethodAsync(userId, ...);
 if (result == null)
-{
-    return BadRequest(new ApiErrorResponse("Descriptive error message"));
-}
-
+    return BadRequest(new ApiErrorResponse("Descriptive message"));
 return Ok(new ApiResponse<SomeDto>(result, "Success message"));
 ```
 
-### Common Error Scenarios
+Service methods return `null` on business-logic failure and throw only on
+unexpected exceptions (which are caught internally and logged).
 
-| Scenario | HTTP Status | Message |
-|----------|-------------|---------|
-| Not authenticated | 401 | "User not authenticated" |
-| Not a job seeker | 400 | "Only job seekers can take assessments" |
-| Profile incomplete | 400 | "Please complete your profile" |
-| No job title | 400 | "Please set your job title" |
-| In cooldown | 400 | "Please wait N days before retaking" |
-| Has in-progress | 400 | "Complete or abandon current assessment" |
-| Assessment expired | 400 | "Assessment has expired" |
-| Question not found | 400 | "Question is invalid" |
-| Already answered | 400 | "Question already answered" |
-| No active assessment | 404 | "No assessment in progress" |
+### Common HTTP Responses
+
+| Scenario | Status | Message |
+|---|---|---|
+| Missing / expired JWT | 401 | "User not authenticated" |
+| Not a JobSeeker | 400 | (eligibility check) |
+| Profile incomplete | 400 | (eligibility check) |
+| No job title | 400 | (eligibility check) |
+| No claimed skills | 400 | (eligibility check) |
+| In cooldown | 400 | (eligibility check) |
+| Assessment in progress | 400 | (eligibility check) |
+| Question not in attempt | 400 | "Failed to submit answer …" |
+| Invalid answer index | 400 | Model validation error |
+| No in-progress attempt | 404 | "No assessment in progress" |
+| Question out of range | 404 | "Question not found" |
+| Result not found / in-progress | 404 | "Assessment result not found or not yet completed" |
 
 ---
 
 ## 14. Frontend Integration Guide
 
-### Typical UI Flow
+### Landing Page Logic
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    ASSESSMENT LANDING PAGE                          │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│   [Call GET /eligibility on page load]                              │
-│                                                                     │
-│   IF isEligible:                                                    │
-│     Show "Start Assessment" button                                  │
-│     Display: "30 questions, 45 minutes, 70% technical"              │
-│                                                                     │
-│   IF in cooldown:                                                   │
-│     Show countdown: "Available in 45 days"                          │
-│     Show current score if exists                                    │
-│                                                                     │
-│   IF has in-progress:                                               │
-│     Show "Resume Assessment" button                                 │
-│     [Call GET /current to get status]                               │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
+On page load → GET /eligibility
 
-┌─────────────────────────────────────────────────────────────────────┐
-│                    QUESTION PAGE                                     │
-├─────────────────────────────────────────────────────────────────────┤
-│   Timer: 38:15 remaining                    Question 5/30           │
-│   ─────────────────────────────────────────────────────────────     │
-│                                                                     │
-│   Technical • Medium Difficulty                                     │
-│                                                                     │
-│   What is the time complexity of binary search?                     │
-│                                                                     │
-│   ○ O(n)                                                            │
-│   ● O(log n)     [selected]                                         │
-│   ○ O(n²)                                                           │
-│   ○ O(1)                                                            │
-│                                                                     │
-│   Progress: ████████░░░░░░░░░░░░░░░░░░░░░░ 16.7%                    │
-│                                                                     │
-│   [Previous] [Skip]        [Submit Answer]   [Abandon Assessment]   │
-└─────────────────────────────────────────────────────────────────────┘
+isEligible = true         → show "Start Assessment" button
+hasInProgressAssessment   → show "Resume" button; call GET /current
+isInCooldownPeriod        → show cooldown countdown from cooldownEndsAt
+                            show current score if currentScore is set
 ```
 
-### Recommended State Management
+### State Shape (TypeScript)
 
 ```typescript
 interface AssessmentState {
-  // Eligibility
-  eligibility: EligibilityResponse | null;
-
-  // Active attempt
+  // Attempt
   attemptId: number | null;
-  currentQuestion: QuestionResponse | null;
-  questionsAnswered: number;
+  status: 'InProgress' | 'Completed' | 'Abandoned' | null;
   totalQuestions: number;
   expiresAt: Date | null;
 
-  // Timer
+  // Progress
+  questionsAnswered: number;
+  questionStatuses: { questionNumber: number; isAnswered: boolean }[];
+
+  // Current question
+  currentQuestion: QuestionResponse | null;
+  selectedAnswerIndex: number | null;
+
+  // Timer (client-side countdown from expiresAt)
   timeRemainingSeconds: number;
 
-  // UI state
-  selectedAnswer: number | null;
-  isSubmitting: boolean;
+  // Review
+  result: AssessmentResultResponse | null;
 }
 ```
 
 ### Timer Implementation
 
+Drive the countdown entirely from `expiresAt` returned by the server.
+Never derive remaining time from a local start timestamp.
+
 ```typescript
-// Start timer after POST /start or GET /current
-const startTimer = (expiresAt: Date) => {
-  const interval = setInterval(() => {
-    const remaining = Math.max(0,
+const startTimer = (expiresAt: Date): (() => void) => {
+  const tick = () => {
+    const remaining = Math.max(
+      0,
       Math.floor((expiresAt.getTime() - Date.now()) / 1000)
     );
+    setTimeRemainingSeconds(remaining);
+    if (remaining === 0) handleTimerExpiry();
+  };
 
-    if (remaining === 0) {
-      clearInterval(interval);
-      handleExpiration();
-    } else {
-      setTimeRemaining(remaining);
-    }
-  }, 1000);
-
-  return () => clearInterval(interval);
+  tick(); // run immediately to avoid 1-second blank
+  const id = setInterval(tick, 1000);
+  return () => clearInterval(id);
 };
 ```
 
-### Handling Connection Loss
+### Reconnect / Page Refresh
 
 ```typescript
-// On reconnect or page refresh
-const resumeAssessment = async () => {
-  const status = await api.get('/assessment/current');
+const resumeInProgressAssessment = async () => {
+  const { data: status } = await api.get('/assessment/current');
+  if (!status) return; // no attempt in progress
 
-  if (status.isExpired) {
-    showMessage('Assessment expired');
-    redirectToResults();
+  // Restore server-authoritative timer
+  startTimer(new Date(status.expiresAt));
+
+  if (status.status === 'Completed') {
+    // Auto-submitted while away
+    redirectToResults(status.attemptId);
     return;
   }
 
-  // Restore timer from server time
-  startTimer(new Date(status.expiresAt));
+  // Reload overview panel
+  const { data: statuses } = await api.get('/assessment/questions');
+  setQuestionStatuses(statuses);
 
-  // Get next question
-  const question = await api.get('/assessment/question');
-  if (question) {
-    showQuestion(question);
-  } else {
-    // All answered, prompt to complete
-    promptComplete();
-  }
+  // Open at the first unanswered question
+  const { data: question } = await api.get('/assessment/question');
+  if (question) setCurrentQuestion(question);
+  else promptToComplete(); // all questions answered
+};
+```
+
+### Timer Expiry Handling
+
+When the client timer reaches zero, the next API call will trigger auto-submit.
+Do not make any assessment calls before showing the user a message.
+
+```typescript
+const handleTimerExpiry = async () => {
+  showExpiryModal('Time is up. Submitting your answers…');
+  const { data: status } = await api.get('/assessment/current');
+  // status.status === 'Completed' at this point
+  redirectToResults(status.attemptId);
 };
 ```
 
@@ -1056,48 +1042,37 @@ const resumeAssessment = async () => {
 
 ## 15. Testing Scenarios
 
-### Happy Path Test
+### Happy Path
 
 ```
-1. Create JobSeeker with ProfileCompletionStep = 4 and JobTitle set
+1. JobSeeker with ProfileCompletionStep = 4, JobTitle, and ≥1 claimed skill
 2. GET /eligibility → isEligible = true
-3. POST /start → Get attemptId, 30 questions
-4. Loop 30 times:
-   - GET /question → Get question details
-   - POST /answer with valid questionId and selectedAnswerIndex
-5. POST /complete → Get scores and question breakdown
-6. GET /history → See attempt in list
-7. GET /result/{attemptId} → See detailed breakdown
+3. POST /start → receive attemptId and 30 questions
+4. Repeat 30 times:
+     GET  /question/{n}
+     POST /answer
+5. POST /complete → scores and skillScores
+6. GET  /result/{attemptId} → full question-level review
+7. GET  /history → attempt appears in list
 ```
 
-### Edge Case Tests
+### Edge Cases
 
-| Scenario | Expected Behavior |
-|----------|-------------------|
-| **Double start** | Second POST /start fails (already in progress) |
-| **Answer wrong question** | POST /answer returns 400 (question not in attempt) |
-| **Answer twice** | POST /answer returns 400 (already answered) |
-| **Complete early** | POST /complete works with partial answers |
-| **Timeout during test** | Next request returns expired status |
-| **Abandon and restart** | Must wait 60 days |
-| **Recruiter tries** | All endpoints return 400 (wrong role) |
+| Scenario | Expected Result |
+|---|---|
+| Double `POST /start` | 400 — attempt already in progress |
+| `POST /answer` wrong questionId | 400 — question not part of attempt |
+| `POST /answer` already-answered question | **200 — answer is overwritten** |
+| `POST /complete` with partial answers | 200 — unanswered count as incorrect |
+| Timer expires; next request | Auto-submit fires; status = Completed |
+| `GET /result/{id}` while InProgress | 404 |
+| Recruiter calls any endpoint | 400 (only JobSeekers can assess) |
+| `POST /start` with `skillIds` subset | Only those skills are targeted |
 
-### Load Test Considerations
+### What to Verify in Unit Tests
 
-- Question selection involves multiple DB queries - ensure indexes are used
-- Score calculation is CPU-bound - test with concurrent completions
-- JSON serialization of question IDs - keep within 500 char limit
-
----
-
-## Summary
-
-The Assessment Module provides a robust, fair, and scalable system for skill verification. Key design decisions:
-
-1. **Exam mode** ensures score validity
-2. **Role-based targeting** provides relevant questions
-3. **Seniority-adjusted difficulty** creates appropriate challenge
-4. **Lazy expiration** simplifies infrastructure
-5. **Comprehensive audit trail** via QuestionIdsJson and AssessmentAnswer records
-
-For questions or contributions, please refer to the project's GitHub repository or contact the backend team.
+- Overwrite does not increment `QuestionsAnswered`
+- `GetQuestionByNumberAsync` returns `selectedAnswerIndex` for an answered question
+- `CompleteAssessmentAsync` returns `OverallScore = 0` when no answers given
+- `GetCurrentStatusAsync` on expired attempt triggers auto-submit and returns `Completed`
+- `CheckEligibilityAsync` counts only `AlgorithmVersion = 2` attempts in `previousAttempts`

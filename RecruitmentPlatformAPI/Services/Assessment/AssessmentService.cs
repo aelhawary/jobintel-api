@@ -10,11 +10,13 @@ using JobSeekerModel = RecruitmentPlatformAPI.Models.JobSeeker.JobSeeker;
 namespace RecruitmentPlatformAPI.Services.Assessment
 {
     /// <summary>
-    /// Service for managing job seeker skill assessments
+    /// Claimed-skills assessment service.
+    /// Questions are selected from the job seeker's claimed skill set and
+    /// filtered by role family and seniority level.
     /// </summary>
     public class AssessmentService : IAssessmentService
     {
-        private const int LegacyAlgorithmVersion = 1;
+        private const int AlgorithmVersion = 2;
 
         private readonly AppDbContext _context;
         private readonly ILogger<AssessmentService> _logger;
@@ -33,7 +35,6 @@ namespace RecruitmentPlatformAPI.Services.Assessment
             {
                 var result = new EligibilityResponseDto();
 
-                // Get user and validate role
                 var user = await _context.Users.FindAsync(userId);
                 if (user == null || user.AccountType != AccountType.JobSeeker)
                 {
@@ -41,7 +42,6 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     return result;
                 }
 
-                // Get job seeker profile
                 var jobSeeker = await _context.JobSeekers
                     .Include(js => js.JobTitle)
                     .FirstOrDefaultAsync(js => js.UserId == userId);
@@ -52,7 +52,6 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     return result;
                 }
 
-                // Check profile completion
                 result.HasCompletedProfile = user.ProfileCompletionStep >= 4;
                 if (!result.HasCompletedProfile)
                 {
@@ -60,7 +59,6 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     return result;
                 }
 
-                // Check job title
                 result.HasJobTitle = jobSeeker.JobTitleId.HasValue;
                 if (!result.HasJobTitle)
                 {
@@ -68,7 +66,20 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     return result;
                 }
 
-                // Check for in-progress assessment
+                var claimedSkills = await GetClaimedSkillsAsync(jobSeeker.Id);
+                result.ClaimedSkillsCount = claimedSkills.Count;
+                result.HasClaimedSkills = claimedSkills.Count > 0;
+                result.ClaimedSkills = claimedSkills
+                    .Select(s => new AssessmentSkillLiteDto { SkillId = s.SkillId, SkillName = s.SkillName })
+                    .ToList();
+
+                if (!result.HasClaimedSkills)
+                {
+                    result.Reason = "Please select at least one skill before taking an assessment";
+                    return result;
+                }
+
+                // Shared lock: a user may only have one active in-progress assessment at a time.
                 var inProgressAttempt = await _context.AssessmentAttempts
                     .FirstOrDefaultAsync(a => a.JobSeekerId == jobSeeker.Id
                                            && a.Status == AssessmentStatus.InProgress);
@@ -80,7 +91,6 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     return result;
                 }
 
-                // Check cooldown period
                 if (jobSeeker.LastAssessmentDate.HasValue)
                 {
                     var cooldownEnds = jobSeeker.LastAssessmentDate.Value.AddDays(AssessmentSettings.CooldownDays);
@@ -94,12 +104,9 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     }
                 }
 
-                // Get previous attempts count
                 result.PreviousAttempts = await _context.AssessmentAttempts
-                    .CountAsync(a => a.JobSeekerId == jobSeeker.Id
-                                  && a.AlgorithmVersion == LegacyAlgorithmVersion);
+                    .CountAsync(a => a.JobSeekerId == jobSeeker.Id && a.AlgorithmVersion == AlgorithmVersion);
 
-                // Get current active score
                 var activeAttempt = await _context.AssessmentAttempts
                     .FirstOrDefaultAsync(a => a.JobSeekerId == jobSeeker.Id
                                            && a.IsActive
@@ -111,13 +118,12 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     result.ScoreExpiresAt = activeAttempt.ScoreExpiresAt;
                 }
 
-                // All checks passed
                 result.IsEligible = true;
                 return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error checking eligibility for user {UserId}", userId);
+                _logger.LogError(ex, "Error checking assessment eligibility for user {UserId}", userId);
                 return new EligibilityResponseDto { Reason = "An error occurred while checking eligibility" };
             }
         }
@@ -126,11 +132,10 @@ namespace RecruitmentPlatformAPI.Services.Assessment
 
         #region Start Assessment
 
-        public async Task<StartAssessmentResponseDto?> StartAssessmentAsync(int userId)
+        public async Task<StartAssessmentResponseDto?> StartAssessmentAsync(int userId, StartAssessmentRequestDto? request = null)
         {
             try
             {
-                // Check eligibility first
                 var eligibility = await CheckEligibilityAsync(userId);
                 if (!eligibility.IsEligible)
                 {
@@ -138,35 +143,49 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     return null;
                 }
 
-                // Get job seeker with job title
                 var jobSeeker = await _context.JobSeekers
                     .Include(js => js.JobTitle)
-                    .FirstOrDefaultAsync(js => js.User.Id == userId);
+                    .FirstOrDefaultAsync(js => js.UserId == userId);
 
                 if (jobSeeker?.JobTitle == null)
                 {
                     return null;
                 }
 
-                // Calculate seniority level
+                var claimedSkills = await GetClaimedSkillsAsync(jobSeeker.Id);
+                if (request?.SkillIds != null && request.SkillIds.Count > 0)
+                {
+                    var requested = request.SkillIds.Distinct().ToHashSet();
+                    claimedSkills = claimedSkills.Where(s => requested.Contains(s.SkillId)).ToList();
+                }
+
+                if (claimedSkills.Count == 0)
+                {
+                    _logger.LogWarning("User {UserId} attempted to start assessment with no valid claimed skills", userId);
+                    return null;
+                }
+
+                var claimedSkillIds = claimedSkills.Select(s => s.SkillId).ToList();
                 var seniorityLevel = CalculateSeniorityLevel(jobSeeker.YearsOfExperience);
                 var roleFamily = jobSeeker.JobTitle.RoleFamily;
 
-                // Select questions for the assessment
-                var questionIds = await SelectQuestionsForAssessmentAsync(roleFamily, seniorityLevel);
-                if (questionIds.Count < AssessmentSettings.TotalQuestionsPerAssessment)
+                var questionIds = await SelectQuestionsForAssessmentAsync(roleFamily, seniorityLevel, claimedSkillIds);
+                if (questionIds.Count == 0)
                 {
-                    _logger.LogWarning("Insufficient questions available for RoleFamily {RoleFamily}, Seniority {Seniority}. Found: {Count}",
-                        roleFamily, seniorityLevel, questionIds.Count);
-                    // Continue with available questions
+                    _logger.LogWarning("No questions could be selected for user {UserId}", userId);
+                    return null;
                 }
 
-                // Determine retake number
-                var previousAttempts = await _context.AssessmentAttempts
-                    .CountAsync(a => a.JobSeekerId == jobSeeker.Id
-                                  && a.AlgorithmVersion == LegacyAlgorithmVersion);
+                if (questionIds.Count < AssessmentSettings.TotalQuestionsPerAssessment)
+                {
+                    _logger.LogWarning(
+                        "Insufficient questions for user {UserId}. RoleFamily {RoleFamily}, Seniority {Seniority}, Selected {Count}",
+                        userId, roleFamily, seniorityLevel, questionIds.Count);
+                }
 
-                // Create the assessment attempt
+                var previousAttempts = await _context.AssessmentAttempts
+                    .CountAsync(a => a.JobSeekerId == jobSeeker.Id && a.AlgorithmVersion == AlgorithmVersion);
+
                 var now = DateTime.UtcNow;
                 var attempt = new AssessmentAttempt
                 {
@@ -181,7 +200,8 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     IsActive = false,
                     RetakeNumber = previousAttempts + 1,
                     QuestionIdsJson = JsonSerializer.Serialize(questionIds),
-                    AlgorithmVersion = LegacyAlgorithmVersion
+                    ClaimedSkillIdsJson = JsonSerializer.Serialize(claimedSkillIds),
+                    AlgorithmVersion = AlgorithmVersion
                 };
 
                 _context.AssessmentAttempts.Add(attempt);
@@ -189,7 +209,7 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                 {
                     await _context.SaveChangesAsync();
                 }
-                catch (DbUpdateException dbEx) when (IsInProgressAttemptConstraintViolation(dbEx))
+                catch (DbUpdateException dbEx) when (IsInProgressConstraintViolation(dbEx))
                 {
                     _logger.LogWarning(
                         dbEx,
@@ -198,12 +218,38 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     return null;
                 }
 
-                _logger.LogInformation("Assessment started for user {UserId}, attempt {AttemptId} with {QuestionCount} questions",
-                    userId, attempt.Id, questionIds.Count);
+                var selectedQuestions = await _context.AssessmentQuestions
+                    .Where(q => questionIds.Contains(q.Id))
+                    .ToListAsync();
 
-                // Count technical vs soft skill questions
-                var technicalCount = await _context.AssessmentQuestions
-                    .CountAsync(q => questionIds.Contains(q.Id) && q.Category == QuestionCategory.Technical);
+                var technicalCount = selectedQuestions.Count(q => q.Category == QuestionCategory.Technical);
+
+                var allSkillIds = selectedQuestions
+                    .Select(q => q.SkillId)
+                    .Concat(claimedSkillIds)
+                    .Distinct()
+                    .ToList();
+
+                var skillNameLookup = await _context.Skills
+                    .Where(s => allSkillIds.Contains(s.Id))
+                    .ToDictionaryAsync(s => s.Id, s => s.Name);
+
+                var skillAllocations = selectedQuestions
+                    .GroupBy(q => q.SkillId)
+                    .Select(group => new SkillAllocationDto
+                    {
+                        SkillId = group.Key,
+                        SkillName = skillNameLookup.GetValueOrDefault(group.Key, $"Skill #{group.Key}"),
+                        TechnicalQuestions = group.Count(q => q.Category == QuestionCategory.Technical),
+                        SoftSkillQuestions = group.Count(q => q.Category == QuestionCategory.SoftSkill)
+                    })
+                    .OrderByDescending(a => a.TotalQuestions)
+                    .ThenBy(a => a.SkillName)
+                    .ToList();
+
+                _logger.LogInformation(
+                    "Assessment started for user {UserId}, attempt {AttemptId}, questions {QuestionCount}, claimed skills {SkillCount}",
+                    userId, attempt.Id, questionIds.Count, claimedSkillIds.Count);
 
                 return new StartAssessmentResponseDto
                 {
@@ -217,7 +263,9 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     JobTitle = jobSeeker.JobTitle.Title,
                     RoleFamily = roleFamily.ToString(),
                     SeniorityLevel = seniorityLevel.ToString(),
-                    RetakeNumber = attempt.RetakeNumber
+                    RetakeNumber = attempt.RetakeNumber,
+                    ClaimedSkillsCount = claimedSkillIds.Count,
+                    SkillAllocations = skillAllocations
                 };
             }
             catch (Exception ex)
@@ -241,20 +289,18 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                 var attempt = await _context.AssessmentAttempts
                     .FirstOrDefaultAsync(a => a.JobSeekerId == jobSeeker.Id
                                            && a.Status == AssessmentStatus.InProgress
-                                           && a.AlgorithmVersion == LegacyAlgorithmVersion);
+                                           && a.AlgorithmVersion == AlgorithmVersion);
 
                 if (attempt == null) return null;
 
-                // Check if expired
                 var now = DateTime.UtcNow;
                 var isExpired = now > attempt.ExpiresAt;
-                var timeRemaining = isExpired ? 0 : (int)(attempt.ExpiresAt - now).TotalSeconds;
-
-                if (isExpired && attempt.Status == AssessmentStatus.InProgress)
+                if (isExpired)
                 {
-                    attempt.Status = AssessmentStatus.Expired;
-                    await _context.SaveChangesAsync();
+                    await AutoSubmitIfExpiredAsync(jobSeeker, attempt, now);
                 }
+
+                var timeRemaining = isExpired ? 0 : (int)(attempt.ExpiresAt - now).TotalSeconds;
 
                 return new AssessmentStatusResponseDto
                 {
@@ -274,7 +320,113 @@ namespace RecruitmentPlatformAPI.Services.Assessment
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting current status for user {UserId}", userId);
+                _logger.LogError(ex, "Error getting assessment status for user {UserId}", userId);
+                return null;
+            }
+        }
+
+        #endregion
+
+        #region Question Overview
+
+        public async Task<List<AssessmentQuestionStatusDto>?> GetQuestionStatusesAsync(int userId)
+        {
+            try
+            {
+                var jobSeeker = await GetJobSeekerByUserIdAsync(userId);
+                if (jobSeeker == null) return null;
+
+                var attempt = await _context.AssessmentAttempts
+                    .Include(a => a.Answers)
+                    .FirstOrDefaultAsync(a => a.JobSeekerId == jobSeeker.Id
+                                           && a.Status == AssessmentStatus.InProgress
+                                           && a.AlgorithmVersion == AlgorithmVersion);
+
+                if (attempt == null) return null;
+
+                var now = DateTime.UtcNow;
+                if (now > attempt.ExpiresAt)
+                {
+                    await AutoSubmitIfExpiredAsync(jobSeeker, attempt, now);
+                    return null;
+                }
+
+                var questionIds = ParseQuestionIdsJson(attempt.QuestionIdsJson);
+                var answeredQuestionIds = attempt.Answers.Select(a => a.QuestionId).ToHashSet();
+
+                var statuses = new List<AssessmentQuestionStatusDto>(questionIds.Count);
+                for (var i = 0; i < questionIds.Count; i++)
+                {
+                    statuses.Add(new AssessmentQuestionStatusDto
+                    {
+                        QuestionNumber = i + 1,
+                        IsAnswered = answeredQuestionIds.Contains(questionIds[i])
+                    });
+                }
+
+                return statuses;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting question statuses for user {UserId}", userId);
+                return null;
+            }
+        }
+
+        public async Task<QuestionResponseDto?> GetQuestionByNumberAsync(int userId, int questionNumber)
+        {
+            try
+            {
+                if (questionNumber <= 0) return null;
+
+                var jobSeeker = await GetJobSeekerByUserIdAsync(userId);
+                if (jobSeeker == null) return null;
+
+                var attempt = await _context.AssessmentAttempts
+                    .Include(a => a.Answers)
+                    .FirstOrDefaultAsync(a => a.JobSeekerId == jobSeeker.Id
+                                           && a.Status == AssessmentStatus.InProgress
+                                           && a.AlgorithmVersion == AlgorithmVersion);
+
+                if (attempt == null) return null;
+
+                var now = DateTime.UtcNow;
+                if (now > attempt.ExpiresAt)
+                {
+                    await AutoSubmitIfExpiredAsync(jobSeeker, attempt, now);
+                    return null;
+                }
+
+                var questionIds = ParseQuestionIdsJson(attempt.QuestionIdsJson);
+                if (questionNumber > questionIds.Count) return null;
+
+                var questionId = questionIds[questionNumber - 1];
+                var question = await _context.AssessmentQuestions
+                    .FirstOrDefaultAsync(q => q.Id == questionId);
+
+                if (question == null) return null;
+
+                var options = JsonSerializer.Deserialize<List<string>>(question.Options) ?? new List<string>();
+                var timeRemaining = (int)(attempt.ExpiresAt - now).TotalSeconds;
+                var existingAnswer = attempt.Answers.FirstOrDefault(a => a.QuestionId == questionId);
+
+                return new QuestionResponseDto
+                {
+                    QuestionId = question.Id,
+                    QuestionNumber = questionNumber,
+                    TotalQuestions = attempt.TotalQuestions,
+                    QuestionText = question.QuestionText,
+                    Category = question.Category.ToString(),
+                    Difficulty = question.Difficulty.ToString(),
+                    Options = options,
+                    SelectedAnswerIndex = existingAnswer?.SelectedAnswerIndex,
+                    TimeAllowedSeconds = question.TimePerQuestion ?? AssessmentSettings.DefaultTimePerQuestionSeconds,
+                    TimeRemainingInAssessmentSeconds = Math.Max(0, timeRemaining)
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting question {QuestionNumber} for user {UserId}", questionNumber, userId);
                 return null;
             }
         }
@@ -294,29 +446,23 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     .Include(a => a.Answers)
                     .FirstOrDefaultAsync(a => a.JobSeekerId == jobSeeker.Id
                                            && a.Status == AssessmentStatus.InProgress
-                                           && a.AlgorithmVersion == LegacyAlgorithmVersion);
+                                           && a.AlgorithmVersion == AlgorithmVersion);
 
                 if (attempt == null) return null;
 
-                // Check if expired
                 var now = DateTime.UtcNow;
                 if (now > attempt.ExpiresAt)
                 {
-                    attempt.Status = AssessmentStatus.Expired;
-                    await _context.SaveChangesAsync();
+                    await AutoSubmitIfExpiredAsync(jobSeeker, attempt, now);
                     return null;
                 }
 
-                // Get question IDs for this attempt
-                var questionIds = JsonSerializer.Deserialize<List<int>>(attempt.QuestionIdsJson ?? "[]") ?? new List<int>();
-
-                // Find already answered question IDs
+                var questionIds = ParseQuestionIdsJson(attempt.QuestionIdsJson);
                 var answeredQuestionIds = attempt.Answers.Select(a => a.QuestionId).ToHashSet();
 
-                // Find next unanswered question (in order)
                 int? nextQuestionId = null;
                 int questionNumber = 0;
-                for (int i = 0; i < questionIds.Count; i++)
+                for (var i = 0; i < questionIds.Count; i++)
                 {
                     if (!answeredQuestionIds.Contains(questionIds[i]))
                     {
@@ -326,21 +472,14 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     }
                 }
 
-                if (nextQuestionId == null)
-                {
-                    // All questions answered
-                    return null;
-                }
+                if (nextQuestionId == null) return null;
 
-                // Get the question
                 var question = await _context.AssessmentQuestions
                     .FirstOrDefaultAsync(q => q.Id == nextQuestionId);
 
                 if (question == null) return null;
 
-                // Parse options
                 var options = JsonSerializer.Deserialize<List<string>>(question.Options) ?? new List<string>();
-
                 var timeRemaining = (int)(attempt.ExpiresAt - now).TotalSeconds;
 
                 return new QuestionResponseDto
@@ -352,6 +491,7 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     Category = question.Category.ToString(),
                     Difficulty = question.Difficulty.ToString(),
                     Options = options,
+                    SelectedAnswerIndex = null,
                     TimeAllowedSeconds = question.TimePerQuestion ?? AssessmentSettings.DefaultTimePerQuestionSeconds,
                     TimeRemainingInAssessmentSeconds = Math.Max(0, timeRemaining)
                 };
@@ -374,51 +514,53 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     .Include(a => a.Answers)
                     .FirstOrDefaultAsync(a => a.JobSeekerId == jobSeeker.Id
                                            && a.Status == AssessmentStatus.InProgress
-                                           && a.AlgorithmVersion == LegacyAlgorithmVersion);
+                                           && a.AlgorithmVersion == AlgorithmVersion);
 
                 if (attempt == null) return null;
 
-                // Check if expired
                 var now = DateTime.UtcNow;
                 if (now > attempt.ExpiresAt)
                 {
-                    attempt.Status = AssessmentStatus.Expired;
-                    await _context.SaveChangesAsync();
+                    await AutoSubmitIfExpiredAsync(jobSeeker, attempt, now);
                     return null;
                 }
 
-                // Verify question is part of this assessment
-                var questionIds = JsonSerializer.Deserialize<List<int>>(attempt.QuestionIdsJson ?? "[]") ?? new List<int>();
+                var questionIds = ParseQuestionIdsJson(attempt.QuestionIdsJson);
                 if (!questionIds.Contains(dto.QuestionId))
                 {
-                    _logger.LogWarning("Question {QuestionId} not part of attempt {AttemptId}", dto.QuestionId, attempt.Id);
+                    _logger.LogWarning("Question {QuestionId} is not part of attempt {AttemptId}", dto.QuestionId, attempt.Id);
                     return null;
                 }
 
-                // Check if already answered
-                if (attempt.Answers.Any(a => a.QuestionId == dto.QuestionId))
-                {
-                    _logger.LogWarning("Question {QuestionId} already answered in attempt {AttemptId}", dto.QuestionId, attempt.Id);
-                    return null;
-                }
-
-                // Get the question to verify answer
                 var question = await _context.AssessmentQuestions.FindAsync(dto.QuestionId);
                 if (question == null) return null;
 
-                // Create the answer
-                var answer = new AssessmentAnswer
+                var existingAnswer = attempt.Answers.FirstOrDefault(a => a.QuestionId == dto.QuestionId);
+                if (existingAnswer != null)
                 {
-                    AssessmentAttemptId = attempt.Id,
-                    QuestionId = dto.QuestionId,
-                    SelectedAnswerIndex = dto.SelectedAnswerIndex,
-                    IsCorrect = dto.SelectedAnswerIndex == question.CorrectAnswerIndex,
-                    TimeSpentSeconds = dto.TimeSpentSeconds,
-                    AnsweredAt = now
-                };
+                    // Overwrite — answered count is unchanged.
+                    existingAnswer.SelectedAnswerIndex = dto.SelectedAnswerIndex;
+                    existingAnswer.IsCorrect = dto.SelectedAnswerIndex == question.CorrectAnswerIndex;
+                    existingAnswer.TimeSpentSeconds = dto.TimeSpentSeconds;
+                    existingAnswer.AnsweredAt = now;
+                }
+                else
+                {
+                    var answer = new AssessmentAnswer
+                    {
+                        AssessmentAttemptId = attempt.Id,
+                        QuestionId = dto.QuestionId,
+                        SelectedAnswerIndex = dto.SelectedAnswerIndex,
+                        IsCorrect = dto.SelectedAnswerIndex == question.CorrectAnswerIndex,
+                        TimeSpentSeconds = dto.TimeSpentSeconds,
+                        AnsweredAt = now
+                    };
 
-                _context.AssessmentAnswers.Add(answer);
-                attempt.QuestionsAnswered++;
+                    _context.AssessmentAnswers.Add(answer);
+                    attempt.Answers.Add(answer);
+                    attempt.QuestionsAnswered++;
+                }
+
                 await _context.SaveChangesAsync();
 
                 var timeRemaining = (int)(attempt.ExpiresAt - now).TotalSeconds;
@@ -457,93 +599,11 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     .Include(a => a.JobTitle)
                     .FirstOrDefaultAsync(a => a.JobSeekerId == jobSeeker.Id
                                            && a.Status == AssessmentStatus.InProgress
-                                           && a.AlgorithmVersion == LegacyAlgorithmVersion);
+                                           && a.AlgorithmVersion == AlgorithmVersion);
 
                 if (attempt == null) return null;
 
-                var now = DateTime.UtcNow;
-                var isExpired = now > attempt.ExpiresAt;
-
-                // Check if expired
-                if (isExpired)
-                {
-                    attempt.Status = AssessmentStatus.Expired;
-                    await _context.SaveChangesAsync();
-                    // Still calculate and return results for expired assessments
-                }
-
-                // Get question details for scoring
-                var questionIds = attempt.Answers.Select(a => a.QuestionId).ToList();
-                var questions = await _context.AssessmentQuestions
-                    .Where(q => questionIds.Contains(q.Id))
-                    .ToDictionaryAsync(q => q.Id);
-
-                // Calculate scores
-                var (overall, technical, softSkill, stats) = CalculateScores(attempt.Answers.ToList(), questions);
-
-                // Update attempt
-                attempt.OverallScore = overall;
-                attempt.TechnicalScore = technical;
-                attempt.SoftSkillsScore = softSkill;
-                attempt.Status = isExpired ? AssessmentStatus.Expired : AssessmentStatus.Completed;
-                attempt.CompletedAt = now;
-                attempt.ScoreExpiresAt = isExpired
-                    ? null
-                    : now.AddMonths(AssessmentSettings.ScoreValidityMonths);
-
-                if (!isExpired)
-                {
-                    // Deactivate previous active attempts
-                    var previousActive = await _context.AssessmentAttempts
-                        .Where(a => a.JobSeekerId == jobSeeker.Id && a.IsActive && a.Id != attempt.Id)
-                        .ToListAsync();
-                    foreach (var prev in previousActive)
-                    {
-                        prev.IsActive = false;
-                    }
-
-                    // Mark this attempt as active
-                    attempt.IsActive = true;
-
-                    // Update JobSeeker denormalized fields
-                    jobSeeker.CurrentAssessmentScore = overall;
-                    jobSeeker.AssessmentJobTitleId = attempt.JobTitleId;
-                }
-                else
-                {
-                    attempt.IsActive = false;
-                }
-
-                jobSeeker.LastAssessmentDate = now;
-
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation("Assessment completed for user {UserId}, attempt {AttemptId}, score {Score}",
-                    userId, attempt.Id, overall);
-
-                var timeTaken = (int)(now - attempt.StartedAt).TotalMinutes;
-
-                return new AssessmentResultResponseDto
-                {
-                    AttemptId = attempt.Id,
-                    Status = attempt.Status.ToString(),
-                    OverallScore = overall,
-                    TechnicalScore = technical,
-                    SoftSkillsScore = softSkill,
-                    TotalQuestions = attempt.TotalQuestions,
-                    CorrectAnswers = stats.TotalCorrect,
-                    TechnicalCorrect = stats.TechnicalCorrect,
-                    TechnicalTotal = stats.TechnicalTotal,
-                    SoftSkillCorrect = stats.SoftSkillCorrect,
-                    SoftSkillTotal = stats.SoftSkillTotal,
-                    StartedAt = attempt.StartedAt,
-                    CompletedAt = attempt.CompletedAt,
-                    TimeTakenMinutes = timeTaken,
-                    ScoreExpiresAt = attempt.ScoreExpiresAt,
-                    JobTitle = attempt.JobTitle?.Title ?? "Unknown",
-                    PerformanceLevel = GetPerformanceLevel(overall),
-                    IsPassing = overall >= AssessmentSettings.MinimumPassingScore
-                };
+                return await FinalizeAttemptAsync(jobSeeker, attempt, DateTime.UtcNow, includeQuestionResults: false);
             }
             catch (Exception ex)
             {
@@ -562,15 +622,14 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                 var attempt = await _context.AssessmentAttempts
                     .FirstOrDefaultAsync(a => a.JobSeekerId == jobSeeker.Id
                                            && a.Status == AssessmentStatus.InProgress
-                                           && a.AlgorithmVersion == LegacyAlgorithmVersion);
+                                           && a.AlgorithmVersion == AlgorithmVersion);
 
                 if (attempt == null) return false;
 
+                var now = DateTime.UtcNow;
                 attempt.Status = AssessmentStatus.Abandoned;
-                attempt.CompletedAt = DateTime.UtcNow;
-
-                // Update cooldown even for abandoned assessments
-                jobSeeker.LastAssessmentDate = DateTime.UtcNow;
+                attempt.CompletedAt = now;
+                jobSeeker.LastAssessmentDate = now;
 
                 await _context.SaveChangesAsync();
 
@@ -600,8 +659,7 @@ namespace RecruitmentPlatformAPI.Services.Assessment
 
                 var attempts = await _context.AssessmentAttempts
                     .Include(a => a.JobTitle)
-                    .Where(a => a.JobSeekerId == jobSeeker.Id
-                             && a.AlgorithmVersion == LegacyAlgorithmVersion)
+                    .Where(a => a.JobSeekerId == jobSeeker.Id && a.AlgorithmVersion == AlgorithmVersion)
                     .OrderByDescending(a => a.StartedAt)
                     .ToListAsync();
 
@@ -633,7 +691,7 @@ namespace RecruitmentPlatformAPI.Services.Assessment
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting history for user {UserId}", userId);
+                _logger.LogError(ex, "Error getting assessment history for user {UserId}", userId);
                 return new AssessmentHistoryResponseDto();
             }
         }
@@ -650,46 +708,32 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     .Include(a => a.JobTitle)
                     .FirstOrDefaultAsync(a => a.Id == attemptId
                                            && a.JobSeekerId == jobSeeker.Id
-                                           && a.AlgorithmVersion == LegacyAlgorithmVersion);
+                                           && a.AlgorithmVersion == AlgorithmVersion);
 
                 if (attempt == null) return null;
+                if (attempt.Status == AssessmentStatus.InProgress) return null;
 
-                // Only show results for completed/expired/abandoned attempts
-                if (attempt.Status == AssessmentStatus.InProgress)
-                {
-                    return null;
-                }
-
-                // Get question details
-                var questionIds = attempt.Answers.Select(a => a.QuestionId).ToList();
-                var questions = await _context.AssessmentQuestions
+                var questionIds = ParseQuestionIdsJson(attempt.QuestionIdsJson);
+                var questionMap = await _context.AssessmentQuestions
                     .Where(q => questionIds.Contains(q.Id))
                     .ToDictionaryAsync(q => q.Id);
 
-                // Build detailed question results
-                var questionResults = attempt.Answers.Select(answer =>
-                {
-                    var question = questions.GetValueOrDefault(answer.QuestionId);
-                    var options = question != null
-                        ? JsonSerializer.Deserialize<List<string>>(question.Options) ?? new List<string>()
-                        : new List<string>();
+                var orderedQuestions = questionIds
+                    .Select(id => questionMap.GetValueOrDefault(id))
+                    .OfType<AssessmentQuestion>()
+                    .ToList();
 
-                    return new QuestionResultDto
-                    {
-                        QuestionId = answer.QuestionId,
-                        QuestionText = question?.QuestionText ?? "Unknown",
-                        Category = question?.Category.ToString() ?? "Unknown",
-                        Difficulty = question?.Difficulty.ToString() ?? "Unknown",
-                        Options = options,
-                        SelectedAnswerIndex = answer.SelectedAnswerIndex,
-                        CorrectAnswerIndex = question?.CorrectAnswerIndex ?? 0,
-                        IsCorrect = answer.IsCorrect,
-                        Explanation = question?.Explanation,
-                        TimeSpentSeconds = answer.TimeSpentSeconds
-                    };
-                }).ToList();
+                var claimedSkillIds = ParseIdsJson(attempt.ClaimedSkillIdsJson);
+                var usedSkillIds = orderedQuestions.Select(q => q.SkillId).Distinct().ToList();
+                var allSkillIds = usedSkillIds.Concat(claimedSkillIds).Distinct().ToList();
 
-                var (_, _, _, stats) = CalculateScores(attempt.Answers.ToList(), questions);
+                var skillNames = await _context.Skills
+                    .Where(s => allSkillIds.Contains(s.Id))
+                    .ToDictionaryAsync(s => s.Id, s => s.Name);
+
+                var (overall, technical, softSkill, stats, skillScores, questionResults) =
+                    BuildSkillScores(attempt.Answers.ToList(), orderedQuestions, skillNames, claimedSkillIds, includeQuestionResults: true);
+
                 var timeTaken = attempt.CompletedAt.HasValue
                     ? (int)(attempt.CompletedAt.Value - attempt.StartedAt).TotalMinutes
                     : (int)(DateTime.UtcNow - attempt.StartedAt).TotalMinutes;
@@ -698,9 +742,9 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                 {
                     AttemptId = attempt.Id,
                     Status = attempt.Status.ToString(),
-                    OverallScore = attempt.OverallScore ?? 0,
-                    TechnicalScore = attempt.TechnicalScore ?? 0,
-                    SoftSkillsScore = attempt.SoftSkillsScore ?? 0,
+                    OverallScore = attempt.OverallScore ?? overall,
+                    TechnicalSkillsTotalScore = attempt.TechnicalScore ?? technical,
+                    SoftSkillsScore = attempt.SoftSkillsScore ?? softSkill,
                     TotalQuestions = attempt.TotalQuestions,
                     CorrectAnswers = stats.TotalCorrect,
                     TechnicalCorrect = stats.TechnicalCorrect,
@@ -712,14 +756,15 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     TimeTakenMinutes = timeTaken,
                     ScoreExpiresAt = attempt.ScoreExpiresAt,
                     JobTitle = attempt.JobTitle?.Title ?? "Unknown",
-                    PerformanceLevel = GetPerformanceLevel(attempt.OverallScore ?? 0),
-                    IsPassing = (attempt.OverallScore ?? 0) >= AssessmentSettings.MinimumPassingScore,
+                    PerformanceLevel = GetPerformanceLevel(attempt.OverallScore ?? overall),
+                    IsPassing = (attempt.OverallScore ?? overall) >= AssessmentSettings.MinimumPassingScore,
+                    SkillScores = skillScores,
                     QuestionResults = questionResults
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting result for user {UserId}, attempt {AttemptId}", userId, attemptId);
+                _logger.LogError(ex, "Error getting assessment result for user {UserId}, attempt {AttemptId}", userId, attemptId);
                 return null;
             }
         }
@@ -739,6 +784,111 @@ namespace RecruitmentPlatformAPI.Services.Assessment
             return await _context.JobSeekers.FirstOrDefaultAsync(js => js.UserId == userId);
         }
 
+        private async Task<bool> AutoSubmitIfExpiredAsync(JobSeekerModel jobSeeker, AssessmentAttempt attempt, DateTime now)
+        {
+            if (attempt.Status != AssessmentStatus.InProgress || now <= attempt.ExpiresAt)
+            {
+                return false;
+            }
+
+            await FinalizeAttemptAsync(jobSeeker, attempt, now, includeQuestionResults: false);
+            return true;
+        }
+
+        private async Task<AssessmentResultResponseDto> FinalizeAttemptAsync(
+            JobSeekerModel jobSeeker,
+            AssessmentAttempt attempt,
+            DateTime now,
+            bool includeQuestionResults)
+        {
+            await _context.Entry(attempt).Collection(a => a.Answers).LoadAsync();
+            await _context.Entry(attempt).Reference(a => a.JobTitle).LoadAsync();
+
+            var questionIds = ParseQuestionIdsJson(attempt.QuestionIdsJson);
+            var questionMap = await _context.AssessmentQuestions
+                .Where(q => questionIds.Contains(q.Id))
+                .ToDictionaryAsync(q => q.Id);
+
+            var orderedQuestions = questionIds
+                .Select(id => questionMap.GetValueOrDefault(id))
+                .OfType<AssessmentQuestion>()
+                .ToList();
+
+            var claimedSkillIds = ParseIdsJson(attempt.ClaimedSkillIdsJson);
+            var usedSkillIds = orderedQuestions.Select(q => q.SkillId).Distinct().ToList();
+            var allSkillIds = usedSkillIds.Concat(claimedSkillIds).Distinct().ToList();
+
+            var skillNames = await _context.Skills
+                .Where(s => allSkillIds.Contains(s.Id))
+                .ToDictionaryAsync(s => s.Id, s => s.Name);
+
+            var (overall, technical, softSkill, stats, skillScores, questionResults) =
+                BuildSkillScores(attempt.Answers.ToList(), orderedQuestions, skillNames, claimedSkillIds, includeQuestionResults);
+
+            attempt.OverallScore = overall;
+            attempt.TechnicalScore = technical;
+            attempt.SoftSkillsScore = softSkill;
+            attempt.Status = AssessmentStatus.Completed;
+            attempt.CompletedAt = now;
+            attempt.ScoreExpiresAt = now.AddMonths(AssessmentSettings.ScoreValidityMonths);
+
+            var previousActiveAttempts = await _context.AssessmentAttempts
+                .Where(a => a.JobSeekerId == jobSeeker.Id && a.IsActive && a.Id != attempt.Id)
+                .ToListAsync();
+
+            foreach (var prev in previousActiveAttempts)
+            {
+                prev.IsActive = false;
+            }
+
+            attempt.IsActive = true;
+            jobSeeker.CurrentAssessmentScore = overall;
+            jobSeeker.AssessmentJobTitleId = attempt.JobTitleId;
+            jobSeeker.LastAssessmentDate = now;
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Assessment completed for user {UserId}, attempt {AttemptId}, score {OverallScore}",
+                jobSeeker.UserId, attempt.Id, overall);
+
+            var timeTaken = (int)(now - attempt.StartedAt).TotalMinutes;
+
+            return new AssessmentResultResponseDto
+            {
+                AttemptId = attempt.Id,
+                Status = attempt.Status.ToString(),
+                OverallScore = overall,
+                TechnicalSkillsTotalScore = technical,
+                SoftSkillsScore = softSkill,
+                TotalQuestions = attempt.TotalQuestions,
+                CorrectAnswers = stats.TotalCorrect,
+                TechnicalCorrect = stats.TechnicalCorrect,
+                TechnicalTotal = stats.TechnicalTotal,
+                SoftSkillCorrect = stats.SoftSkillCorrect,
+                SoftSkillTotal = stats.SoftSkillTotal,
+                StartedAt = attempt.StartedAt,
+                CompletedAt = attempt.CompletedAt,
+                TimeTakenMinutes = timeTaken,
+                ScoreExpiresAt = attempt.ScoreExpiresAt,
+                JobTitle = attempt.JobTitle?.Title ?? "Unknown",
+                PerformanceLevel = GetPerformanceLevel(overall),
+                IsPassing = overall >= AssessmentSettings.MinimumPassingScore,
+                SkillScores = skillScores,
+                QuestionResults = questionResults
+            };
+        }
+
+        private async Task<List<(int SkillId, string SkillName)>> GetClaimedSkillsAsync(int jobSeekerId)
+        {
+            return await _context.JobSeekerSkills
+                .Where(js => js.JobSeekerId == jobSeekerId)
+                .Include(js => js.Skill)
+                .OrderBy(js => js.Skill.Name)
+                .Select(js => new ValueTuple<int, string>(js.SkillId, js.Skill.Name))
+                .ToListAsync();
+        }
+
         private static ExperienceSeniorityLevel CalculateSeniorityLevel(int? yearsOfExperience)
         {
             return yearsOfExperience switch
@@ -751,126 +901,290 @@ namespace RecruitmentPlatformAPI.Services.Assessment
 
         private async Task<List<int>> SelectQuestionsForAssessmentAsync(
             JobTitleRoleFamily roleFamily,
-            ExperienceSeniorityLevel seniorityLevel)
+            ExperienceSeniorityLevel seniorityLevel,
+            List<int> claimedSkillIds)
         {
-            var selectedIds = new List<int>();
+            var questions = await _context.AssessmentQuestions
+                .AsNoTracking()
+                .Where(q => q.IsActive)
+                .ToListAsync();
 
-            // Define difficulty distribution based on seniority
-            var (easyTech, mediumTech, hardTech) = seniorityLevel switch
-            {
-                ExperienceSeniorityLevel.Junior => (10, 8, 3),
-                ExperienceSeniorityLevel.Mid => (5, 11, 5),
-                _ => (3, 8, 10) // Senior
-            };
+            var technicalPool = questions
+                .Where(q => q.Category == QuestionCategory.Technical && IsRoleCompatible(q.RoleFamily, roleFamily))
+                .Select(q => new QuestionPoolItem(q))
+                .ToList();
 
-            var (easySoft, mediumSoft, hardSoft) = seniorityLevel switch
-            {
-                ExperienceSeniorityLevel.Junior => (4, 4, 1),
-                ExperienceSeniorityLevel.Mid => (2, 5, 2),
-                _ => (1, 4, 4) // Senior
-            };
+            var softPool = questions
+                .Where(q => q.Category == QuestionCategory.SoftSkill)
+                .Select(q => new QuestionPoolItem(q))
+                .ToList();
 
-            // Select technical questions
-            foreach (var (difficulty, count) in new[]
-            {
-                (QuestionDifficulty.Easy, easyTech),
-                (QuestionDifficulty.Medium, mediumTech),
-                (QuestionDifficulty.Hard, hardTech)
-            })
-            {
-                var questions = await _context.AssessmentQuestions
-                    .Where(q => q.Category == QuestionCategory.Technical
-                             && q.RoleFamily == roleFamily
-                             && q.SeniorityLevel == seniorityLevel
-                             && q.Difficulty == difficulty
-                             && q.IsActive)
-                    .Select(q => q.Id)
-                    .ToListAsync();
+            var claimedSkillSet = claimedSkillIds.Distinct().ToHashSet();
 
-                // Shuffle and take required count
-                var shuffled = questions.OrderBy(_ => Guid.NewGuid()).Take(count);
-                selectedIds.AddRange(shuffled);
+            var claimedTechnicalSkills = technicalPool
+                .Where(q => claimedSkillSet.Contains(q.SkillId))
+                .Select(q => q.SkillId)
+                .Distinct()
+                .ToList();
+
+            var claimedSoftSkills = softPool
+                .Where(q => claimedSkillSet.Contains(q.SkillId))
+                .Select(q => q.SkillId)
+                .Distinct()
+                .ToList();
+
+            var selectedTechnical = SelectQuestionsBySkillCoverage(
+                technicalPool, claimedTechnicalSkills, AssessmentSettings.TechnicalQuestionsCount, seniorityLevel);
+
+            if (selectedTechnical.Count < AssessmentSettings.TechnicalQuestionsCount)
+            {
+                FillFromPool(selectedTechnical, technicalPool, AssessmentSettings.TechnicalQuestionsCount, seniorityLevel, _ => true);
             }
 
-            // If not enough technical questions, try adjacent seniority levels
-            if (selectedIds.Count < AssessmentSettings.TechnicalQuestionsCount)
-            {
-                var fallbackQuestions = await _context.AssessmentQuestions
-                    .Where(q => q.Category == QuestionCategory.Technical
-                             && q.RoleFamily == roleFamily
-                             && q.IsActive
-                             && !selectedIds.Contains(q.Id))
-                    .Select(q => q.Id)
-                    .ToListAsync();
+            var selectedSoft = SelectQuestionsBySkillCoverage(
+                softPool,
+                claimedSoftSkills.Count > 0 ? claimedSoftSkills : new List<int>(),
+                AssessmentSettings.SoftSkillQuestionsCount,
+                seniorityLevel);
 
-                var needed = AssessmentSettings.TechnicalQuestionsCount - selectedIds.Count;
-                selectedIds.AddRange(fallbackQuestions.OrderBy(_ => Guid.NewGuid()).Take(needed));
+            if (selectedSoft.Count < AssessmentSettings.SoftSkillQuestionsCount)
+            {
+                FillFromPool(selectedSoft, softPool, AssessmentSettings.SoftSkillQuestionsCount, seniorityLevel, _ => true);
             }
 
-            // Select soft skill questions (not role-specific)
-            foreach (var (difficulty, count) in new[]
-            {
-                (QuestionDifficulty.Easy, easySoft),
-                (QuestionDifficulty.Medium, mediumSoft),
-                (QuestionDifficulty.Hard, hardSoft)
-            })
-            {
-                var questions = await _context.AssessmentQuestions
-                    .Where(q => q.Category == QuestionCategory.SoftSkill
-                             && q.SeniorityLevel == seniorityLevel
-                             && q.Difficulty == difficulty
-                             && q.IsActive)
-                    .Select(q => q.Id)
-                    .ToListAsync();
-
-                var shuffled = questions.OrderBy(_ => Guid.NewGuid()).Take(count);
-                selectedIds.AddRange(shuffled);
-            }
-
-            // Shuffle the final list
-            return selectedIds.OrderBy(_ => Guid.NewGuid()).ToList();
+            return selectedTechnical
+                .Concat(selectedSoft)
+                .Distinct()
+                .OrderBy(_ => Guid.NewGuid())
+                .ToList();
         }
 
-        private record ScoreStats(int TotalCorrect, int TechnicalCorrect, int TechnicalTotal, int SoftSkillCorrect, int SoftSkillTotal);
-
-        private static (decimal Overall, decimal Technical, decimal SoftSkill, ScoreStats Stats) CalculateScores(
-            List<AssessmentAnswer> answers,
-            Dictionary<int, AssessmentQuestion> questions)
+        private static List<int> SelectQuestionsBySkillCoverage(
+            List<QuestionPoolItem> pool,
+            List<int> skillIds,
+            int targetCount,
+            ExperienceSeniorityLevel preferredSeniority)
         {
-            var technicalAnswers = answers.Where(a =>
-                questions.TryGetValue(a.QuestionId, out var q) && q.Category == QuestionCategory.Technical).ToList();
-            var softSkillAnswers = answers.Where(a =>
-                questions.TryGetValue(a.QuestionId, out var q) && q.Category == QuestionCategory.SoftSkill).ToList();
+            if (targetCount <= 0 || pool.Count == 0)
+            {
+                return new List<int>();
+            }
 
-            var technicalCorrect = technicalAnswers.Count(a => a.IsCorrect);
-            var technicalTotal = technicalAnswers.Count;
-            var softSkillCorrect = softSkillAnswers.Count(a => a.IsCorrect);
-            var softSkillTotal = softSkillAnswers.Count;
+            var selected = new List<int>();
+            var uniquePool = pool
+                .GroupBy(p => p.QuestionId)
+                .Select(g => g.First())
+                .ToList();
 
-            var technicalScore = technicalTotal > 0
-                ? (decimal)technicalCorrect / technicalTotal * 100
-                : 0;
-            var softSkillScore = softSkillTotal > 0
-                ? (decimal)softSkillCorrect / softSkillTotal * 100
-                : 0;
+            if (skillIds.Count == 0)
+            {
+                FillFromPool(selected, uniquePool, targetCount, preferredSeniority, _ => true);
+                return selected;
+            }
 
-            var overallScore = (technicalScore * AssessmentSettings.TechnicalWeight)
-                             + (softSkillScore * AssessmentSettings.SoftSkillWeight);
+            var distinctSkills = skillIds.Distinct().ToList();
+            var basePerSkill = targetCount / distinctSkills.Count;
+            var remainder = targetCount % distinctSkills.Count;
 
-            var stats = new ScoreStats(
-                technicalCorrect + softSkillCorrect,
-                technicalCorrect,
-                technicalTotal,
-                softSkillCorrect,
-                softSkillTotal
-            );
+            for (var i = 0; i < distinctSkills.Count; i++)
+            {
+                var skillId = distinctSkills[i];
+                var requiredForSkill = basePerSkill + (i < remainder ? 1 : 0);
+
+                var preferred = uniquePool
+                    .Where(q => q.SkillId == skillId && q.SeniorityLevel == preferredSeniority && !selected.Contains(q.QuestionId))
+                    .OrderBy(_ => Guid.NewGuid())
+                    .Take(requiredForSkill)
+                    .Select(q => q.QuestionId)
+                    .ToList();
+
+                selected.AddRange(preferred);
+
+                if (preferred.Count < requiredForSkill)
+                {
+                    var fallback = uniquePool
+                        .Where(q => q.SkillId == skillId && !selected.Contains(q.QuestionId))
+                        .OrderBy(_ => Guid.NewGuid())
+                        .Take(requiredForSkill - preferred.Count)
+                        .Select(q => q.QuestionId)
+                        .ToList();
+
+                    selected.AddRange(fallback);
+                }
+            }
+
+            if (selected.Count < targetCount)
+            {
+                FillFromPool(selected, uniquePool, targetCount, preferredSeniority, q => distinctSkills.Contains(q.SkillId));
+            }
+
+            return selected;
+        }
+
+        private static void FillFromPool(
+            List<int> selectedIds,
+            List<QuestionPoolItem> pool,
+            int targetCount,
+            ExperienceSeniorityLevel preferredSeniority,
+            Func<QuestionPoolItem, bool> predicate)
+        {
+            if (selectedIds.Count >= targetCount) return;
+
+            var preferred = pool
+                .Where(q => predicate(q) && q.SeniorityLevel == preferredSeniority && !selectedIds.Contains(q.QuestionId))
+                .OrderBy(_ => Guid.NewGuid())
+                .Take(targetCount - selectedIds.Count)
+                .Select(q => q.QuestionId)
+                .ToList();
+
+            selectedIds.AddRange(preferred);
+
+            if (selectedIds.Count >= targetCount) return;
+
+            var anySeniority = pool
+                .Where(q => predicate(q) && !selectedIds.Contains(q.QuestionId))
+                .OrderBy(_ => Guid.NewGuid())
+                .Take(targetCount - selectedIds.Count)
+                .Select(q => q.QuestionId)
+                .ToList();
+
+            selectedIds.AddRange(anySeniority);
+        }
+
+        private (decimal Overall, decimal Technical, decimal SoftSkill, ScoreStats Stats, List<SkillScoreDto> SkillScores, List<QuestionResultDto>? QuestionResults)
+            BuildSkillScores(
+                List<AssessmentAnswer> answers,
+                List<AssessmentQuestion> questions,
+                Dictionary<int, string> skillNames,
+                List<int> claimedSkillIds,
+                bool includeQuestionResults)
+        {
+            var claimedSkillSet = claimedSkillIds.ToHashSet();
+            var buckets = new Dictionary<int, SkillBucket>();
+
+            var answersByQuestionId = answers
+                .GroupBy(a => a.QuestionId)
+                .Select(g => g.First())
+                .ToDictionary(a => a.QuestionId);
+
+            var technicalCorrect = 0;
+            var technicalTotal = 0;
+            var softSkillCorrect = 0;
+            var softSkillTotal = 0;
+
+            List<QuestionResultDto>? questionResults = includeQuestionResults ? new List<QuestionResultDto>() : null;
+
+            foreach (var question in questions)
+            {
+                var skillId = question.SkillId;
+                if (!buckets.TryGetValue(skillId, out var bucket))
+                {
+                    bucket = new SkillBucket { SkillId = skillId, Category = question.Category };
+                    buckets[skillId] = bucket;
+                }
+
+                bucket.TotalQuestions++;
+
+                var hasAnswer = answersByQuestionId.TryGetValue(question.Id, out var answer);
+                var isCorrect = hasAnswer && answer!.IsCorrect;
+                if (isCorrect) bucket.CorrectAnswers++;
+
+                if (question.Category == QuestionCategory.Technical)
+                {
+                    technicalTotal++;
+                    if (isCorrect) technicalCorrect++;
+                }
+                else
+                {
+                    softSkillTotal++;
+                    if (isCorrect) softSkillCorrect++;
+                }
+
+                if (questionResults != null)
+                {
+                    var options = JsonSerializer.Deserialize<List<string>>(question.Options) ?? new List<string>();
+                    questionResults.Add(new QuestionResultDto
+                    {
+                        QuestionId = question.Id,
+                        QuestionText = question.QuestionText,
+                        Category = question.Category.ToString(),
+                        Difficulty = question.Difficulty.ToString(),
+                        Options = options,
+                        SelectedAnswerIndex = hasAnswer ? answer!.SelectedAnswerIndex : null,
+                        CorrectAnswerIndex = question.CorrectAnswerIndex,
+                        IsCorrect = isCorrect,
+                        Explanation = question.Explanation,
+                        TimeSpentSeconds = hasAnswer ? answer!.TimeSpentSeconds : 0,
+                        SkillId = skillId,
+                        SkillName = skillNames.GetValueOrDefault(skillId, $"Skill #{skillId}")
+                    });
+                }
+            }
+
+            // Ensure every claimed skill has a bucket (even if no questions were sampled for it).
+            foreach (var claimedSkillId in claimedSkillSet)
+            {
+                if (!buckets.ContainsKey(claimedSkillId))
+                {
+                    buckets[claimedSkillId] = new SkillBucket
+                    {
+                        SkillId = claimedSkillId,
+                        Category = QuestionCategory.Technical
+                    };
+                }
+            }
+
+            var totalCorrect = technicalCorrect + softSkillCorrect;
+            var totalQuestions = technicalTotal + softSkillTotal;
+
+            var technicalScore = technicalTotal > 0 ? (decimal)technicalCorrect / technicalTotal * 100 : 0;
+            var softSkillScore = softSkillTotal > 0 ? (decimal)softSkillCorrect / softSkillTotal * 100 : 0;
+            var overallScore = totalQuestions > 0 ? (decimal)totalCorrect / totalQuestions * 100 : 0;
+
+            var skillScores = buckets.Values
+                .Select(b => new SkillScoreDto
+                {
+                    SkillId = b.SkillId,
+                    SkillName = skillNames.GetValueOrDefault(b.SkillId, $"Skill #{b.SkillId}"),
+                    Category = b.Category.ToString(),
+                    CorrectAnswers = b.CorrectAnswers,
+                    TotalQuestions = b.TotalQuestions,
+                    Score = b.TotalQuestions > 0
+                        ? Math.Round((decimal)b.CorrectAnswers / b.TotalQuestions * 100, 2)
+                        : 0,
+                    IsClaimedSkill = claimedSkillSet.Contains(b.SkillId)
+                })
+                .OrderByDescending(s => s.IsClaimedSkill)
+                .ThenByDescending(s => s.TotalQuestions)
+                .ThenBy(s => s.SkillName)
+                .ToList();
+
+            var statsResult = new ScoreStats(totalCorrect, technicalCorrect, technicalTotal, softSkillCorrect, softSkillTotal);
 
             return (
                 Math.Round(overallScore, 2),
                 Math.Round(technicalScore, 2),
                 Math.Round(softSkillScore, 2),
-                stats
-            );
+                statsResult,
+                skillScores,
+                questionResults);
+        }
+
+        private static bool IsRoleCompatible(JobTitleRoleFamily questionRoleFamily, JobTitleRoleFamily userRoleFamily)
+        {
+            return questionRoleFamily == userRoleFamily
+                || questionRoleFamily == JobTitleRoleFamily.FullStack
+                || userRoleFamily == JobTitleRoleFamily.FullStack;
+        }
+
+        private static List<int> ParseIdsJson(string? json)
+        {
+            return JsonSerializer.Deserialize<List<int>>(json ?? "[]")?.Distinct().ToList() ?? new List<int>();
+        }
+
+        private static List<int> ParseQuestionIdsJson(string? json)
+        {
+            return JsonSerializer.Deserialize<List<int>>(json ?? "[]") ?? new List<int>();
         }
 
         private static string GetPerformanceLevel(decimal score)
@@ -884,11 +1198,35 @@ namespace RecruitmentPlatformAPI.Services.Assessment
             };
         }
 
-        private static bool IsInProgressAttemptConstraintViolation(DbUpdateException exception)
+        private static bool IsInProgressConstraintViolation(DbUpdateException exception)
         {
             return exception.Message.Contains("UX_AssessmentAttempt_JobSeeker_InProgress", StringComparison.OrdinalIgnoreCase)
                 || (exception.InnerException?.Message.Contains("UX_AssessmentAttempt_JobSeeker_InProgress", StringComparison.OrdinalIgnoreCase) ?? false);
         }
+
+        private sealed class QuestionPoolItem
+        {
+            public QuestionPoolItem(AssessmentQuestion question)
+            {
+                QuestionId = question.Id;
+                SkillId = question.SkillId;
+                SeniorityLevel = question.SeniorityLevel;
+            }
+
+            public int QuestionId { get; }
+            public int SkillId { get; }
+            public ExperienceSeniorityLevel SeniorityLevel { get; }
+        }
+
+        private sealed class SkillBucket
+        {
+            public int SkillId { get; set; }
+            public QuestionCategory Category { get; set; }
+            public int CorrectAnswers { get; set; }
+            public int TotalQuestions { get; set; }
+        }
+
+        private record ScoreStats(int TotalCorrect, int TechnicalCorrect, int TechnicalTotal, int SoftSkillCorrect, int SoftSkillTotal);
 
         #endregion
     }

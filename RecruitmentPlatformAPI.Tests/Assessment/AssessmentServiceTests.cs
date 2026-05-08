@@ -13,7 +13,7 @@ using Xunit;
 
 namespace RecruitmentPlatformAPI.Tests.Assessment;
 
-public class AssessmentV2ServiceTests
+public class AssessmentServiceTests
 {
     private const int UserId = 9001;
     private const int JobSeekerId = 9101;
@@ -23,11 +23,11 @@ public class AssessmentV2ServiceTests
 
     private static AppDbContext CreateContext() =>
         new(new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase($"AssessmentV2_{Guid.NewGuid()}")
+            .UseInMemoryDatabase($"Assessment_{Guid.NewGuid()}")
             .Options);
 
-    private static AssessmentV2Service MakeService(AppDbContext ctx) =>
-        new(ctx, NullLogger<AssessmentV2Service>.Instance);
+    private static AssessmentService MakeService(AppDbContext ctx) =>
+        new(ctx, NullLogger<AssessmentService>.Instance);
 
     private static async Task SeedEligibleJobSeekerAsync(
         AppDbContext ctx,
@@ -151,7 +151,7 @@ public class AssessmentV2ServiceTests
     }
 
     [Fact]
-    public async Task CheckEligibility_PreviousAttempts_CountsOnlyV2Attempts()
+    public async Task CheckEligibility_PreviousAttempts_CountsOnlyCurrentAlgorithmAttempts()
     {
         using var ctx = CreateContext();
         await SeedEligibleJobSeekerAsync(ctx, includeClaimedSkill: true);
@@ -169,7 +169,7 @@ public class AssessmentV2ServiceTests
                 TimeLimitMinutes = 45,
                 TotalQuestions = 3,
                 QuestionsAnswered = 3,
-                AlgorithmVersion = 1,
+                AlgorithmVersion = 1,  // legacy attempt — not counted
                 RetakeNumber = 1,
                 IsActive = false
             },
@@ -200,7 +200,7 @@ public class AssessmentV2ServiceTests
     }
 
     [Fact]
-    public async Task StartAssessment_WithClaimedSkill_CreatesV2AttemptWithSnapshot()
+    public async Task StartAssessment_WithClaimedSkill_CreatesAttemptWithSnapshot()
     {
         using var ctx = CreateContext();
         await SeedEligibleJobSeekerAsync(ctx, includeClaimedSkill: true);
@@ -317,7 +317,7 @@ public class AssessmentV2ServiceTests
     }
 
     [Fact]
-    public async Task StartAssessment_WhenV1InProgressExists_ReturnsNull()
+    public async Task StartAssessment_WhenAnyAttemptInProgress_ReturnsNull()
     {
         using var ctx = CreateContext();
         await SeedEligibleJobSeekerAsync(ctx, includeClaimedSkill: true);
@@ -334,7 +334,7 @@ public class AssessmentV2ServiceTests
             TimeLimitMinutes = 45,
             TotalQuestions = 3,
             QuestionsAnswered = 0,
-            AlgorithmVersion = 1,
+            AlgorithmVersion = 1,  // any version blocks start
             RetakeNumber = 1,
             IsActive = false,
             QuestionIdsJson = JsonSerializer.Serialize(new[] { 9401, 9402, 9403 })
@@ -363,10 +363,7 @@ public class AssessmentV2ServiceTests
         for (var i = 0; i < 10; i++)
         {
             var question = await service.GetNextQuestionAsync(UserId);
-            if (question == null)
-            {
-                break;
-            }
+            if (question == null) break;
 
             var submit = await service.SubmitAnswerAsync(UserId, new SubmitAnswerRequestDto
             {
@@ -396,7 +393,7 @@ public class AssessmentV2ServiceTests
     }
 
     [Fact]
-    public async Task CompleteAssessment_PartialSubmissionCountsUnansweredAsIncorrect()
+    public async Task CompleteAssessment_PartialSubmission_CountsUnansweredAsIncorrect()
     {
         using var ctx = CreateContext();
         await SeedEligibleJobSeekerAsync(ctx, includeClaimedSkill: true);
@@ -466,14 +463,10 @@ public class AssessmentV2ServiceTests
         var started = await service.StartAssessmentAsync(UserId);
         Assert.NotNull(started);
 
-        var answered = 0;
         while (true)
         {
             var question = await service.GetNextQuestionAsync(UserId);
-            if (question == null)
-            {
-                break;
-            }
+            if (question == null) break;
 
             await service.SubmitAnswerAsync(UserId, new SubmitAnswerRequestDto
             {
@@ -481,8 +474,6 @@ public class AssessmentV2ServiceTests
                 SelectedAnswerIndex = 0,
                 TimeSpentSeconds = 8
             });
-
-            answered++;
         }
 
         var completed = await service.CompleteAssessmentAsync(UserId);

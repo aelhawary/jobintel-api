@@ -3,73 +3,55 @@ using RecruitmentPlatformAPI.DTOs.Assessment;
 namespace RecruitmentPlatformAPI.Services.Assessment
 {
     /// <summary>
-    /// Service for managing job seeker skill assessments
+    /// Service contract for job-seeker skill assessments.
+    /// Supports flexible navigation, draft-answer overwrite, overview panel,
+    /// partial submission, auto-submit on expiry, and full review results.
     /// </summary>
     public interface IAssessmentService
     {
-        /// <summary>
-        /// Check if job seeker is eligible to start an assessment
-        /// </summary>
-        /// <param name="userId">The user ID</param>
-        /// <returns>Eligibility status with details</returns>
+        /// <summary>Check whether the user is eligible to start an assessment.</summary>
         Task<EligibilityResponseDto> CheckEligibilityAsync(int userId);
 
         /// <summary>
-        /// Start a new assessment attempt
+        /// Start a new assessment attempt. Returns null when the user is not eligible
+        /// or when a concurrent start is detected.
         /// </summary>
-        /// <param name="userId">The user ID</param>
-        /// <returns>Assessment start details or null if not eligible</returns>
-        Task<StartAssessmentResponseDto?> StartAssessmentAsync(int userId);
+        Task<StartAssessmentResponseDto?> StartAssessmentAsync(int userId, StartAssessmentRequestDto? request = null);
 
         /// <summary>
-        /// Get current in-progress assessment status
+        /// Get the current in-progress assessment status. Auto-submits and returns the
+        /// completed status when the attempt has expired.
         /// </summary>
-        /// <param name="userId">The user ID</param>
-        /// <returns>Current assessment status or null if none in progress</returns>
         Task<AssessmentStatusResponseDto?> GetCurrentStatusAsync(int userId);
 
-        /// <summary>
-        /// Get the next unanswered question
-        /// </summary>
-        /// <param name="userId">The user ID</param>
-        /// <returns>Next question or null if assessment complete/not found</returns>
+        /// <summary>Return the answered/unanswered status for every question in the active attempt.</summary>
+        Task<List<AssessmentQuestionStatusDto>?> GetQuestionStatusesAsync(int userId);
+
+        /// <summary>Return the next unanswered question, or null when all questions are answered.</summary>
         Task<QuestionResponseDto?> GetNextQuestionAsync(int userId);
 
+        /// <summary>Return the question at the given 1-based position. Supports non-linear navigation.</summary>
+        Task<QuestionResponseDto?> GetQuestionByNumberAsync(int userId, int questionNumber);
+
         /// <summary>
-        /// Submit an answer for a question
+        /// Record or overwrite an answer for a question.
+        /// Overwriting an existing answer does not change the answered count.
         /// </summary>
-        /// <param name="userId">The user ID</param>
-        /// <param name="dto">Answer submission details</param>
-        /// <returns>Submission result or null if failed</returns>
         Task<SubmitAnswerResponseDto?> SubmitAnswerAsync(int userId, SubmitAnswerRequestDto dto);
 
         /// <summary>
-        /// Complete the assessment and calculate scores
+        /// Finalise the assessment and compute skill-based scores.
+        /// Unanswered questions count as incorrect.
         /// </summary>
-        /// <param name="userId">The user ID</param>
-        /// <returns>Assessment result with scores or null if failed</returns>
         Task<AssessmentResultResponseDto?> CompleteAssessmentAsync(int userId);
 
-        /// <summary>
-        /// Abandon the current assessment
-        /// </summary>
-        /// <param name="userId">The user ID</param>
-        /// <returns>True if abandoned successfully</returns>
+        /// <summary>Abandon the current in-progress assessment.</summary>
         Task<bool> AbandonAssessmentAsync(int userId);
 
-        /// <summary>
-        /// Get assessment history for a job seeker
-        /// </summary>
-        /// <param name="userId">The user ID</param>
-        /// <returns>Assessment history with all attempts</returns>
+        /// <summary>Return the assessment history for the job seeker.</summary>
         Task<AssessmentHistoryResponseDto> GetHistoryAsync(int userId);
 
-        /// <summary>
-        /// Get detailed result for a specific attempt
-        /// </summary>
-        /// <param name="userId">The user ID</param>
-        /// <param name="attemptId">The assessment attempt ID</param>
-        /// <returns>Detailed result or null if not found/not owned</returns>
+        /// <summary>Return the full review result for a completed attempt, including correct answers and explanations.</summary>
         Task<AssessmentResultResponseDto?> GetResultAsync(int userId, int attemptId);
     }
 }
