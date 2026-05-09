@@ -176,11 +176,12 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     return null;
                 }
 
-                if (questionIds.Count < AssessmentSettings.TotalQuestionsPerAssessment)
+                if (questionIds.Count != AssessmentSettings.TotalQuestionsPerAssessment)
                 {
                     _logger.LogWarning(
-                        "Insufficient questions for user {UserId}. RoleFamily {RoleFamily}, Seniority {Seniority}, Selected {Count}",
-                        userId, roleFamily, seniorityLevel, questionIds.Count);
+                        "Insufficient questions for user {UserId}. RoleFamily {RoleFamily}, Seniority {Seniority}, Selected {Count} (Expected {Expected})",
+                        userId, roleFamily, seniorityLevel, questionIds.Count, AssessmentSettings.TotalQuestionsPerAssessment);
+                    return null;
                 }
 
                 var previousAttempts = await _context.AssessmentAttempts

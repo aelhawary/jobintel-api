@@ -335,6 +335,10 @@ if none are claimed, questions are drawn from the general soft-skill pool.
 - Persist `QuestionIdsJson` (ordered, frozen) and `ClaimedSkillIdsJson`
   (snapshot) on the `AssessmentAttempt`.
 
+If the question bank cannot satisfy the full 30-question distribution
+(21 technical + 9 soft-skill) for the selected role family, seniority, and
+claimed skills, the start request fails and no attempt is created.
+
 **Why persist question IDs?**  
 Freezing the list ensures consistent question order across page refreshes,
 validates that submitted answers belong to this attempt, and enables
@@ -569,6 +573,9 @@ from the job-seeker profile. Provided IDs are validated for ownership.
   "success": false,
   "message": "Cannot start assessment. Check eligibility and claimed skills."
 }
+
+// 400 Bad Request — insufficient questions to build a full 30-question attempt
+// (same message as above; no attempt is created)
 ```
 
 ---
@@ -928,6 +935,7 @@ unexpected exceptions (which are caught internally and logged).
 | No claimed skills | 400 | (eligibility check) |
 | In cooldown | 400 | (eligibility check) |
 | Assessment in progress | 400 | (eligibility check) |
+| Insufficient question bank | 400 | "Cannot start assessment. Check eligibility and claimed skills." |
 | Question not in attempt | 400 | "Failed to submit answer …" |
 | Invalid answer index | 400 | Model validation error |
 | No in-progress attempt | 404 | "No assessment in progress" |

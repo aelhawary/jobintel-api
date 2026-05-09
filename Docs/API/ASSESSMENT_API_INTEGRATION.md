@@ -185,12 +185,16 @@ Omitting the body (or `skillIds`) causes the server to snapshot all skills
 from the job-seeker profile. The server validates that provided IDs are
 actually on the profile.
 
+If the question bank cannot satisfy the required 30-question distribution
+(for the selected role family, seniority level, and claimed skills), the
+start request fails with 400 and no attempt is created.
+
 **Response `data`:**
 
 | Field | Type | Description |
 |---|---|---|
 | `attemptId` | int | Use this on all subsequent calls |
-| `totalQuestions` | int | Total number of questions (typically 30) |
+| `totalQuestions` | int | Total number of questions (always 30; start fails if insufficient questions exist) |
 | `technicalQuestions` | int | Technical question count |
 | `softSkillQuestions` | int | Soft-skill question count |
 | `timeLimitMinutes` | int | Total time allowed |
@@ -885,6 +889,7 @@ const resumeAssessment = async () => {
 | Profile incomplete / no title / no skills | 400 | Returned via eligibility check |
 | Already in cooldown | 400 | Returned via eligibility check |
 | `POST /start` with in-progress attempt | 400 | Use `GET /current` to resume |
+| `POST /start` with insufficient question bank | 400 | No attempt is created; verify the question pool for the role/seniority/skills |
 | `POST /answer` questionId not in attempt | 400 | Always use IDs from `/question/{n}` |
 | Invalid `selectedAnswerIndex` | 400 | Model validation error shape |
 | `GET /result` while InProgress | 404 | Assessment not yet completed |
@@ -900,6 +905,10 @@ Do not treat a repeat submission as an error.
 **Concurrent start** — If two tabs simultaneously call `POST /start` for the
 same user, the second will return 400 because the server enforces a unique
 filtered index on in-progress attempts.
+
+**Insufficient question bank** — If the question bank cannot satisfy the full
+30-question distribution for the selected role, seniority, or claimed skills,
+`POST /start` returns 400 and no attempt is created.
 
 **Auto-submit timing** — If the user's client timer reaches zero but the
 network is offline, the attempt is still valid on the server until a request
@@ -921,6 +930,7 @@ submit prompt, not an error condition.
 | Symptom | Likely Cause | Fix |
 |---|---|---|
 | `400` on `POST /start` | User already has an in-progress attempt | Call `GET /current` to check; resume or abandon before starting again |
+| `400` on `POST /start` | Insufficient questions for the selected role/seniority/skills | Expand the question bank or adjust claimed skills |
 | `400` on `POST /answer` | `questionId` not part of this attempt | Always use the `questionId` returned by `GET /question/{n}` |
 | `404` on `GET /questions` | No in-progress attempt | Call `GET /current` first; if expired, it auto-submits |
 | `404` on `GET /result/{id}` | Attempt is still `InProgress` | Call `POST /complete` or wait for auto-submit |

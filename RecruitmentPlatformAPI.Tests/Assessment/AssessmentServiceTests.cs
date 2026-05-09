@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using RecruitmentPlatformAPI.Configuration;
 using RecruitmentPlatformAPI.Data;
 using RecruitmentPlatformAPI.DTOs.Assessment;
 using RecruitmentPlatformAPI.Enums;
@@ -89,25 +90,15 @@ public class AssessmentServiceTests
     {
         var optionsJson = JsonSerializer.Serialize(new[] { "A", "B", "C", "D" });
 
-        var questions = new[]
+        var questions = new List<AssessmentQuestion>();
+        var id = 9401;
+
+        for (var i = 0; i < AssessmentSettings.TechnicalQuestionsCount; i++)
         {
-            new AssessmentQuestion
+            questions.Add(new AssessmentQuestion
             {
-                Id = 9401,
-                QuestionText = "What is dependency injection?",
-                Category = QuestionCategory.Technical,
-                RoleFamily = JobTitleRoleFamily.Backend,
-                SkillId = ClaimedTechnicalSkillId,
-                Difficulty = QuestionDifficulty.Easy,
-                SeniorityLevel = ExperienceSeniorityLevel.Mid,
-                Options = optionsJson,
-                CorrectAnswerIndex = 0,
-                IsActive = true
-            },
-            new AssessmentQuestion
-            {
-                Id = 9402,
-                QuestionText = "What is middleware in ASP.NET Core?",
+                Id = id++,
+                QuestionText = $"Technical question {i + 1}",
                 Category = QuestionCategory.Technical,
                 RoleFamily = JobTitleRoleFamily.Backend,
                 SkillId = ClaimedTechnicalSkillId,
@@ -116,11 +107,15 @@ public class AssessmentServiceTests
                 Options = optionsJson,
                 CorrectAnswerIndex = 0,
                 IsActive = true
-            },
-            new AssessmentQuestion
+            });
+        }
+
+        for (var i = 0; i < AssessmentSettings.SoftSkillQuestionsCount; i++)
+        {
+            questions.Add(new AssessmentQuestion
             {
-                Id = 9403,
-                QuestionText = "How do you communicate technical tradeoffs to stakeholders?",
+                Id = id++,
+                QuestionText = $"Soft skill question {i + 1}",
                 Category = QuestionCategory.SoftSkill,
                 RoleFamily = JobTitleRoleFamily.Other,
                 SkillId = SoftSkillId,
@@ -129,8 +124,8 @@ public class AssessmentServiceTests
                 Options = optionsJson,
                 CorrectAnswerIndex = 0,
                 IsActive = true
-            }
-        };
+            });
+        }
 
         ctx.AssessmentQuestions.AddRange(questions);
         await ctx.SaveChangesAsync();
@@ -360,7 +355,7 @@ public class AssessmentServiceTests
         Assert.NotNull(started);
 
         var answered = 0;
-        for (var i = 0; i < 10; i++)
+        while (true)
         {
             var question = await service.GetNextQuestionAsync(UserId);
             if (question == null) break;
@@ -376,7 +371,7 @@ public class AssessmentServiceTests
             answered++;
         }
 
-        Assert.Equal(3, answered);
+        Assert.Equal(started!.TotalQuestions, answered);
 
         var completed = await service.CompleteAssessmentAsync(UserId);
 
@@ -416,7 +411,7 @@ public class AssessmentServiceTests
         var completed = await service.CompleteAssessmentAsync(UserId);
         Assert.NotNull(completed);
         Assert.Equal(started!.TotalQuestions, completed!.TotalQuestions);
-        Assert.Equal(33.33m, completed.OverallScore);
+        Assert.Equal(3.33m, completed.OverallScore);
         Assert.Equal(completed.TotalQuestions, completed.TechnicalTotal + completed.SoftSkillTotal);
     }
 
