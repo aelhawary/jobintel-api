@@ -45,10 +45,10 @@ namespace RecruitmentPlatformAPI.Models.Assessment
         public DateTime? CompletedAt { get; set; }
         
         /// <summary>
-        /// Time limit in minutes (default: 45)
+        /// Time limit in minutes (default: 30)
         /// </summary>
         [Required]
-        public int TimeLimitMinutes { get; set; } = 45;
+        public int TimeLimitMinutes { get; set; } = 30;
         
         /// <summary>
         /// Total number of questions in this assessment

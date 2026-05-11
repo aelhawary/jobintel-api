@@ -18,7 +18,7 @@ namespace RecruitmentPlatformAPI.Configuration
         /// <summary>
         /// Default time limit for completing an assessment (in minutes)
         /// </summary>
-        public const int DefaultTimeLimitMinutes = 45;
+        public const int DefaultTimeLimitMinutes = 30;
         
         /// <summary>
         /// Default time allowed per question (in seconds)

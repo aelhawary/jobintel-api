@@ -217,9 +217,9 @@ start request fails with 400 and no attempt is created.
     "totalQuestions": 30,
     "technicalQuestions": 21,
     "softSkillQuestions": 9,
-    "timeLimitMinutes": 45,
+    "timeLimitMinutes": 30,
     "startedAt": "2026-05-08T10:00:00Z",
-    "expiresAt": "2026-05-08T10:45:00Z",
+    "expiresAt": "2026-05-08T10:30:00Z",
     "jobTitle": "Senior Backend Developer",
     "roleFamily": "Backend",
     "seniorityLevel": "Senior",
@@ -265,8 +265,8 @@ responding and `status` will be `"Completed"`.
     "questionsAnswered": 12,
     "questionsRemaining": 18,
     "startedAt": "2026-05-08T10:00:00Z",
-    "expiresAt": "2026-05-08T10:45:00Z",
-    "timeRemainingSeconds": 1980,
+    "expiresAt": "2026-05-08T10:30:00Z",
+    "timeRemainingSeconds": 1080,
     "progressPercentage": 40.0,
     "isExpired": false
   }
@@ -331,7 +331,7 @@ populated so the UI can pre-select it and allow the user to change it.
     "options": ["O(n)", "O(log n)", "O(n²)", "O(1)"],
     "selectedAnswerIndex": 1,
     "timeAllowedSeconds": 60,
-    "timeRemainingInAssessmentSeconds": 1940
+    "timeRemainingInAssessmentSeconds": 1320
   }
 }
 

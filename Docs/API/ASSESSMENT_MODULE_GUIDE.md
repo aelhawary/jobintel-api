@@ -34,7 +34,7 @@ The Assessment Module is a skill-verification system that lets **Job Seekers** t
 | Feature | Detail |
 |---|---|
 | 30-question assessments | 21 technical + 9 soft-skill questions |
-| 45-minute time limit | Hard expiry, auto-submitted on next request |
+| 30-minute time limit | Hard expiry, auto-submitted on next request |
 | Claimed-skill targeting | Questions matched to the job seeker's stated skills |
 | Per-skill allocation | Start response shows how questions are distributed per skill |
 | Flexible navigation | Jump to any question by 1-based number at any time |
@@ -156,7 +156,7 @@ RecruitmentPlatformAPI/
 | `Status` | int | InProgress=1, Completed=2, Abandoned=3, Expired=4 |
 | `StartedAt` | datetime2 | |
 | `CompletedAt` | datetime2? | |
-| `TimeLimitMinutes` | int | Default 45 |
+| `TimeLimitMinutes` | int | Default 30 |
 | `TotalQuestions` | int | |
 | `QuestionsAnswered` | int | Incremented on first answer; unaffected by overwrites |
 | `ExpiresAt` | datetime2 | StartedAt + TimeLimitMinutes |
@@ -214,7 +214,7 @@ public static class AssessmentSettings
 {
     public const int CooldownDays                  = 60;    // Days between attempts
     public const int ScoreValidityMonths           = 18;    // Months a score remains valid
-    public const int DefaultTimeLimitMinutes       = 45;    // Total exam time
+    public const int DefaultTimeLimitMinutes       = 30;    // Total exam time
     public const int DefaultTimePerQuestionSeconds = 60;    // Per-question guidance time
 
     public const int TotalQuestionsPerAssessment   = 30;
@@ -229,7 +229,7 @@ public static class AssessmentSettings
 |---|---|---|
 | 60-day cooldown | Prevents gaming; allows genuine improvement |
 | 18-month validity | Skills evolve; keeps scores current |
-| 45-minute limit | Long enough for thoughtful answers, short enough to maintain focus |
+| 30-minute limit | Enough time for 30 questions while keeping focus |
 | 70/30 split | Technical skills are primary; soft skills differentiate candidates |
 | 50 % passing | Minimum floor for "verified" status |
 
@@ -356,7 +356,7 @@ exact reconstruction for audit or review.
     POST /start           → Create attempt; receive attemptId, expiresAt,
                             skillAllocations
 
-[2] DURING ASSESSMENT (45-minute window)
+[2] DURING ASSESSMENT (30-minute window)
     GET  /current         → Resume / reconnect; get remaining time
     GET  /questions       → Load overview panel (answered flags per question)
     GET  /question/{n}    → Fetch question n (returns selectedAnswerIndex
@@ -541,9 +541,9 @@ from the job-seeker profile. Provided IDs are validated for ownership.
     "totalQuestions": 30,
     "technicalQuestions": 21,
     "softSkillQuestions": 9,
-    "timeLimitMinutes": 45,
+    "timeLimitMinutes": 30,
     "startedAt": "2026-05-08T10:00:00Z",
-    "expiresAt": "2026-05-08T10:45:00Z",
+    "expiresAt": "2026-05-08T10:30:00Z",
     "jobTitle": "Senior Backend Developer",
     "roleFamily": "Backend",
     "seniorityLevel": "Senior",
@@ -596,8 +596,8 @@ before the response is returned and `status` will read `"Completed"`.
     "questionsAnswered": 12,
     "questionsRemaining": 18,
     "startedAt": "2026-05-08T10:00:00Z",
-    "expiresAt": "2026-05-08T10:45:00Z",
-    "timeRemainingSeconds": 1980,
+    "expiresAt": "2026-05-08T10:30:00Z",
+    "timeRemainingSeconds": 1080,
     "progressPercentage": 40.0,
     "isExpired": false
   }
@@ -651,7 +651,7 @@ enabling in-exam review and answer changes.
     "options": ["O(n)", "O(log n)", "O(n²)", "O(1)"],
     "selectedAnswerIndex": 1,
     "timeAllowedSeconds": 60,
-    "timeRemainingInAssessmentSeconds": 1940
+    "timeRemainingInAssessmentSeconds": 1320
   }
 }
 
