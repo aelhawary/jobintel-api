@@ -744,7 +744,7 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                     AttemptId = attempt.Id,
                     Status = attempt.Status.ToString(),
                     OverallScore = attempt.OverallScore ?? overall,
-                    TechnicalSkillsTotalScore = attempt.TechnicalScore ?? technical,
+                    TechnicalScore = attempt.TechnicalScore ?? technical,
                     SoftSkillsScore = attempt.SoftSkillsScore ?? softSkill,
                     TotalQuestions = attempt.TotalQuestions,
                     CorrectAnswers = stats.TotalCorrect,
@@ -860,7 +860,7 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                 AttemptId = attempt.Id,
                 Status = attempt.Status.ToString(),
                 OverallScore = overall,
-                TechnicalSkillsTotalScore = technical,
+                TechnicalScore = technical,
                 SoftSkillsScore = softSkill,
                 TotalQuestions = attempt.TotalQuestions,
                 CorrectAnswers = stats.TotalCorrect,
@@ -900,6 +900,68 @@ namespace RecruitmentPlatformAPI.Services.Assessment
             };
         }
 
+        /// <summary>
+        /// Returns the target difficulty distribution for a given seniority level.
+        /// Juniors get mostly easy questions, seniors get mostly hard questions.
+        /// </summary>
+        private static Dictionary<QuestionDifficulty, double> GetDifficultyDistribution(ExperienceSeniorityLevel level)
+        {
+            return level switch
+            {
+                ExperienceSeniorityLevel.Junior => new Dictionary<QuestionDifficulty, double>
+                {
+                    { QuestionDifficulty.Easy, 0.50 },
+                    { QuestionDifficulty.Medium, 0.35 },
+                    { QuestionDifficulty.Hard, 0.15 }
+                },
+                ExperienceSeniorityLevel.Mid => new Dictionary<QuestionDifficulty, double>
+                {
+                    { QuestionDifficulty.Easy, 0.20 },
+                    { QuestionDifficulty.Medium, 0.50 },
+                    { QuestionDifficulty.Hard, 0.30 }
+                },
+                ExperienceSeniorityLevel.Senior => new Dictionary<QuestionDifficulty, double>
+                {
+                    { QuestionDifficulty.Easy, 0.10 },
+                    { QuestionDifficulty.Medium, 0.30 },
+                    { QuestionDifficulty.Hard, 0.60 }
+                },
+                _ => new Dictionary<QuestionDifficulty, double>
+                {
+                    { QuestionDifficulty.Easy, 0.33 },
+                    { QuestionDifficulty.Medium, 0.34 },
+                    { QuestionDifficulty.Hard, 0.33 }
+                }
+            };
+        }
+
+        /// <summary>
+        /// Computes how many questions of each difficulty level are needed for a given
+        /// target count, based on the seniority-appropriate distribution.
+        /// </summary>
+        private static Dictionary<QuestionDifficulty, int> ComputeDifficultyTargets(int targetCount, ExperienceSeniorityLevel seniority)
+        {
+            var distribution = GetDifficultyDistribution(seniority);
+            var targets = new Dictionary<QuestionDifficulty, int>();
+            var allocated = 0;
+
+            var difficulties = new[] { QuestionDifficulty.Easy, QuestionDifficulty.Medium, QuestionDifficulty.Hard };
+            foreach (var diff in difficulties)
+            {
+                var count = (int)Math.Round(targetCount * distribution.GetValueOrDefault(diff, 0));
+                targets[diff] = count;
+                allocated += count;
+            }
+
+            // Adjust rounding: add/remove from Medium bucket
+            if (allocated != targetCount)
+            {
+                targets[QuestionDifficulty.Medium] += targetCount - allocated;
+            }
+
+            return targets;
+        }
+
         private async Task<List<int>> SelectQuestionsForAssessmentAsync(
             JobTitleRoleFamily roleFamily,
             ExperienceSeniorityLevel seniorityLevel,
@@ -934,8 +996,11 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                 .Distinct()
                 .ToList();
 
+            var technicalDifficultyTargets = ComputeDifficultyTargets(AssessmentSettings.TechnicalQuestionsCount, seniorityLevel);
+            var softDifficultyTargets = ComputeDifficultyTargets(AssessmentSettings.SoftSkillQuestionsCount, seniorityLevel);
+
             var selectedTechnical = SelectQuestionsBySkillCoverage(
-                technicalPool, claimedTechnicalSkills, AssessmentSettings.TechnicalQuestionsCount, seniorityLevel);
+                technicalPool, claimedTechnicalSkills, AssessmentSettings.TechnicalQuestionsCount, seniorityLevel, technicalDifficultyTargets);
 
             if (selectedTechnical.Count < AssessmentSettings.TechnicalQuestionsCount)
             {
@@ -946,7 +1011,8 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                 softPool,
                 claimedSoftSkills.Count > 0 ? claimedSoftSkills : new List<int>(),
                 AssessmentSettings.SoftSkillQuestionsCount,
-                seniorityLevel);
+                seniorityLevel,
+                softDifficultyTargets);
 
             if (selectedSoft.Count < AssessmentSettings.SoftSkillQuestionsCount)
             {
@@ -960,11 +1026,16 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                 .ToList();
         }
 
+        /// <summary>
+        /// Selects questions from the pool, distributing evenly across claimed skills
+        /// and respecting the target difficulty distribution per seniority.
+        /// </summary>
         private static List<int> SelectQuestionsBySkillCoverage(
             List<QuestionPoolItem> pool,
             List<int> skillIds,
             int targetCount,
-            ExperienceSeniorityLevel preferredSeniority)
+            ExperienceSeniorityLevel preferredSeniority,
+            Dictionary<QuestionDifficulty, int> difficultyTargets)
         {
             if (targetCount <= 0 || pool.Count == 0)
             {
@@ -979,7 +1050,7 @@ namespace RecruitmentPlatformAPI.Services.Assessment
 
             if (skillIds.Count == 0)
             {
-                FillFromPool(selected, uniquePool, targetCount, preferredSeniority, _ => true);
+                FillFromPoolByDifficulty(selected, uniquePool, difficultyTargets, targetCount);
                 return selected;
             }
 
@@ -991,25 +1062,33 @@ namespace RecruitmentPlatformAPI.Services.Assessment
             {
                 var skillId = distinctSkills[i];
                 var requiredForSkill = basePerSkill + (i < remainder ? 1 : 0);
+                var skillSubTargets = ComputeDifficultyTargets(requiredForSkill, preferredSeniority);
+                var countBefore = selected.Count;
 
-                var preferred = uniquePool
-                    .Where(q => q.SkillId == skillId && q.SeniorityLevel == preferredSeniority && !selected.Contains(q.QuestionId))
-                    .OrderBy(_ => Guid.NewGuid())
-                    .Take(requiredForSkill)
-                    .Select(q => q.QuestionId)
-                    .ToList();
-
-                selected.AddRange(preferred);
-
-                if (preferred.Count < requiredForSkill)
+                // Select from this skill following difficulty distribution
+                foreach (var (diff, count) in skillSubTargets)
                 {
+                    if (count <= 0) continue;
+                    var batch = uniquePool
+                        .Where(q => q.SkillId == skillId && q.Difficulty == diff && !selected.Contains(q.QuestionId))
+                        .OrderBy(_ => Guid.NewGuid())
+                        .Take(count)
+                        .Select(q => q.QuestionId)
+                        .ToList();
+                    selected.AddRange(batch);
+                }
+
+                // If difficulty-targeted selection didn't fill the skill quota, fill from any difficulty
+                var selectedForThisSkill = selected.Count - countBefore;
+                if (selectedForThisSkill < requiredForSkill)
+                {
+                    var gap = requiredForSkill - selectedForThisSkill;
                     var fallback = uniquePool
                         .Where(q => q.SkillId == skillId && !selected.Contains(q.QuestionId))
                         .OrderBy(_ => Guid.NewGuid())
-                        .Take(requiredForSkill - preferred.Count)
+                        .Take(gap)
                         .Select(q => q.QuestionId)
                         .ToList();
-
                     selected.AddRange(fallback);
                 }
             }
@@ -1020,6 +1099,41 @@ namespace RecruitmentPlatformAPI.Services.Assessment
             }
 
             return selected;
+        }
+
+        /// <summary>
+        /// Fills selected IDs from the pool, preferring the target difficulty distribution first,
+        /// then falling back to preferred seniority, then any remaining questions.
+        /// </summary>
+        private static void FillFromPoolByDifficulty(
+            List<int> selectedIds,
+            List<QuestionPoolItem> pool,
+            Dictionary<QuestionDifficulty, int> difficultyTargets,
+            int totalTarget)
+        {
+            foreach (var (diff, count) in difficultyTargets)
+            {
+                if (selectedIds.Count >= totalTarget || count <= 0) break;
+                var batch = pool
+                    .Where(q => q.Difficulty == diff && !selectedIds.Contains(q.QuestionId))
+                    .OrderBy(_ => Guid.NewGuid())
+                    .Take(count)
+                    .Select(q => q.QuestionId)
+                    .ToList();
+                selectedIds.AddRange(batch);
+            }
+
+            // Fill any remaining gap from the full pool
+            if (selectedIds.Count < totalTarget)
+            {
+                var remaining = pool
+                    .Where(q => !selectedIds.Contains(q.QuestionId))
+                    .OrderBy(_ => Guid.NewGuid())
+                    .Take(totalTarget - selectedIds.Count)
+                    .Select(q => q.QuestionId)
+                    .ToList();
+                selectedIds.AddRange(remaining);
+            }
         }
 
         private static void FillFromPool(
@@ -1212,11 +1326,13 @@ namespace RecruitmentPlatformAPI.Services.Assessment
                 QuestionId = question.Id;
                 SkillId = question.SkillId;
                 SeniorityLevel = question.SeniorityLevel;
+                Difficulty = question.Difficulty;
             }
 
             public int QuestionId { get; }
             public int SkillId { get; }
             public ExperienceSeniorityLevel SeniorityLevel { get; }
+            public QuestionDifficulty Difficulty { get; }
         }
 
         private sealed class SkillBucket

@@ -27,12 +27,12 @@ namespace RecruitmentPlatformAPI.Models.Assessment
         public decimal? OverallScore { get; set; }
         
         /// <summary>
-        /// Technical questions score (0-100), weighted 70% of overall
+        /// Technical questions score (0-100)
         /// </summary>
         public decimal? TechnicalScore { get; set; }
         
         /// <summary>
-        /// Soft skills questions score (0-100), weighted 30% of overall
+        /// Soft skills questions score (0-100)
         /// </summary>
         public decimal? SoftSkillsScore { get; set; }
         

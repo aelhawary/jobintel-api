@@ -91,7 +91,7 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings?.Audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings?.SecretKey ?? ""))
     };
-    
+
     // Add JWT debugging events
     options.Events = new JwtBearerEvents
     {
@@ -110,7 +110,7 @@ builder.Services.AddAuthentication(options =>
         OnChallenge = context =>
         {
             var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-            logger.LogWarning("JWT Challenge triggered. Error: {Error}, ErrorDescription: {ErrorDescription}", 
+            logger.LogWarning("JWT Challenge triggered. Error: {Error}, ErrorDescription: {ErrorDescription}",
                 context.Error, context.ErrorDescription);
             return Task.CompletedTask;
         }

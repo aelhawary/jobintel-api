@@ -294,7 +294,7 @@ namespace RecruitmentPlatformAPI.DTOs.Assessment
         public decimal OverallScore { get; set; }
 
         /// <summary>Score across technical questions only (0–100).</summary>
-        public decimal TechnicalSkillsTotalScore { get; set; }
+        public decimal TechnicalScore { get; set; }
 
         /// <summary>Score across soft-skill questions only (0–100).</summary>
         public decimal SoftSkillsScore { get; set; }

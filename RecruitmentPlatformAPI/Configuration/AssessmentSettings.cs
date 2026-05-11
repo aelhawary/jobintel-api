@@ -16,16 +16,6 @@ namespace RecruitmentPlatformAPI.Configuration
         public const int ScoreValidityMonths = 18;
         
         /// <summary>
-        /// Weight of technical questions in overall score (70%)
-        /// </summary>
-        public const decimal TechnicalWeight = 0.70m;
-        
-        /// <summary>
-        /// Weight of soft skill questions in overall score (30%)
-        /// </summary>
-        public const decimal SoftSkillWeight = 0.30m;
-        
-        /// <summary>
         /// Default time limit for completing an assessment (in minutes)
         /// </summary>
         public const int DefaultTimeLimitMinutes = 45;
