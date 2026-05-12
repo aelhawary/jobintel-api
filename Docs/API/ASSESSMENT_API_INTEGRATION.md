@@ -1,7 +1,7 @@
 # Assessment Module — Frontend Integration Guide
 
-**Last Updated:** May 2026  
-**Base URL:** `http://localhost:5217/api/assessment`
+**Last Updated:** May 12, 2026  
+**Base URL:** `http://jobintel.runasp.net/api/assessment`
 
 ---
 
@@ -23,7 +23,7 @@
 
 ## 1. Overview
 
-The Assessment module lets job seekers take targeted skill-verification quizzes. Questions are drawn from the candidate's claimed-skill profile and filtered by role family and seniority. The module is designed around these core behaviours:
+The Assessment module lets job seekers take targeted skill-verification quizzes. Questions are drawn from the candidate's claimed-skill profile and filtered by role family, seniority, and a seniority-based difficulty distribution. The module is designed around these core behaviours:
 
 - **Flexible navigation** — jump to any question by number at any time.
 - **Draft answer overwrite** — re-answer any question before submitting; the answered count is not affected.
@@ -202,7 +202,7 @@ start request fails with 400 and no attempt is created.
 | `expiresAt` | DateTime | UTC expiry — use this for the countdown timer |
 | `jobTitle` | string | Job title at time of start |
 | `roleFamily` | string | e.g. "Backend", "Frontend" |
-| `seniorityLevel` | string | "Junior", "Mid", or "Senior" |
+| `seniorityLevel` | string | "Junior", "Mid", or "Senior" (determines difficulty distribution) |
 | `retakeNumber` | int | 1 on first attempt |
 | `claimedSkillsCount` | int | Skills snapshotted for this attempt |
 | `skillAllocations` | array | Per-skill question distribution |
@@ -416,7 +416,7 @@ per-question review, call `GET /result/{attemptId}` after completion.
     "attemptId": 42,
     "status": "Completed",
     "overallScore": 73.33,
-    "technicalSkillsTotalScore": 71.43,
+    "technicalScore": 71.43,
     "softSkillsScore": 77.78,
     "totalQuestions": 30,
     "correctAnswers": 22,
@@ -519,7 +519,7 @@ review UI to group questions by skill.
     "attemptId": 42,
     "status": "Completed",
     "overallScore": 73.33,
-    "technicalSkillsTotalScore": 71.43,
+    "technicalScore": 71.43,
     "softSkillsScore": 77.78,
     "totalQuestions": 30,
     "correctAnswers": 22,
@@ -773,7 +773,7 @@ interface AssessmentResult {
   attemptId: number;
   status: string;
   overallScore: number;
-  technicalSkillsTotalScore: number;
+  technicalScore: number;
   softSkillsScore: number;
   totalQuestions: number;
   correctAnswers: number;

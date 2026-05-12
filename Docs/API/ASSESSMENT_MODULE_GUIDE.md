@@ -1,7 +1,7 @@
 # Assessment Module — Comprehensive Technical Guide
 
-**Last Updated:** May 2026  
-**Base URL:** `api/assessment`
+**Last Updated:** May 12, 2026  
+**Base URL:** `http://jobintel.runasp.net/api/assessment`
 
 ---
 
@@ -45,6 +45,7 @@ The Assessment Module is a skill-verification system that lets **Job Seekers** t
 | 18-month score validity | Scores expire and the cycle can restart |
 | Exam mode | No correctness feedback during the test |
 | Full review results | `/result/{id}` returns correct answers, explanations, and per-skill breakdown |
+| Pedagogical explanations | 3-part explanation format (Fact + Contrast + Rationale) for better learning |
 
 ---
 
@@ -310,39 +311,43 @@ SeniorityLevel = yearsOfExperience switch
 };
 ```
 
-### Step 2 — Build question pools
+### Step 2 — Build pools
 
 - **Technical pool**: active technical questions with a compatible role family  
   (same role family as the job seeker, or either side is `FullStack`).
 - **Soft-skill pool**: all active soft-skill questions (role-independent).
 
-### Step 3 — Distribute by claimed skill coverage
+### Step 3 — Compute difficulty targets
 
-1. Distribute the target count evenly across distinct claimed skills;  
-   remainder questions are assigned round-robin.
-2. For each skill, prefer questions matching the derived seniority level.
-3. If a skill has fewer questions than required, fall back to any seniority
-   for that skill.
-4. If the pool is still short, fill from role-compatible questions regardless
-   of skill match.
+The system calculates a target number of Easy, Medium, and Hard questions based on the candidate's seniority:
 
-Soft-skill questions follow the same logic against any claimed soft skills;
-if none are claimed, questions are drawn from the general soft-skill pool.
+| Seniority | Easy | Medium | Hard |
+|---|---|---|---|
+| **Junior** | 50% | 35% | 15% |
+| **Mid** | 20% | 50% | 30% |
+| **Senior** | 10% | 30% | 60% |
 
-### Step 4 — Finalise and persist
+These targets are applied separately to Technical (21) and Soft Skill (9) categories.
+
+### Step 4 — Distribute by claimed skill coverage
+
+1. Distribute the target count evenly across distinct claimed skills.
+2. For each skill, select questions that match the target difficulty distribution.
+3. If a specific difficulty level is unavailable for a skill, fall back to any difficulty for that skill.
+4. If the skill quota still isn't met, fill from role-compatible questions regardless of skill match.
+
+Soft-skill questions follow the same logic against claimed soft skills; if none are claimed, questions are drawn from the general soft-skill pool using the same difficulty distribution.
+
+### Step 5 — Finalise and persist
 
 - Combine technical and soft-skill selections, deduplicate, then shuffle.
-- Persist `QuestionIdsJson` (ordered, frozen) and `ClaimedSkillIdsJson`
-  (snapshot) on the `AssessmentAttempt`.
+- Persist `QuestionIdsJson` (ordered, frozen) and `ClaimedSkillIdsJson` (snapshot) on the `AssessmentAttempt`.
 
-If the question bank cannot satisfy the full 30-question distribution
-(21 technical + 9 soft-skill) for the selected role family, seniority, and
-claimed skills, the start request fails and no attempt is created.
+**Why use difficulty distribution?**  
+Difficulty levels (Easy, Medium, Hard) were previously decorative. By tying them to seniority, the system ensures a balanced challenge: a Senior candidate might still see some "Easy" fundamentals but will be primarily tested on "Hard" architectural or complex scenarios.
 
 **Why persist question IDs?**  
-Freezing the list ensures consistent question order across page refreshes,
-validates that submitted answers belong to this attempt, and enables
-exact reconstruction for audit or review.
+Freezing the list ensures consistent question order across page refreshes, validates that submitted answers belong to this attempt, and enables exact reconstruction for audit or review.
 
 ---
 
@@ -709,7 +714,7 @@ Use `GET /result/{attemptId}` for the full review.
     "attemptId": 42,
     "status": "Completed",
     "overallScore": 73.33,
-    "technicalSkillsTotalScore": 71.43,
+    "technicalScore": 71.43,
     "softSkillsScore": 77.78,
     "totalQuestions": 30,
     "correctAnswers": 22,
