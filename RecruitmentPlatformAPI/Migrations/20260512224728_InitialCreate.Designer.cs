@@ -12,7 +12,7 @@ using RecruitmentPlatformAPI.Data;
 namespace RecruitmentPlatformAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260511074144_InitialCreate")]
+    [Migration("20260512224728_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
