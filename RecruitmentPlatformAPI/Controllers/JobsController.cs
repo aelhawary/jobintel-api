@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using RecruitmentPlatformAPI.DTOs.Common;
 using RecruitmentPlatformAPI.DTOs.Recruiter;
 using RecruitmentPlatformAPI.Services.Recruiter;
+using System.Security.Claims;
 
 namespace RecruitmentPlatformAPI.Controllers
 {
@@ -202,6 +202,34 @@ namespace RecruitmentPlatformAPI.Controllers
                 return NotFound(new ApiErrorResponse("Job not found or you don't have permission"));
 
             return Ok(new ApiResponse<string>("Job deleted successfully"));
+        }
+
+        /// <summary>
+        /// Get the full profile of a candidate recommended for one of your jobs.
+        /// Access is denied if the job doesn't belong to you or if the candidate
+        /// was not recommended for this specific job by the AI system.
+        /// </summary>
+        /// <param name="jobId">Your job ID</param>
+        /// <param name="jobSeekerId">The candidate's Job Seeker ID</param>
+        [HttpGet("{jobId}/candidates/{jobSeekerId}")]
+        [Authorize]
+        [ProducesResponseType(typeof(ApiResponse<CandidateProfileDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetCandidateProfile(int jobId, int jobSeekerId)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+
+            var result = await _jobService.GetCandidateProfileAsync(userId, jobId, jobSeekerId);
+
+            if (result == null)
+                return NotFound(new ApiErrorResponse(
+                    "Candidate not found, or they were not recommended for this job, " +
+                    "or this job does not belong to you."));
+
+            return Ok(new ApiResponse<CandidateProfileDto>(result));
         }
 
         // ─── Helper ───────────────────────────────

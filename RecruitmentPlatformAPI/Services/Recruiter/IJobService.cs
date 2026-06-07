@@ -47,5 +47,12 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
         /// Get available skills for the job creation form (with optional search filter)
         /// </summary>
         Task<List<SkillOptionDto>> GetSkillsAsync(string? search = null);
+
+        /// <summary>
+        /// Get the full profile of a candidate recommended for one of the recruiter's jobs.
+        /// Returns null if: the job doesn't belong to this recruiter,
+        /// or no Recommendation exists linking this job seeker to this job.
+        /// </summary>
+        Task<CandidateProfileDto?> GetCandidateProfileAsync(int userId, int jobId, int jobSeekerId);
     }
 }

@@ -353,5 +353,191 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
                 Skills = skills
             };
         }
+
+        public async Task<CandidateProfileDto?> GetCandidateProfileAsync(
+    int userId, int jobId, int jobSeekerId)
+        {
+            try
+            {
+                // 1️⃣ الوظيفة موجودة وبتاعة الـ Recruiter ده؟
+                var job = await GetOwnedJobAsync(userId, jobId);
+                if (job == null) return null;
+
+                // 2️⃣ الـ Job Seeker ده متوصى بيه على الوظيفة دي؟
+                var recommendation = await _context.Recommendations
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(r => r.JobId == jobId && r.JobSeekerId == jobSeekerId);
+
+                if (recommendation == null) return null;
+
+                // 3️⃣ جيب بيانات الـ Job Seeker كلها في query واحدة
+                var jobSeeker = await _context.JobSeekers
+                    .AsNoTracking()
+                    .Include(js => js.User)
+                    .Include(js => js.JobTitle)
+                    .Include(js => js.Country)
+                    .Include(js => js.FirstLanguage)
+                    .Include(js => js.SecondLanguage)
+                    .FirstOrDefaultAsync(js => js.Id == jobSeekerId);
+
+                if (jobSeeker == null) return null;
+
+                // 4️⃣ جيب الـ related data (كلها مع IsDeleted = false)
+                var skills = await _context.JobSeekerSkills
+                    .AsNoTracking()
+                    .Where(s => s.JobSeekerId == jobSeekerId)
+                    .Join(_context.Skills,
+                        jss => jss.SkillId,
+                        s => s.Id,
+                        (jss, s) => new CandidateSkillDto
+                        {
+                            Id = s.Id,
+                            Name = s.Name,
+                            Source = jss.Source
+                        })
+                    .ToListAsync();
+
+                var experiences = await _context.Experiences
+                    .AsNoTracking()
+                    .Where(e => e.JobSeekerId == jobSeekerId && !e.IsDeleted)
+                    .OrderBy(e => e.DisplayOrder)
+                    .Select(e => new CandidateExperienceDto
+                    {
+                        Id = e.Id,
+                        JobTitle = e.JobTitle,
+                        CompanyName = e.CompanyName,
+                        Location = e.Location,
+                        EmploymentType = e.EmploymentType.ToString(),
+                        StartDate = e.StartDate,
+                        EndDate = e.EndDate,
+                        IsCurrent = e.IsCurrent,
+                        Responsibilities = e.Responsibilities
+                    })
+                    .ToListAsync();
+
+                var educations = await _context.Educations
+                    .AsNoTracking()
+                    .Where(e => e.JobSeekerId == jobSeekerId && !e.IsDeleted)
+                    .OrderBy(e => e.DisplayOrder)
+                    .Select(e => new CandidateEducationDto
+                    {
+                        Id = e.Id,
+                        Institution = e.Institution,
+                        Degree = e.Degree.ToString(),
+                        Major = e.Major,
+                        GradeOrGPA = e.GradeOrGPA,
+                        StartDate = e.StartDate,
+                        EndDate = e.EndDate,
+                        IsCurrent = e.IsCurrent
+                    })
+                    .ToListAsync();
+
+                var projects = await _context.Projects
+                    .AsNoTracking()
+                    .Where(p => p.JobSeekerId == jobSeekerId && !p.IsDeleted)
+                    .OrderBy(p => p.DisplayOrder)
+                    .Select(p => new CandidateProjectDto
+                    {
+                        Id = p.Id,
+                        Title = p.Title,
+                        Description = p.Description,
+                        TechnologiesUsed = p.TechnologiesUsed,
+                        ProjectLink = p.ProjectLink
+                    })
+                    .ToListAsync();
+
+                var certificates = await _context.Certificates
+                    .AsNoTracking()
+                    .Where(c => c.JobSeekerId == jobSeekerId && !c.IsDeleted)
+                    .OrderBy(c => c.DisplayOrder)
+                    .Select(c => new CandidateCertificateDto
+                    {
+                        Id = c.Id,
+                        Title = c.Title,
+                        IssuingOrganization = c.IssuingOrganization,
+                        IssueDate = c.IssueDate,
+                        ExpirationDate = c.ExpirationDate
+                    })
+                    .ToListAsync();
+
+                var social = await _context.SocialAccounts
+                    .AsNoTracking()
+                    .Where(s => s.JobSeekerId == jobSeekerId)
+                    .Select(s => new CandidateSocialDto
+                    {
+                        LinkedIn = s.LinkedIn,
+                        Github = s.Github,
+                        PersonalWebsite = s.PersonalWebsite,
+                        Behance = s.Behance,
+                        Dribbble = s.Dribbble
+                    })
+                    .FirstOrDefaultAsync();
+
+                var resume = await _context.Resumes
+                    .AsNoTracking()
+                    .Where(r => r.JobSeekerId == jobSeekerId && !r.IsDeleted)
+                    .Select(r => new CandidateResumeDto
+                    {
+                        FileName = r.FileName,
+                        FilePath = r.FilePath,
+                        FileSizeBytes = r.FileSizeBytes,
+                        ContentType = r.ContentType
+                    })
+                    .FirstOrDefaultAsync();
+
+                // 5️⃣ ركّب الـ response
+                return new CandidateProfileDto
+                {
+                    // AI match info
+                    MatchScore = recommendation.MatchScore,
+                    RecommendedAt = recommendation.GeneratedAt,
+
+                    // Identity
+                    JobSeekerId = jobSeeker.Id,
+                    FirstName = jobSeeker.User.FirstName,
+                    LastName = jobSeeker.User.LastName,
+                    Email = jobSeeker.User.Email,
+                    ProfilePictureUrl = jobSeeker.User.ProfilePictureUrl,
+                    PhoneNumber = jobSeeker.PhoneNumber,
+                    Bio = jobSeeker.Bio,
+                    City = jobSeeker.City,
+                    Country = jobSeeker.Country?.NameEn,
+                    JobTitle = jobSeeker.JobTitle?.Title,
+                    YearsOfExperience = jobSeeker.YearsOfExperience,
+
+                    // Assessment
+                    AssessmentScore = jobSeeker.CurrentAssessmentScore,
+                    LastAssessmentDate = jobSeeker.LastAssessmentDate,
+
+                    // Languages
+                    FirstLanguage = jobSeeker.FirstLanguage == null ? null : new CandidateLanguageDto
+                    {
+                        Name = jobSeeker.FirstLanguage.NameEn,
+                        Proficiency = jobSeeker.FirstLanguageProficiency.ToString()
+                    },
+                    SecondLanguage = jobSeeker.SecondLanguage == null ? null : new CandidateLanguageDto
+                    {
+                        Name = jobSeeker.SecondLanguage.NameEn,
+                        Proficiency = jobSeeker.SecondLanguageProficiency.ToString()
+                    },
+
+                    // Collections
+                    Skills = skills,
+                    Experiences = experiences,
+                    Educations = educations,
+                    Projects = projects,
+                    Certificates = certificates,
+                    SocialAccounts = social,
+                    Resume = resume
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Error getting candidate profile. UserId={UserId} JobId={JobId} JobSeekerId={JobSeekerId}",
+                    userId, jobId, jobSeekerId);
+                return null;
+            }
+        }
     }
 }

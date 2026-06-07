@@ -1,13 +1,13 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using RecruitmentPlatformAPI.Configuration;
 using RecruitmentPlatformAPI.Data;
+using RecruitmentPlatformAPI.Services.Assessment;
 using RecruitmentPlatformAPI.Services.Auth;
 using RecruitmentPlatformAPI.Services.JobSeeker;
 using RecruitmentPlatformAPI.Services.Recruiter;
-using RecruitmentPlatformAPI.Services.Assessment;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -185,7 +185,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         logger.LogInformation("Applying SQL Server migrations...");
-        db.Database.Migrate();
+        //db.Database.Migrate();
         logger.LogInformation("Database migration completed successfully.");
     }
     catch (Exception ex)
