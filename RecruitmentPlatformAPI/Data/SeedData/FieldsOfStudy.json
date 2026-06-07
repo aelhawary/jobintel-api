@@ -1,0 +1,238 @@
+[
+  {
+    "NameEn": "Computer Science",
+    "NameAr": "علوم الحاسب"
+  },
+  {
+    "NameEn": "Business Administration",
+    "NameAr": "إدارة الأعمال"
+  },
+  {
+    "NameEn": "Mechanical Engineering",
+    "NameAr": "الهندسة الميكانيكية"
+  },
+  {
+    "NameEn": "Electrical Engineering",
+    "NameAr": "الهندسة الكهربائية"
+  },
+  {
+    "NameEn": "Civil Engineering",
+    "NameAr": "الهندسة المدنية"
+  },
+  {
+    "NameEn": "Medicine",
+    "NameAr": "الطب البشري"
+  },
+  {
+    "NameEn": "Pharmacy",
+    "NameAr": "الصيدلة"
+  },
+  {
+    "NameEn": "Law",
+    "NameAr": "الحقوق"
+  },
+  {
+    "NameEn": "Architecture",
+    "NameAr": "الهندسة المعمارية"
+  },
+  {
+    "NameEn": "Economics",
+    "NameAr": "الاقتصاد"
+  },
+  {
+    "NameEn": "Accounting",
+    "NameAr": "المحاسبة"
+  },
+  {
+    "NameEn": "Finance",
+    "NameAr": "التمويل"
+  },
+  {
+    "NameEn": "Marketing",
+    "NameAr": "التسويق"
+  },
+  {
+    "NameEn": "Information Technology",
+    "NameAr": "تقنية المعلومات"
+  },
+  {
+    "NameEn": "Software Engineering",
+    "NameAr": "هندسة البرمجيات"
+  },
+  {
+    "NameEn": "Data Science",
+    "NameAr": "علم البيانات"
+  },
+  {
+    "NameEn": "Artificial Intelligence",
+    "NameAr": "الذكاء الاصطناعي"
+  },
+  {
+    "NameEn": "Cybersecurity",
+    "NameAr": "الأمن السيبراني"
+  },
+  {
+    "NameEn": "Chemical Engineering",
+    "NameAr": "الهندسة الكيميائية"
+  },
+  {
+    "NameEn": "Industrial Engineering",
+    "NameAr": "الهندسة الصناعية"
+  },
+  {
+    "NameEn": "Biomedical Engineering",
+    "NameAr": "الهندسة الطبية الحيوية"
+  },
+  {
+    "NameEn": "Mathematics",
+    "NameAr": "الرياضيات"
+  },
+  {
+    "NameEn": "Physics",
+    "NameAr": "الفيزياء"
+  },
+  {
+    "NameEn": "Chemistry",
+    "NameAr": "الكيمياء"
+  },
+  {
+    "NameEn": "Biology",
+    "NameAr": "علم الأحياء"
+  },
+  {
+    "NameEn": "Nursing",
+    "NameAr": "التمريض"
+  },
+  {
+    "NameEn": "Dentistry",
+    "NameAr": "طب الأسنان"
+  },
+  {
+    "NameEn": "Public Health",
+    "NameAr": "الصحة العامة"
+  },
+  {
+    "NameEn": "Psychology",
+    "NameAr": "علم النفس"
+  },
+  {
+    "NameEn": "Sociology",
+    "NameAr": "علم الاجتماع"
+  },
+  {
+    "NameEn": "Political Science",
+    "NameAr": "العلوم السياسية"
+  },
+  {
+    "NameEn": "International Relations",
+    "NameAr": "العلاقات الدولية"
+  },
+  {
+    "NameEn": "English Language & Literature",
+    "NameAr": "اللغة الإنجليزية وآدابها"
+  },
+  {
+    "NameEn": "Arabic Language & Literature",
+    "NameAr": "اللغة العربية وآدابها"
+  },
+  {
+    "NameEn": "Journalism & Mass Communication",
+    "NameAr": "الصحافة والإعلام"
+  },
+  {
+    "NameEn": "Graphic Design",
+    "NameAr": "التصميم الجرافيكي"
+  },
+  {
+    "NameEn": "Interior Design",
+    "NameAr": "التصميم الداخلي"
+  },
+  {
+    "NameEn": "Human Resources Management",
+    "NameAr": "إدارة الموارد البشرية"
+  },
+  {
+    "NameEn": "Supply Chain Management",
+    "NameAr": "إدارة سلسلة التوريد"
+  },
+  {
+    "NameEn": "Management Information Systems",
+    "NameAr": "نظم المعلومات الإدارية"
+  },
+  {
+    "NameEn": "Statistics",
+    "NameAr": "الإحصاء"
+  },
+  {
+    "NameEn": "Biochemistry",
+    "NameAr": "الكيمياء الحيوية"
+  },
+  {
+    "NameEn": "Environmental Engineering",
+    "NameAr": "الهندسة البيئية"
+  },
+  {
+    "NameEn": "Aerospace Engineering",
+    "NameAr": "هندسة الطيران والفضاء"
+  },
+  {
+    "NameEn": "Education",
+    "NameAr": "التربية والتعليم"
+  },
+  {
+    "NameEn": "Philosophy",
+    "NameAr": "الفلسفة"
+  },
+  {
+    "NameEn": "History",
+    "NameAr": "التاريخ"
+  },
+  {
+    "NameEn": "Translation & Interpretation",
+    "NameAr": "الترجمة والتفسير"
+  },
+  {
+    "NameEn": "Nutrition & Dietetics",
+    "NameAr": "التغذية وعلوم الأغذية"
+  },
+  {
+    "NameEn": "Physical Therapy",
+    "NameAr": "العلاج الطبيعي"
+  },
+  {
+    "NameEn": "Computer Engineering",
+    "NameAr": "هندسة الحاسب"
+  },
+  {
+    "NameEn": "Veterinary Medicine",
+    "NameAr": "الطب البيطري"
+  },
+  {
+    "NameEn": "Agricultural Engineering",
+    "NameAr": "الهندسة الزراعية"
+  },
+  {
+    "NameEn": "Urban & Regional Planning",
+    "NameAr": "التخطيط العمراني والإقليمي"
+  },
+  {
+    "NameEn": "Media Production",
+    "NameAr": "الإنتاج الإعلامي"
+  },
+  {
+    "NameEn": "Fine Arts",
+    "NameAr": "الفنون الجميلة"
+  },
+  {
+    "NameEn": "Social Work",
+    "NameAr": "الخدمة الاجتماعية"
+  },
+  {
+    "NameEn": "Actuarial Science",
+    "NameAr": "علم الاكتواريات"
+  },
+  {
+    "NameEn": "Petroleum Engineering",
+    "NameAr": "هندسة البترول"
+  }
+]

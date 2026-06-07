@@ -1,0 +1,304 @@
+{
+  "languages": [
+    {
+      "code": "ar",
+      "english_name": "Arabic",
+      "arabic_name": "العربية"
+    },
+    {
+      "code": "hy",
+      "english_name": "Armenian",
+      "arabic_name": "الأرمنية"
+    },
+    {
+      "code": "az",
+      "english_name": "Azerbaijani",
+      "arabic_name": "الأذربيجانية"
+    },
+    {
+      "code": "bn",
+      "english_name": "Bengali",
+      "arabic_name": "البنغالية"
+    },
+    {
+      "code": "bg",
+      "english_name": "Bulgarian",
+      "arabic_name": "البلغارية"
+    },
+    {
+      "code": "my",
+      "english_name": "Burmese",
+      "arabic_name": "البورمية"
+    },
+    {
+      "code": "ca",
+      "english_name": "Catalan",
+      "arabic_name": "الكتالونية"
+    },
+    {
+      "code": "zh",
+      "english_name": "Chinese",
+      "arabic_name": "الصينية"
+    },
+    {
+      "code": "hr",
+      "english_name": "Croatian",
+      "arabic_name": "الكرواتية"
+    },
+    {
+      "code": "cs",
+      "english_name": "Czech",
+      "arabic_name": "التشيكية"
+    },
+    {
+      "code": "da",
+      "english_name": "Danish",
+      "arabic_name": "الدنماركية"
+    },
+    {
+      "code": "nl",
+      "english_name": "Dutch",
+      "arabic_name": "الهولندية"
+    },
+    {
+      "code": "en",
+      "english_name": "English",
+      "arabic_name": "الإنجليزية"
+    },
+    {
+      "code": "et",
+      "english_name": "Estonian",
+      "arabic_name": "الإستونية"
+    },
+    {
+      "code": "fi",
+      "english_name": "Finnish",
+      "arabic_name": "الفنلندية"
+    },
+    {
+      "code": "fr",
+      "english_name": "French",
+      "arabic_name": "الفرنسية"
+    },
+    {
+      "code": "ka",
+      "english_name": "Georgian",
+      "arabic_name": "الجورجية"
+    },
+    {
+      "code": "de",
+      "english_name": "German",
+      "arabic_name": "الألمانية"
+    },
+    {
+      "code": "el",
+      "english_name": "Greek",
+      "arabic_name": "اليونانية"
+    },
+    {
+      "code": "gu",
+      "english_name": "Gujarati",
+      "arabic_name": "الغوجاراتية"
+    },
+    {
+      "code": "he",
+      "english_name": "Hebrew",
+      "arabic_name": "العبرية"
+    },
+    {
+      "code": "hi",
+      "english_name": "Hindi",
+      "arabic_name": "الهندية"
+    },
+    {
+      "code": "hu",
+      "english_name": "Hungarian",
+      "arabic_name": "المجرية"
+    },
+    {
+      "code": "is",
+      "english_name": "Icelandic",
+      "arabic_name": "الأيسلندية"
+    },
+    {
+      "code": "id",
+      "english_name": "Indonesian",
+      "arabic_name": "الإندونيسية"
+    },
+    {
+      "code": "it",
+      "english_name": "Italian",
+      "arabic_name": "الإيطالية"
+    },
+    {
+      "code": "ja",
+      "english_name": "Japanese",
+      "arabic_name": "اليابانية"
+    },
+    {
+      "code": "kn",
+      "english_name": "Kannada",
+      "arabic_name": "الكانادا"
+    },
+    {
+      "code": "kk",
+      "english_name": "Kazakh",
+      "arabic_name": "الكازاخية"
+    },
+    {
+      "code": "ko",
+      "english_name": "Korean",
+      "arabic_name": "الكورية"
+    },
+    {
+      "code": "lv",
+      "english_name": "Latvian",
+      "arabic_name": "اللاتفية"
+    },
+    {
+      "code": "lt",
+      "english_name": "Lithuanian",
+      "arabic_name": "الليتوانية"
+    },
+    {
+      "code": "mk",
+      "english_name": "Macedonian",
+      "arabic_name": "المقدونية"
+    },
+    {
+      "code": "ms",
+      "english_name": "Malay",
+      "arabic_name": "الملايوية"
+    },
+    {
+      "code": "ml",
+      "english_name": "Malayalam",
+      "arabic_name": "المالايالامية"
+    },
+    {
+      "code": "mr",
+      "english_name": "Marathi",
+      "arabic_name": "الماراثية"
+    },
+    {
+      "code": "mn",
+      "english_name": "Mongolian",
+      "arabic_name": "المنغولية"
+    },
+    {
+      "code": "ne",
+      "english_name": "Nepali",
+      "arabic_name": "النيبالية"
+    },
+    {
+      "code": "no",
+      "english_name": "Norwegian",
+      "arabic_name": "النرويجية"
+    },
+    {
+      "code": "fa",
+      "english_name": "Persian",
+      "arabic_name": "الفارسية"
+    },
+    {
+      "code": "pl",
+      "english_name": "Polish",
+      "arabic_name": "البولندية"
+    },
+    {
+      "code": "pt",
+      "english_name": "Portuguese",
+      "arabic_name": "البرتغالية"
+    },
+    {
+      "code": "pa",
+      "english_name": "Punjabi",
+      "arabic_name": "البنجابية"
+    },
+    {
+      "code": "ro",
+      "english_name": "Romanian",
+      "arabic_name": "الرومانية"
+    },
+    {
+      "code": "ru",
+      "english_name": "Russian",
+      "arabic_name": "الروسية"
+    },
+    {
+      "code": "sr",
+      "english_name": "Serbian",
+      "arabic_name": "الصربية"
+    },
+    {
+      "code": "si",
+      "english_name": "Sinhala",
+      "arabic_name": "السنهالية"
+    },
+    {
+      "code": "sk",
+      "english_name": "Slovak",
+      "arabic_name": "السلوفاكية"
+    },
+    {
+      "code": "sl",
+      "english_name": "Slovenian",
+      "arabic_name": "السلوفينية"
+    },
+    {
+      "code": "es",
+      "english_name": "Spanish",
+      "arabic_name": "الإسبانية"
+    },
+    {
+      "code": "sw",
+      "english_name": "Swahili",
+      "arabic_name": "السواحلية"
+    },
+    {
+      "code": "sv",
+      "english_name": "Swedish",
+      "arabic_name": "السويدية"
+    },
+    {
+      "code": "ta",
+      "english_name": "Tamil",
+      "arabic_name": "التاميلية"
+    },
+    {
+      "code": "te",
+      "english_name": "Telugu",
+      "arabic_name": "التيلوغوية"
+    },
+    {
+      "code": "th",
+      "english_name": "Thai",
+      "arabic_name": "التايلاندية"
+    },
+    {
+      "code": "tr",
+      "english_name": "Turkish",
+      "arabic_name": "التركية"
+    },
+    {
+      "code": "uk",
+      "english_name": "Ukrainian",
+      "arabic_name": "الأوكرانية"
+    },
+    {
+      "code": "ur",
+      "english_name": "Urdu",
+      "arabic_name": "الأردية"
+    },
+    {
+      "code": "uz",
+      "english_name": "Uzbek",
+      "arabic_name": "الأوزبكية"
+    },
+    {
+      "code": "vi",
+      "english_name": "Vietnamese",
+      "arabic_name": "الفيتنامية"
+    }
+  ]
+}
