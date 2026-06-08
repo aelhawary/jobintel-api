@@ -9,11 +9,13 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
     public class JobService : IJobService
     {
         private readonly AppDbContext _context;
+        private readonly IAIMatchingService _aiMatchingService;
         private readonly ILogger<JobService> _logger;
 
-        public JobService(AppDbContext context, ILogger<JobService> logger)
+        public JobService(AppDbContext context, IAIMatchingService aiMatchingService, ILogger<JobService> logger)
         {
             _context = context;
+            _aiMatchingService = aiMatchingService;
             _logger = logger;
         }
 
@@ -35,6 +37,11 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
                 if (!locationValidation.Success)
                     return JobServiceResult<JobResponseDto>.Fail(locationValidation.Message, locationValidation.ErrorCode);
 
+                // Validate JobTitleId
+                var titleValidation = await ValidateJobTitleIdAsync(dto.JobTitleId);
+                if (!titleValidation.Success)
+                    return JobServiceResult<JobResponseDto>.Fail(titleValidation.Message, titleValidation.ErrorCode);
+
                 // Validate skill IDs if provided
                 var skillValidation = await ValidateSkillIdsAsync(dto.SkillIds);
                 if (!skillValidation.Success)
@@ -44,6 +51,7 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
                 {
                     RecruiterId = recruiter.Id,
                     Title = dto.Title.Trim(),
+                    JobTitleId = dto.JobTitleId,
                     Description = dto.Description.Trim(),
                     Requirements = dto.Requirements.Trim(),
                     EmploymentType = dto.EmploymentType,
@@ -106,6 +114,11 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
                 if (!locationValidation.Success)
                     return JobServiceResult<JobResponseDto>.Fail(locationValidation.Message, locationValidation.ErrorCode);
 
+                // Validate JobTitleId
+                var titleValidation = await ValidateJobTitleIdAsync(dto.JobTitleId);
+                if (!titleValidation.Success)
+                    return JobServiceResult<JobResponseDto>.Fail(titleValidation.Message, titleValidation.ErrorCode);
+
                 // Validate skill IDs if provided
                 var skillValidation = await ValidateSkillIdsAsync(dto.SkillIds);
                 if (!skillValidation.Success)
@@ -113,6 +126,7 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
 
                 // Detect core matching criteria changes for AI invalidation
                 bool criteriaChanged = job.Title != dto.Title.Trim() ||
+                                       job.JobTitleId != dto.JobTitleId ||
                                        job.Description != dto.Description.Trim() ||
                                        job.Requirements != dto.Requirements.Trim() ||
                                        job.EmploymentType != dto.EmploymentType ||
@@ -131,16 +145,20 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
 
                 if (criteriaChanged)
                 {
-                    _logger.LogInformation("Core matching criteria changed for Job {JobId}. Invalidating existing AI recommendations.", jobId);
+                    _logger.LogInformation("Core matching criteria changed for Job {JobId}. Invalidating existing AI recommendations and cache.", jobId);
                     var existingRecommendations = await _context.Recommendations.Where(r => r.JobId == jobId).ToListAsync();
                     if (existingRecommendations.Any())
                     {
                         _context.Recommendations.RemoveRange(existingRecommendations);
                     }
+
+                    // Invalidate the AI match cache so the next candidate fetch re-calls the external API
+                    await _aiMatchingService.InvalidateCacheAsync(jobId);
                 }
 
                 // Update job fields
                 job.Title = dto.Title.Trim();
+                job.JobTitleId = dto.JobTitleId;
                 job.Description = dto.Description.Trim();
                 job.Requirements = dto.Requirements.Trim();
                 job.EmploymentType = dto.EmploymentType;
@@ -170,9 +188,14 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
                 // Reload skills for accurate DTO mapping
                 await _context.Entry(job).Collection(j => j.JobSkills).Query().Include(js => js.Skill).LoadAsync();
 
+                // If criteria changed, recommendations were cleared; otherwise count existing
+                var candidateCount = criteriaChanged
+                    ? 0
+                    : await _context.Recommendations.CountAsync(r => r.JobId == jobId);
+
                 _logger.LogInformation("Job {JobId} updated by user {UserId}", jobId, userId);
                 return JobServiceResult<JobResponseDto>.Ok(
-                    BuildJobResponseDto(job),
+                    BuildJobResponseDto(job, candidateCount),
                     "Job updated successfully");
             }
             catch (Exception ex)
@@ -285,6 +308,7 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
                     .AsNoTracking()
                     .Include(j => j.JobSkills)
                         .ThenInclude(js => js.Skill)
+                    .Include(j => j.JobTitle)
                     .Include(j => j.Country)
                     .Include(j => j.City)
                     .AsSplitQuery()
@@ -293,7 +317,15 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
                     .Take(pageSize)
                     .ToListAsync();
 
-                var dtos = jobs.Select(BuildJobResponseDto).ToList();
+                // Batch-fetch recommendation counts for all jobs on this page
+                var jobIds = jobs.Select(j => j.Id).ToList();
+                var recCounts = await _context.Recommendations
+                    .Where(r => jobIds.Contains(r.JobId))
+                    .GroupBy(r => r.JobId)
+                    .Select(g => new { JobId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(x => x.JobId, x => x.Count);
+
+                var dtos = jobs.Select(j => BuildJobResponseDto(j, recCounts.GetValueOrDefault(j.Id, 0))).ToList();
 
                 return JobServiceResult<JobListResponseDto>.Ok(new JobListResponseDto
                 {
@@ -325,8 +357,10 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
                         JobServiceErrorCode.NotFound);
                 }
 
+                var candidateCount = await _context.Recommendations.CountAsync(r => r.JobId == jobId);
+
                 return JobServiceResult<JobResponseDto>.Ok(
-                    BuildJobResponseDto(job),
+                    BuildJobResponseDto(job, candidateCount),
                     "Job retrieved successfully");
             }
             catch (Exception ex)
@@ -379,6 +413,9 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
             var query = _context.Jobs
                 .Include(j => j.JobSkills)
                     .ThenInclude(js => js.Skill)
+                .Include(j => j.JobTitle)
+                .Include(j => j.Recruiter)
+                    .ThenInclude(r => r.User)
                 .Include(j => j.Country)
                 .Include(j => j.City)
                 .AsQueryable();
@@ -397,7 +434,7 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
         /// <summary>
         /// Builds a full JobResponseDto including skills from eagerly loaded JobSkills.
         /// </summary>
-        private static JobResponseDto BuildJobResponseDto(Job job)
+        private static JobResponseDto BuildJobResponseDto(Job job, int candidateCount = 0)
         {
             var skills = job.JobSkills?.Select(js => new JobSkillDto
             {
@@ -405,15 +442,17 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
                 Name = js.Skill.Name
             }).ToList() ?? new List<JobSkillDto>();
 
-            return MapJobResponse(job, skills);
+            return MapJobResponse(job, skills, candidateCount);
         }
 
-        private static JobResponseDto MapJobResponse(Job job, List<JobSkillDto> skills)
+        private static JobResponseDto MapJobResponse(Job job, List<JobSkillDto> skills, int candidateCount = 0)
         {
             return new JobResponseDto
             {
                 Id = job.Id,
                 Title = job.Title,
+                JobTitleId = job.JobTitleId,
+                JobTitleName = job.JobTitle?.TitleEn,
                 Description = job.Description,
                 Requirements = job.Requirements,
                 EmploymentType = job.EmploymentType,
@@ -426,9 +465,22 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
                 PostedAt = job.PostedAt,
                 UpdatedAt = job.UpdatedAt,
                 IsActive = job.IsActive,
-                CandidateCount = 0, // Reserved for future AI matching module
+                CandidateCount = candidateCount,
                 Skills = skills
             };
+        }
+
+        private async Task<JobServiceResult<bool>> ValidateJobTitleIdAsync(int jobTitleId)
+        {
+            var exists = await _context.JobTitles.AnyAsync(jt => jt.Id == jobTitleId && jt.IsActive);
+            if (!exists)
+            {
+                return JobServiceResult<bool>.Fail(
+                    "Invalid job title ID or the job title is not active.",
+                    JobServiceErrorCode.Validation);
+            }
+
+            return JobServiceResult<bool>.Ok(true);
         }
 
         private async Task<JobServiceResult<List<int>>> ValidateSkillIdsAsync(List<int>? skillIds)

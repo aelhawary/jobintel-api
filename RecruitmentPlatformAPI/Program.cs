@@ -126,6 +126,9 @@ builder.Services.AddAuthentication(options =>
 // Register HttpClient for Brevo HTTP API email sending
 builder.Services.AddHttpClient();
 
+// Register in-memory cache for AI matching results
+builder.Services.AddMemoryCache();
+
 // Register services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -147,6 +150,7 @@ builder.Services.AddScoped<IJobService, JobService>();
 builder.Services.AddScoped<ICertificateService, CertificateService>();
 builder.Services.AddScoped<IJobSeekerSkillService, JobSeekerSkillService>();
 builder.Services.AddScoped<IEngagementService, EngagementService>();
+builder.Services.AddScoped<IAIMatchingService, AIMatchingService>();
 builder.Services.AddScoped<IAssessmentService, AssessmentService>();
 
 // Background Services
@@ -217,7 +221,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         logger.LogInformation("Applying SQL Server migrations...");
-        db.Database.Migrate();
+        await db.Database.MigrateAsync();
         logger.LogInformation("Database migration completed successfully.");
 
         // Seed geographic data
@@ -243,9 +247,12 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
-// Enable Swagger in all environments for API testing
-app.UseSwagger();
-app.UseSwaggerUI();
+// Enable Swagger only in development
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseHttpsRedirection();
 

@@ -23,6 +23,12 @@ namespace RecruitmentPlatformAPI.Models.JobSeeker
         public int? ViewerRecruiterId { get; set; }
 
         /// <summary>
+        /// The job that was being browsed when this view occurred.
+        /// Provides context for search appearances (which job listing triggered this).
+        /// </summary>
+        public int? JobId { get; set; }
+
+        /// <summary>
         /// Type of view: "Search" (appeared in search results) or "ProfileClick" (recruiter clicked into full profile).
         /// </summary>
         [Required, MaxLength(20)]
@@ -35,5 +41,6 @@ namespace RecruitmentPlatformAPI.Models.JobSeeker
 
         // Navigation properties
         public JobSeeker JobSeeker { get; set; } = null!;
+        public RecruitmentPlatformAPI.Models.Recruiter.Recruiter? ViewerRecruiter { get; set; }
     }
 }

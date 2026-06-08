@@ -1,7 +1,10 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using RecruitmentPlatformAPI.Data;
 using RecruitmentPlatformAPI.DTOs.JobSeeker;
+using RecruitmentPlatformAPI.DTOs.Recruiter;
 using RecruitmentPlatformAPI.Models.JobSeeker;
+using RecruitmentPlatformAPI.Models.Jobs;
 
 namespace RecruitmentPlatformAPI.Services.JobSeeker
 {
@@ -10,20 +13,49 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
         private readonly AppDbContext _context;
         private readonly ILogger<EngagementService> _logger;
 
+        private const int DEDUP_WINDOW_HOURS = 1;
+
         public EngagementService(AppDbContext context, ILogger<EngagementService> logger)
         {
             _context = context;
             _logger = logger;
         }
 
-        public async Task RecordSearchAppearancesAsync(IEnumerable<int> jobSeekerIds, int? recruiterId)
+        public async Task RecordSearchAppearancesAsync(IEnumerable<int> jobSeekerIds, int? recruiterId, int? jobId)
         {
             try
             {
-                var views = jobSeekerIds.Select(id => new ProfileView
+                var ids = jobSeekerIds.ToList();
+                if (!ids.Any()) return;
+
+                var cutoff = DateTime.UtcNow.AddHours(-DEDUP_WINDOW_HOURS);
+
+                // Deduplicate: for each jobseeker, skip if this recruiter already triggered a Search view within the window
+                var existingQuery = _context.ProfileViews
+                    .Where(pv =>
+                        pv.ViewType == "Search" &&
+                        pv.ViewedAt > cutoff);
+
+                if (recruiterId.HasValue)
+                {
+                    existingQuery = existingQuery.Where(pv => pv.ViewerRecruiterId == recruiterId.Value);
+                }
+
+                var existingJobSeekerIds = await existingQuery
+                    .Select(pv => pv.JobSeekerId)
+                    .Distinct()
+                    .ToListAsync();
+
+                var existingSet = new HashSet<int>(existingJobSeekerIds);
+                var newIds = ids.Where(id => !existingSet.Contains(id)).ToList();
+
+                if (!newIds.Any()) return;
+
+                var views = newIds.Select(id => new ProfileView
                 {
                     JobSeekerId = id,
                     ViewerRecruiterId = recruiterId,
+                    JobId = jobId,
                     ViewType = "Search",
                     ViewedAt = DateTime.UtcNow
                 });
@@ -38,17 +70,17 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
             }
         }
 
-        public async Task RecordProfileViewAsync(int jobSeekerId, int recruiterId)
+        public async Task RecordProfileViewAsync(int jobSeekerId, int recruiterId, int? jobId)
         {
             try
             {
                 // Deduplicate: don't record if this recruiter already viewed this profile in the last hour
-                var oneHourAgo = DateTime.UtcNow.AddHours(-1);
+                var cutoff = DateTime.UtcNow.AddHours(-DEDUP_WINDOW_HOURS);
                 var alreadyViewed = await _context.ProfileViews.AnyAsync(pv =>
                     pv.JobSeekerId == jobSeekerId &&
                     pv.ViewerRecruiterId == recruiterId &&
                     pv.ViewType == "ProfileClick" &&
-                    pv.ViewedAt > oneHourAgo);
+                    pv.ViewedAt > cutoff);
 
                 if (alreadyViewed) return;
 
@@ -56,6 +88,7 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                 {
                     JobSeekerId = jobSeekerId,
                     ViewerRecruiterId = recruiterId,
+                    JobId = jobId,
                     ViewType = "ProfileClick",
                     ViewedAt = DateTime.UtcNow
                 });
@@ -67,39 +100,119 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
             }
         }
 
+        public async Task StoreRecommendationsAsync(int jobId, List<MatchedCandidateDto> candidates)
+        {
+            try
+            {
+                // Remove existing recommendations for this job (idempotent re-run)
+                var existing = await _context.Recommendations
+                    .Where(r => r.JobId == jobId)
+                    .ToListAsync();
+
+                if (existing.Any())
+                {
+                    _context.Recommendations.RemoveRange(existing);
+                }
+
+                // Insert fresh recommendations from AI results
+                var recommendations = candidates.Select(c => new Recommendation
+                {
+                    JobId = jobId,
+                    JobSeekerId = c.JobSeekerId,
+                    MatchScore = c.MatchScore,
+                    AiReasoning = c.AiReasoning,
+                    MatchedSkillsJson = JsonSerializer.Serialize(c.MatchedSkills),
+                    MissingSkillsJson = JsonSerializer.Serialize(c.MissingSkills),
+                    IsViewed = false,
+                    GeneratedAt = DateTime.UtcNow
+                }).ToList();
+
+                _context.Recommendations.AddRange(recommendations);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation(
+                    "Stored {Count} recommendations for Job {JobId}",
+                    recommendations.Count, jobId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to store recommendations for Job {JobId}", jobId);
+            }
+        }
+
         public async Task<EngagementStatsDto> GetEngagementStatsAsync(int jobSeekerId)
         {
             var now = DateTime.UtcNow;
             var thisWeekStart = now.AddDays(-7);
             var lastWeekStart = now.AddDays(-14);
 
-            var allViews = await _context.ProfileViews
+            // ─── Profile Views & Search Appearances (optimized SQL aggregation) ───
+            var weeklyStats = await _context.ProfileViews
                 .Where(pv => pv.JobSeekerId == jobSeekerId && pv.ViewedAt >= lastWeekStart)
-                .Select(pv => new { pv.ViewType, pv.ViewedAt })
+                .GroupBy(pv => new { pv.ViewType, IsThisWeek = pv.ViewedAt >= thisWeekStart })
+                .Select(g => new
+                {
+                    g.Key.ViewType,
+                    g.Key.IsThisWeek,
+                    Count = g.Count()
+                })
                 .ToListAsync();
 
-            var thisWeekViews = allViews.Where(v => v.ViewedAt >= thisWeekStart).ToList();
-            var lastWeekViews = allViews.Where(v => v.ViewedAt >= lastWeekStart && v.ViewedAt < thisWeekStart).ToList();
+            var searchThisWeek = weeklyStats
+                .Where(s => s.ViewType == "Search" && s.IsThisWeek)
+                .Sum(s => s.Count);
+            var searchLastWeek = weeklyStats
+                .Where(s => s.ViewType == "Search" && !s.IsThisWeek)
+                .Sum(s => s.Count);
+            var profileThisWeek = weeklyStats
+                .Where(s => s.ViewType == "ProfileClick" && s.IsThisWeek)
+                .Sum(s => s.Count);
+            var profileLastWeek = weeklyStats
+                .Where(s => s.ViewType == "ProfileClick" && !s.IsThisWeek)
+                .Sum(s => s.Count);
 
-            var searchThisWeek = thisWeekViews.Count(v => v.ViewType == "Search");
-            var searchLastWeek = lastWeekViews.Count(v => v.ViewType == "Search");
-            var profileThisWeek = thisWeekViews.Count(v => v.ViewType == "ProfileClick");
-            var profileLastWeek = lastWeekViews.Count(v => v.ViewType == "ProfileClick");
+            // All-time totals (single query each)
+            var totalSearch = await _context.ProfileViews
+                .CountAsync(pv => pv.JobSeekerId == jobSeekerId && pv.ViewType == "Search");
+            var totalProfile = await _context.ProfileViews
+                .CountAsync(pv => pv.JobSeekerId == jobSeekerId && pv.ViewType == "ProfileClick");
 
-            // Get all-time totals
-            var totalSearch = await _context.ProfileViews.CountAsync(pv => pv.JobSeekerId == jobSeekerId && pv.ViewType == "Search");
-            var totalProfile = await _context.ProfileViews.CountAsync(pv => pv.JobSeekerId == jobSeekerId && pv.ViewType == "ProfileClick");
+            // ─── Recommendations ───
+            var recStats = await _context.Recommendations
+                .Where(r => r.JobSeekerId == jobSeekerId && r.GeneratedAt >= lastWeekStart)
+                .GroupBy(r => new { IsThisWeek = r.GeneratedAt >= thisWeekStart })
+                .Select(g => new
+                {
+                    g.Key.IsThisWeek,
+                    Count = g.Count()
+                })
+                .ToListAsync();
+
+            var recThisWeek = recStats.Where(s => s.IsThisWeek).Sum(s => s.Count);
+            var recLastWeek = recStats.Where(s => !s.IsThisWeek).Sum(s => s.Count);
+            var totalRec = await _context.Recommendations
+                .CountAsync(r => r.JobSeekerId == jobSeekerId);
 
             return new EngagementStatsDto
             {
                 SearchAppearancesThisWeek = searchThisWeek,
                 ProfileViewsThisWeek = profileThisWeek,
+                RecommendationsThisWeek = recThisWeek,
                 SearchAppearancesLastWeek = searchLastWeek,
                 ProfileViewsLastWeek = profileLastWeek,
+                RecommendationsLastWeek = recLastWeek,
                 TotalSearchAppearances = totalSearch,
                 TotalProfileViews = totalProfile,
-                SearchAppearancesTrend = searchLastWeek > 0 ? Math.Round((double)(searchThisWeek - searchLastWeek) / searchLastWeek * 100, 1) : null,
-                ProfileViewsTrend = profileLastWeek > 0 ? Math.Round((double)(profileThisWeek - profileLastWeek) / profileLastWeek * 100, 1) : null,
+                TotalRecommendations = totalRec,
+                SearchAppearancesTrend = searchLastWeek > 0
+                    ? Math.Round((double)(searchThisWeek - searchLastWeek) / searchLastWeek * 100, 1)
+                    : null,
+                ProfileViewsTrend = profileLastWeek > 0
+                    ? Math.Round((double)(profileThisWeek - profileLastWeek) / profileLastWeek * 100, 1)
+                    : null,
+                RecommendationsTrend = recLastWeek > 0
+                    ? Math.Round((double)(recThisWeek - recLastWeek) / recLastWeek * 100, 1)
+                    : null,
             };
         }
     }

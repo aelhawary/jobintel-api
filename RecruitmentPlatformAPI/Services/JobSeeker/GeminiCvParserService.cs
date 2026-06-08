@@ -110,13 +110,62 @@ CV Text:
                 };
 
                 var url = $"https://generativelanguage.googleapis.com/v1beta/models/{_settings.GeminiModel}:generateContent?key={_settings.GeminiApiKey}";
-                
-                var response = await _httpClient.PostAsJsonAsync(url, requestBody);
-                
-                if (!response.IsSuccessStatusCode)
+
+                // Retry transient errors (429 / 5xx) with exponential backoff.
+                // Gemini routinely returns 503 "model is currently experiencing
+                // high demand" during traffic spikes; Google's own message
+                // advises "please try again later". Giving up on the first
+                // failure was the root cause of failed CV parses during peak
+                // load. Non-transient errors (400 / 401 / 403) fail fast.
+                const int maxAttempts = 3;
+                HttpResponseMessage? response = null;
+                for (int attempt = 1; attempt <= maxAttempts; attempt++)
                 {
-                    var err = await response.Content.ReadAsStringAsync();
-                    _logger.LogError("Gemini API error: {Status} - {Error}", response.StatusCode, err);
+                    response = await _httpClient.PostAsJsonAsync(url, requestBody);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        break;
+                    }
+
+                    var statusCode = (int)response.StatusCode;
+                    if (!IsTransientError(statusCode) || attempt == maxAttempts)
+                    {
+                        var err = await response.Content.ReadAsStringAsync();
+                        _logger.LogError(
+                            "Gemini API error after {Attempt}/{Max} attempts: {Status} - {Error}",
+                            attempt, maxAttempts, response.StatusCode, err);
+                        return null;
+                    }
+
+                    // Respect server-provided Retry-After when present,
+                    // otherwise fall back to exponential backoff (1s, 2s, 4s).
+                    var delay = TimeSpan.FromSeconds(Math.Pow(2, attempt - 1));
+                    if (response.Headers.RetryAfter is { } retryAfter)
+                    {
+                        if (retryAfter.Delta.HasValue)
+                        {
+                            delay = retryAfter.Delta.Value;
+                        }
+                        else if (retryAfter.Date.HasValue)
+                        {
+                            var serverDelay = retryAfter.Date.Value - DateTimeOffset.UtcNow;
+                            if (serverDelay > TimeSpan.Zero) delay = serverDelay;
+                        }
+                    }
+
+                    _logger.LogWarning(
+                        "Gemini API transient error {Status} on attempt {Attempt}/{Max}. Retrying in {DelaySeconds:F1}s...",
+                        response.StatusCode, attempt, maxAttempts, delay.TotalSeconds);
+
+                    // Dispose the failed response before waiting; we will
+                    // issue a fresh request on the next attempt.
+                    response.Dispose();
+                    await Task.Delay(delay);
+                }
+
+                if (response == null || !response.IsSuccessStatusCode)
+                {
                     return null;
                 }
 
@@ -281,6 +330,18 @@ CV Text:
                 _logger.LogError(ex, "Error parsing CV with Gemini.");
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Returns true for HTTP status codes that are worth retrying: 429
+        /// (rate limit) and the 5xx server-error family. Everything else
+        /// (400, 401, 403, 404, …) is a client mistake or auth problem and
+        /// will not get better with a retry.
+        /// </summary>
+        private static bool IsTransientError(int statusCode)
+        {
+            return statusCode == 429
+                || (statusCode >= 500 && statusCode <= 504);
         }
 
         private class GeminiExtractedData

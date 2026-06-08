@@ -259,6 +259,11 @@ namespace RecruitmentPlatformAPI.Data
                  .HasForeignKey(j => j.CityId)
                  .OnDelete(DeleteBehavior.Restrict);
 
+                b.HasOne(j => j.JobTitle)
+                 .WithMany()
+                 .HasForeignKey(j => j.JobTitleId)
+                 .OnDelete(DeleteBehavior.Restrict);
+
                 // Store Enums as strings in database
                 b.Property(j => j.EmploymentType)
                  .HasConversion<string>()
@@ -317,6 +322,10 @@ namespace RecruitmentPlatformAPI.Data
 
                 b.HasIndex(r => new { r.JobId, r.JobSeekerId }).IsUnique();
                 b.Property(r => r.MatchScore).HasPrecision(5, 2);
+
+                // Index for querying recommendations by job seeker (for engagement stats)
+                b.HasIndex(r => new { r.JobSeekerId, r.GeneratedAt })
+                 .HasDatabaseName("IX_Recommendation_JobSeeker_Date");
             });
 
             // EmailVerification - one-to-many with User
@@ -566,9 +575,18 @@ namespace RecruitmentPlatformAPI.Data
                  .HasForeignKey(pv => pv.JobSeekerId)
                  .OnDelete(DeleteBehavior.Cascade);
 
+                b.HasOne(pv => pv.ViewerRecruiter)
+                 .WithMany()
+                 .HasForeignKey(pv => pv.ViewerRecruiterId)
+                 .OnDelete(DeleteBehavior.NoAction);
+
                 // Composite index for fast weekly aggregation queries
                 b.HasIndex(pv => new { pv.JobSeekerId, pv.ViewedAt, pv.ViewType })
                  .HasDatabaseName("IX_ProfileView_JobSeeker_Date_Type");
+
+                // Index for deduplication checks (same recruiter viewing same profile)
+                b.HasIndex(pv => new { pv.JobSeekerId, pv.ViewerRecruiterId, pv.ViewType, pv.ViewedAt })
+                 .HasDatabaseName("IX_ProfileView_Dedup");
             });
         }
     }

@@ -4,7 +4,6 @@ using System.Security.Claims;
 using RecruitmentPlatformAPI.DTOs.Common;
 using RecruitmentPlatformAPI.DTOs.JobSeeker;
 using RecruitmentPlatformAPI.Services.JobSeeker;
-using RecruitmentPlatformAPI.Services.Auth;
 using RecruitmentPlatformAPI.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,17 +18,20 @@ namespace RecruitmentPlatformAPI.Controllers.JobSeeker
         private readonly IJobSeekerService _jobSeekerService;
         private readonly IProfilePictureService _profilePictureService;
         private readonly IEngagementService _engagementService;
+        private readonly AppDbContext _context;
         private readonly ILogger<JobSeekerController> _logger;
 
         public JobSeekerController(
             IJobSeekerService jobSeekerService, 
             IProfilePictureService profilePictureService,
             IEngagementService engagementService,
+            AppDbContext context,
             ILogger<JobSeekerController> logger)
         {
             _jobSeekerService = jobSeekerService;
             _profilePictureService = profilePictureService;
             _engagementService = engagementService;
+            _context = context;
             _logger = logger;
         }
 
@@ -313,10 +315,11 @@ namespace RecruitmentPlatformAPI.Controllers.JobSeeker
         #region Engagement Analytics
 
         /// <summary>
-        /// Get engagement statistics for the authenticated job seeker's dashboard.
-        /// Shows search appearances, profile views, and weekly trends.
+        /// Get consolidated engagement statistics for the authenticated job seeker's dashboard.
+        /// Shows search appearances, profile views, AI recommendations, and weekly trends.
+        /// All metrics are aggregated — no individual recruiter information is exposed.
         /// </summary>
-        /// <returns>Engagement stats with this week, last week, and all-time totals</returns>
+        /// <returns>Engagement stats with this week, last week, all-time totals, and trend percentages</returns>
         [HttpGet("engagement-stats")]
         [ProducesResponseType(typeof(ApiResponse<EngagementStatsDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
@@ -328,8 +331,7 @@ namespace RecruitmentPlatformAPI.Controllers.JobSeeker
                 return Unauthorized(new ApiErrorResponse("User not authenticated"));
             }
 
-            var context = HttpContext.RequestServices.GetRequiredService<AppDbContext>();
-            var jobSeeker = await context.JobSeekers.FirstOrDefaultAsync(js => js.UserId == userId);
+            var jobSeeker = await _context.JobSeekers.FirstOrDefaultAsync(js => js.UserId == userId);
             
             if (jobSeeker == null) 
             {

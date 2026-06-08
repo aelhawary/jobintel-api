@@ -22,6 +22,14 @@ namespace RecruitmentPlatformAPI.DTOs.Recruiter
         public string Title { get; set; } = string.Empty;
 
         /// <summary>
+        /// Job title ID (FK to JobTitle reference table)
+        /// </summary>
+        /// <example>12</example>
+        [Required(ErrorMessage = "Job title is required")]
+        [Range(1, int.MaxValue, ErrorMessage = "Job title must be a valid ID")]
+        public int JobTitleId { get; set; }
+
+        /// <summary>
         /// Detailed job description
         /// </summary>
         /// <example>We are looking for an experienced backend developer to join our team...</example>
@@ -111,6 +119,14 @@ namespace RecruitmentPlatformAPI.DTOs.Recruiter
         /// <summary>Job title</summary>
         /// <example>Senior Backend Developer</example>
         public string Title { get; set; } = string.Empty;
+
+        /// <summary>Job title ID (FK to JobTitle reference table)</summary>
+        /// <example>12</example>
+        public int? JobTitleId { get; set; }
+
+        /// <summary>Job title name (from reference table)</summary>
+        /// <example>Backend Developer</example>
+        public string? JobTitleName { get; set; }
 
         /// <summary>Job description</summary>
         /// <example>We are looking for an experienced backend developer...</example>

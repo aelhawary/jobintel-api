@@ -23,15 +23,10 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
         {
             _logger.LogInformation("Weekly Engagement Digest Service is starting.");
 
-            // Loop until cancellation is requested
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    // For production, we would want this to run on Monday mornings.
-                    // For the sake of testing/showcase, we will run it immediately if requested, 
-                    // or check conditions. We'll simulate a 24-hour cycle.
-                    
                     var today = DateTime.UtcNow.DayOfWeek;
                     if (today == DayOfWeek.Monday)
                     {
@@ -39,8 +34,6 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                         await ProcessWeeklyDigestsAsync(stoppingToken);
                     }
 
-                    // Wait 24 hours before checking again
-                    // Use a shorter delay if you need to test it locally.
                     await Task.Delay(TimeSpan.FromHours(24), stoppingToken);
                 }
                 catch (TaskCanceledException)
@@ -65,10 +58,17 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
 
             var oneWeekAgo = DateTime.UtcNow.AddDays(-7);
 
-            // Get all job seekers who had at least 1 view or search appearance in the last 7 days
-            var activeSeekerIds = await context.ProfileViews
+            // Get all job seekers who had at least 1 view, search appearance, or recommendation in the last 7 days
+            var activeFromViews = context.ProfileViews
                 .Where(pv => pv.ViewedAt >= oneWeekAgo)
-                .Select(pv => pv.JobSeekerId)
+                .Select(pv => pv.JobSeekerId);
+
+            var activeFromRecs = context.Recommendations
+                .Where(r => r.GeneratedAt >= oneWeekAgo)
+                .Select(r => r.JobSeekerId);
+
+            var activeSeekerIds = await activeFromViews
+                .Union(activeFromRecs)
                 .Distinct()
                 .ToListAsync(stoppingToken);
 
@@ -78,7 +78,6 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                 return;
             }
 
-            // Fetch their emails and stats
             foreach (var seekerId in activeSeekerIds)
             {
                 if (stoppingToken.IsCancellationRequested) break;
@@ -90,21 +89,18 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                 if (jobSeeker == null || !jobSeeker.User.IsActive || string.IsNullOrEmpty(jobSeeker.User.Email))
                     continue;
 
-                // Calculate stats
                 var searchAppearances = await context.ProfileViews
                     .CountAsync(pv => pv.JobSeekerId == seekerId && pv.ViewType == "Search" && pv.ViewedAt >= oneWeekAgo, stoppingToken);
-                
+
                 var profileViews = await context.ProfileViews
                     .CountAsync(pv => pv.JobSeekerId == seekerId && pv.ViewType == "ProfileClick" && pv.ViewedAt >= oneWeekAgo, stoppingToken);
 
-                // Send email
                 await emailService.SendWeeklyDigestAsync(
-                    jobSeeker.User.Email, 
-                    jobSeeker.User.FirstName, 
-                    searchAppearances, 
+                    jobSeeker.User.Email,
+                    jobSeeker.User.FirstName,
+                    searchAppearances,
                     profileViews);
-                
-                // Slight delay to avoid hitting email provider rate limits
+
                 await Task.Delay(500, stoppingToken);
             }
 

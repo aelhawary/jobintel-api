@@ -255,6 +255,7 @@ namespace RecruitmentPlatformAPI.Data.Seed
                 {
                     RecruiterId = recruiter.Id,
                     Title = faker.Name.JobTitle(),
+                    JobTitleId = faker.PickRandom(jobTitleIds),
                     Description = faker.Lorem.Paragraphs(2),
                     Requirements = faker.Lorem.Paragraphs(1),
                     EmploymentType = faker.PickRandom(employmentTypeValues),

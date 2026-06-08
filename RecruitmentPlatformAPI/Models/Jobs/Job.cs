@@ -12,6 +12,7 @@ namespace RecruitmentPlatformAPI.Models.Jobs
         public int RecruiterId { get; set; }
         [Required, MaxLength(150)]
         public string Title { get; set; } = string.Empty;
+        public int? JobTitleId { get; set; } // FK to JobTitle reference table
         [Required, MaxLength(1200)]
         public string Description { get; set; } = string.Empty;
         [Required, MaxLength(1200)]
@@ -30,6 +31,7 @@ namespace RecruitmentPlatformAPI.Models.Jobs
 
         // Navigation properties
         public RecruiterEntity Recruiter { get; set; } = null!;
+        public JobTitle? JobTitle { get; set; }
         public Country? Country { get; set; }
         public City? City { get; set; }
         public ICollection<JobSkill> JobSkills { get; set; } = new List<JobSkill>();
