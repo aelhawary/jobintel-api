@@ -157,6 +157,8 @@ namespace RecruitmentPlatformAPI.DTOs.JobSeeker
         public int? CountryId { get; set; }
         public string? CityName { get; set; }
         public int? CityId { get; set; }
+        public RecruitmentPlatformAPI.Enums.EmploymentType EmploymentType { get; set; } = RecruitmentPlatformAPI.Enums.EmploymentType.FullTime;
+        public string? Responsibilities { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public bool IsCurrent { get; set; }
@@ -168,6 +170,7 @@ namespace RecruitmentPlatformAPI.DTOs.JobSeeker
         public string? Degree { get; set; }
         public int? FieldOfStudyId { get; set; }
         public string? FieldOfStudyName { get; set; }
+        public string? GradeOrGpa { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public bool IsCurrent { get; set; }

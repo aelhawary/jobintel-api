@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using RecruitmentPlatformAPI.Controllers.Common;
 using RecruitmentPlatformAPI.DTOs.Common;
 using RecruitmentPlatformAPI.DTOs.JobSeeker;
 using RecruitmentPlatformAPI.Services.JobSeeker;
@@ -10,7 +10,7 @@ namespace RecruitmentPlatformAPI.Controllers.JobSeeker
     [ApiController]
     [Route("api/jobseeker/social-accounts")]
     [Authorize(Roles = "JobSeeker")]
-    public class SocialAccountsController : ControllerBase
+    public class SocialAccountsController : BaseApiController
     {
         private readonly ISocialAccountService _socialAccountService;
         private readonly ILogger<SocialAccountsController> _logger;
@@ -107,12 +107,6 @@ namespace RecruitmentPlatformAPI.Controllers.JobSeeker
             }
 
             return Ok(result);
-        }
-
-        private int GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return int.TryParse(userIdClaim, out var userId) ? userId : 0;
         }
     }
 }

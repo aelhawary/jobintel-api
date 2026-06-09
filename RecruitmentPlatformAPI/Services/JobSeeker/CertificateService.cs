@@ -213,7 +213,7 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
 
                 for (int i = 0; i < remaining.Count; i++)
                 {
-                    remaining[i].DisplayOrder = i + 1;
+                    remaining[i].DisplayOrder = i;
                 }
 
                 await _context.SaveChangesAsync();

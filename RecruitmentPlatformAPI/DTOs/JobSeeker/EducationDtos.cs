@@ -50,6 +50,13 @@ namespace RecruitmentPlatformAPI.DTOs.JobSeeker
         public bool IsCurrent { get; set; }
 
         /// <summary>
+        /// GPA or grade (e.g., "3.8/4.0", "First Class Honours")
+        /// </summary>
+        /// <example>3.8/4.0</example>
+        [MaxLength(50, ErrorMessage = "Grade/GPA cannot exceed 50 characters")]
+        public string? GradeOrGPA { get; set; }
+
+        /// <summary>
         /// Display order (lower numbers appear first)
         /// </summary>
         /// <example>0</example>
@@ -117,6 +124,11 @@ namespace RecruitmentPlatformAPI.DTOs.JobSeeker
         /// Whether currently studying here
         /// </summary>
         public bool IsCurrent { get; set; }
+
+        /// <summary>
+        /// GPA or grade
+        /// </summary>
+        public string? GradeOrGPA { get; set; }
 
         /// <summary>
         /// Display order

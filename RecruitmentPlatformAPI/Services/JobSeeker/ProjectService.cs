@@ -280,7 +280,7 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
 
                 for (int i = 0; i < remainingProjects.Count; i++)
                 {
-                    remainingProjects[i].DisplayOrder = i + 1;
+                    remainingProjects[i].DisplayOrder = i;
                     remainingProjects[i].UpdatedAt = DateTime.UtcNow;
                 }
 

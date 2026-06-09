@@ -14,8 +14,5 @@ namespace RecruitmentPlatformAPI.Services.Auth
         Task<AuthResponseDto> ForgotPasswordAsync(ForgotPasswordDto forgotPasswordDto);
         Task<AuthResponseDto> ValidateResetTokenAsync(ValidateResetTokenDto validateDto);
         Task<AuthResponseDto> ResetPasswordAsync(ResetPasswordDto resetPasswordDto);
-        string GenerateJwtToken(User user);
-        string HashPassword(string password);
-        bool VerifyPassword(string password, string hash);
     }
 }

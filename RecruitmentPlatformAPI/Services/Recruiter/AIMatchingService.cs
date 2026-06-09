@@ -14,7 +14,7 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
         private readonly IMemoryCache _cache;
         private readonly ILogger<AIMatchingService> _logger;
 
-        private const string AI_API_URL = "https://alikhaled123-ai-recruitment-api.hf.space";
+        private const string AI_API_URL = "https://alikhaled123-ai-recruitment-api.hf.space/api/recommend";
         private const string CACHE_KEY_PREFIX = "JobMatches_";
         private static readonly TimeSpan CACHE_DURATION = TimeSpan.FromMinutes(30);
 

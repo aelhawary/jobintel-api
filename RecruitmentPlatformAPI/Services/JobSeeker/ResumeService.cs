@@ -190,17 +190,27 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                 // Re-read the file from disk and run the AI pipeline.
                 var extension = Path.GetExtension(resume.FilePath);
                 ParsedResumeDataDto? extractedData = null;
+                bool aiServiceFailed = false;
                 try
                 {
                     var text = ExtractTextFromFile(absolutePath, extension);
-                    if (!string.IsNullOrWhiteSpace(text))
+                    if (string.IsNullOrWhiteSpace(text))
                     {
-                        extractedData = await _cvParserService.ParseResumeTextAsync(text);
+                        // File was readable but contained no text — likely
+                        // image-based, encrypted, or empty.
+                        resume.ParseStatus = "Failed";
+                        resume.ProcessedAt = DateTime.UtcNow;
+                        resume.UpdatedAt = DateTime.UtcNow;
+                        await _context.SaveChangesAsync();
+                        return ResumeResponseDto.FailureResult(
+                            "We couldn't extract text from your CV. The file may be image-based, encrypted, or empty. Please upload a text-based PDF or DOCX.");
                     }
+                    extractedData = await _cvParserService.ParseResumeTextAsync(text);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Failed to parse CV text for resume {ResumeId}", resume.Id);
+                    aiServiceFailed = true;
                 }
 
                 if (extractedData == null)
@@ -210,7 +220,9 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                     resume.UpdatedAt = DateTime.UtcNow;
                     await _context.SaveChangesAsync();
                     return ResumeResponseDto.FailureResult(
-                        "We couldn't extract data from your CV. The file may be image-based, encrypted, or empty.");
+                        aiServiceFailed
+                            ? "The AI service is temporarily unavailable due to high demand. Please try again in a few minutes."
+                            : "We couldn't extract data from your CV. The file may be image-based, encrypted, or empty.");
                 }
 
                 // Apply ALL extracted data to the database in one transaction.
@@ -304,6 +316,8 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                         CompanyName = !string.IsNullOrWhiteSpace(aiExp.CompanyName) ? aiExp.CompanyName : "Unknown Company",
                         CountryId = aiExp.CountryId > 0 ? aiExp.CountryId.Value : (jobSeeker.CountryId ?? 0),
                         CityId = aiExp.CityId > 0 ? aiExp.CityId.Value : (jobSeeker.CityId ?? 0),
+                        EmploymentType = aiExp.EmploymentType,
+                        Responsibilities = !string.IsNullOrWhiteSpace(aiExp.Responsibilities) ? aiExp.Responsibilities.Trim() : null,
                         StartDate = aiExp.StartDate ?? new DateTime(2000, 1, 1),
                         EndDate = aiExp.IsCurrent ? null : aiExp.EndDate,
                         IsCurrent = aiExp.IsCurrent,
@@ -333,6 +347,7 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                         Institution = !string.IsNullOrWhiteSpace(aiEdu.Institution) ? aiEdu.Institution : "Unknown Institution",
                         Degree = degreeEnum,
                         FieldOfStudyId = aiEdu.FieldOfStudyId ?? 0,
+                        GradeOrGPA = !string.IsNullOrWhiteSpace(aiEdu.GradeOrGpa) ? aiEdu.GradeOrGpa.Trim() : null,
                         StartDate = aiEdu.StartDate,
                         EndDate = aiEdu.IsCurrent ? null : aiEdu.EndDate,
                         IsCurrent = aiEdu.IsCurrent,

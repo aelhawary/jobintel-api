@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using RecruitmentPlatformAPI.Controllers.Common;
 using RecruitmentPlatformAPI.DTOs.Common;
 using RecruitmentPlatformAPI.DTOs.JobSeeker;
 using RecruitmentPlatformAPI.Services.JobSeeker;
@@ -14,7 +14,7 @@ namespace RecruitmentPlatformAPI.Controllers.JobSeeker
     [Route("api/jobseeker/resume")]
     [Produces("application/json")]
     [Authorize(Roles = "JobSeeker")]
-    public class ResumeController : ControllerBase
+    public class ResumeController : BaseApiController
     {
         private readonly IResumeService _resumeService;
         private readonly ILogger<ResumeController> _logger;
@@ -271,22 +271,5 @@ namespace RecruitmentPlatformAPI.Controllers.JobSeeker
                 ? "Resume exists" 
                 : "No resume uploaded yet"));
         }
-
-        #region Private Helpers
-
-        private int GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
-                              ?? User.FindFirst("sub")?.Value;
-
-            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
-            {
-                return 0;
-            }
-
-            return userId;
-        }
-
-        #endregion
     }
 }

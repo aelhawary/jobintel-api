@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using RecruitmentPlatformAPI.Controllers.Common;
 using RecruitmentPlatformAPI.DTOs.Common;
 using RecruitmentPlatformAPI.DTOs.JobSeeker;
 using RecruitmentPlatformAPI.Services.JobSeeker;
@@ -14,7 +14,7 @@ namespace RecruitmentPlatformAPI.Controllers.JobSeeker
     [Route("api/jobseeker/experience")]
     [Authorize(Roles = "JobSeeker")]
     [Produces("application/json")]
-    public class ExperienceController : ControllerBase
+    public class ExperienceController : BaseApiController
     {
         private readonly IExperienceService _experienceService;
         private readonly ILogger<ExperienceController> _logger;
@@ -209,12 +209,6 @@ namespace RecruitmentPlatformAPI.Controllers.JobSeeker
 
             var result = await _experienceService.HasExperienceAsync(userId);
             return Ok(new ApiResponse<bool>(result));
-        }
-
-        private int GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return int.TryParse(userIdClaim, out var userId) ? userId : 0;
         }
     }
 }

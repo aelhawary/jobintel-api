@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using RecruitmentPlatformAPI.Controllers.Common;
 using RecruitmentPlatformAPI.DTOs.Common;
 using RecruitmentPlatformAPI.DTOs.Recruiter;
 using RecruitmentPlatformAPI.Services.Recruiter;
@@ -14,7 +14,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
     [Route("api/jobs")]
     [Produces("application/json")]
     [Authorize(Roles = "Recruiter")]
-    public class JobsController : ControllerBase
+    public class JobsController : BaseApiController
     {
         private readonly IJobService _jobService;
         private readonly ILogger<JobsController> _logger;
@@ -185,13 +185,6 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
             return MapJobResult(result, data => Ok(new ApiResponse<bool>(data, result.Message)));
         }
 
-        // ─── Helper ───────────────────────────────
-        private int GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                              ?? User.FindFirst("sub")?.Value;
-            return int.TryParse(userIdClaim, out var userId) ? userId : 0;
-        }
 
         private IActionResult MapJobResult<T>(JobServiceResult<T> result, Func<T, IActionResult> onSuccess)
         {

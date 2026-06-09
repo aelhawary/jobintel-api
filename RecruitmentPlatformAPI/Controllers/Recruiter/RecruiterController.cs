@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using RecruitmentPlatformAPI.Controllers.Common;
 using RecruitmentPlatformAPI.DTOs.Common;
 using RecruitmentPlatformAPI.DTOs.JobSeeker;
 using RecruitmentPlatformAPI.DTOs.Recruiter;
@@ -13,7 +13,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
     [Route("api/recruiter")]
     [Produces("application/json")]
     [Authorize(Roles = "Recruiter")]
-    public class RecruiterController : ControllerBase
+    public class RecruiterController : BaseApiController
     {
         private readonly IRecruiterService _recruiterService;
         private readonly IProfilePictureService _profilePictureService;
@@ -307,12 +307,5 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
         }
 
         #endregion
-
-        // Helper method to extract user ID from JWT token
-        private int GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return int.TryParse(userIdClaim, out var userId) ? userId : 0;
-        }
     }
 }

@@ -22,6 +22,7 @@ namespace RecruitmentPlatformAPI.Controllers.Common
         /// </summary>
         /// <param name="lang">Language code for localization (en or ar)</param>
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse<List<CountryDto>>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetCountries([FromQuery] string lang = "en")
         {
             bool isArabic = lang.ToLower() == "ar";
@@ -36,7 +37,7 @@ namespace RecruitmentPlatformAPI.Controllers.Common
                 .OrderBy(c => c.Name)
                 .ToListAsync();
 
-            return Ok(countries);
+            return Ok(new ApiResponse<List<CountryDto>>(countries));
         }
 
         /// <summary>
@@ -45,6 +46,7 @@ namespace RecruitmentPlatformAPI.Controllers.Common
         /// <param name="id">The country ID</param>
         /// <param name="lang">Language code for localization (en or ar)</param>
         [HttpGet("{id}/cities")]
+        [ProducesResponseType(typeof(ApiResponse<List<CityDto>>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetCitiesByCountry(int id, [FromQuery] string lang = "en")
         {
             bool isArabic = lang.ToLower() == "ar";
@@ -60,7 +62,7 @@ namespace RecruitmentPlatformAPI.Controllers.Common
                 .OrderBy(c => c.Name)
                 .ToListAsync();
 
-            return Ok(cities);
+            return Ok(new ApiResponse<List<CityDto>>(cities));
         }
     }
 }

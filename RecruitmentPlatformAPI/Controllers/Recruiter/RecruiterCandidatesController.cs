@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using RecruitmentPlatformAPI.Controllers.Common;
 using Microsoft.EntityFrameworkCore;
 using RecruitmentPlatformAPI.Data;
 using RecruitmentPlatformAPI.DTOs.Common;
@@ -18,7 +18,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
     [Route("api/recruiter")]
     [Produces("application/json")]
     [Authorize(Roles = "Recruiter")]
-    public class RecruiterCandidatesController : ControllerBase
+    public class RecruiterCandidatesController : BaseApiController
     {
         private readonly IAIMatchingService _aiMatchingService;
         private readonly IEngagementService _engagementService;
@@ -84,26 +84,39 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
             // Map AI results to our internal DTO with full profile data
             var matchedCandidates = new List<MatchedCandidateDto>();
 
+            // Batch-load all candidate IDs in 2 queries instead of N+1
+            var allCandidateIds = aiResponse.Results
+                .Select(r => int.TryParse(r.CandidateId, out var id) ? id : (int?)null)
+                .Where(id => id.HasValue)
+                .Select(id => id!.Value)
+                .Distinct()
+                .ToList();
+
+            var jobSeekersById = await _context.JobSeekers
+                .Include(js => js.User)
+                .Include(js => js.JobTitle)
+                .Include(js => js.Country)
+                .Include(js => js.City)
+                .Where(js => allCandidateIds.Contains(js.Id))
+                .ToDictionaryAsync(js => js.Id);
+
+            var skillsByJobSeekerId = await _context.JobSeekerSkills
+                .Where(jss => allCandidateIds.Contains(jss.JobSeekerId))
+                .Include(jss => jss.Skill)
+                .GroupBy(jss => jss.JobSeekerId)
+                .ToDictionaryAsync(
+                    g => g.Key,
+                    g => g.Select(jss => jss.Skill.Name).ToList());
+
             foreach (var result in aiResponse.Results)
             {
                 if (!int.TryParse(result.CandidateId, out var candidateId))
                     continue;
 
-                var jobSeeker = await _context.JobSeekers
-                    .Include(js => js.User)
-                    .Include(js => js.JobTitle)
-                    .Include(js => js.Country)
-                    .Include(js => js.City)
-                    .FirstOrDefaultAsync(js => js.Id == candidateId);
+                if (!jobSeekersById.TryGetValue(candidateId, out var jobSeeker))
+                    continue;
 
-                if (jobSeeker == null) continue;
-
-                // Load skills for this candidate
-                var skills = await _context.JobSeekerSkills
-                    .Where(jss => jss.JobSeekerId == candidateId)
-                    .Include(jss => jss.Skill)
-                    .Select(jss => jss.Skill.Name)
-                    .ToListAsync();
+                skillsByJobSeekerId.TryGetValue(candidateId, out var skills);
 
                 matchedCandidates.Add(new MatchedCandidateDto
                 {
@@ -116,7 +129,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                     CountryName = jobSeeker.Country?.NameEn,
                     CityName = jobSeeker.City?.NameEn,
                     AssessmentScore = jobSeeker.CurrentAssessmentScore,
-                    Skills = skills,
+                    Skills = skills ?? new List<string>(),
                     MatchScore = result.FinalScore,
                     MatchedSkills = result.MatchedSkills,
                     MissingSkills = result.MissingSkills,
@@ -145,6 +158,174 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                 TotalMatched = matchedCandidates.Count,
                 Candidates = matchedCandidates
             }));
+        }
+
+        /// <summary>
+        /// Get the full profile of a specific candidate in the context of a job.
+        /// Returns personal info, experiences, education, projects, skills, social links,
+        /// and assessment score. Records a profile view for engagement tracking.
+        /// </summary>
+        /// <param name="jobId">The job context (must belong to this recruiter)</param>
+        /// <param name="candidateId">The job seeker's ID</param>
+        /// <returns>Complete candidate profile</returns>
+        [HttpGet("jobs/{jobId}/candidates/{candidateId}")]
+        [ProducesResponseType(typeof(ApiResponse<RecruiterCandidateProfileDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetCandidateProfile(int jobId, int candidateId)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+
+            var recruiter = await _context.Recruiters
+                .FirstOrDefaultAsync(r => r.UserId == userId);
+
+            if (recruiter == null)
+                return Forbid();
+
+            // Verify the job belongs to this recruiter
+            var job = await _context.Jobs
+                .FirstOrDefaultAsync(j => j.Id == jobId && j.RecruiterId == recruiter.Id);
+
+            if (job == null)
+                return NotFound(new ApiErrorResponse("Job not found or access denied."));
+
+            // Load the candidate with all related data in batch queries
+            var jobSeeker = await _context.JobSeekers
+                .Include(js => js.User)
+                .Include(js => js.JobTitle)
+                .Include(js => js.Country)
+                .Include(js => js.City)
+                .Include(js => js.FirstLanguage)
+                .Include(js => js.SecondLanguage)
+                .FirstOrDefaultAsync(js => js.Id == candidateId);
+
+            if (jobSeeker == null)
+                return NotFound(new ApiErrorResponse("Candidate not found."));
+
+            // Batch-load related entities (3 queries instead of N+1)
+            var skills = await _context.JobSeekerSkills
+                .Where(jss => jss.JobSeekerId == candidateId)
+                .Include(jss => jss.Skill)
+                .ToListAsync();
+
+            var experiences = await _context.Experiences
+                .Include(e => e.Country)
+                .Include(e => e.City)
+                .Where(e => e.JobSeekerId == candidateId && !e.IsDeleted)
+                .OrderBy(e => e.DisplayOrder)
+                .ThenByDescending(e => e.StartDate)
+                .ToListAsync();
+
+            var educations = await _context.Educations
+                .Include(e => e.FieldOfStudy)
+                .Where(e => e.JobSeekerId == candidateId && !e.IsDeleted)
+                .OrderBy(e => e.DisplayOrder)
+                .ThenByDescending(e => e.StartDate)
+                .ToListAsync();
+
+            var projects = await _context.Projects
+                .Where(p => p.JobSeekerId == candidateId && !p.IsDeleted)
+                .OrderBy(p => p.DisplayOrder)
+                .ToListAsync();
+
+            var socialAccount = await _context.SocialAccounts
+                .FirstOrDefaultAsync(sa => sa.JobSeekerId == candidateId);
+
+            // Record profile click for engagement tracking (1-hour dedup)
+            await _engagementService.RecordProfileViewAsync(candidateId, recruiter.Id, jobId);
+
+            var profile = new RecruiterCandidateProfileDto
+            {
+                JobSeekerId = jobSeeker.Id,
+                FirstName = jobSeeker.User.FirstName,
+                LastName = jobSeeker.User.LastName,
+                Email = jobSeeker.User.Email,
+                ProfilePictureUrl = jobSeeker.User.ProfilePictureUrl,
+                PhoneNumber = jobSeeker.PhoneNumber,
+                Bio = jobSeeker.Bio,
+
+                JobTitleId = jobSeeker.JobTitleId,
+                JobTitle = jobSeeker.JobTitle?.TitleEn,
+                YearsOfExperience = jobSeeker.YearsOfExperience,
+
+                CountryId = jobSeeker.CountryId,
+                Country = jobSeeker.Country?.NameEn,
+                CountryCode = jobSeeker.Country?.CountryCode,
+                CityId = jobSeeker.CityId,
+                City = jobSeeker.City?.NameEn,
+
+                FirstLanguage = jobSeeker.FirstLanguage?.NameEn,
+                FirstLanguageProficiency = jobSeeker.FirstLanguageProficiency?.ToString(),
+                SecondLanguage = jobSeeker.SecondLanguage?.NameEn,
+                SecondLanguageProficiency = jobSeeker.SecondLanguageProficiency?.ToString(),
+
+                WorkPreferences = jobSeeker.WorkPreferences ?? new(),
+                DesiredEmploymentTypes = jobSeeker.DesiredEmploymentTypes ?? new(),
+
+                AssessmentScore = jobSeeker.CurrentAssessmentScore,
+                LastAssessmentDate = jobSeeker.LastAssessmentDate,
+
+                Skills = skills.Select(s => new RecruiterCandidateSkillDto
+                {
+                    SkillId = s.SkillId,
+                    Name = s.Skill.Name,
+                    Source = s.Source
+                }).ToList(),
+
+                Experiences = experiences.Select(e => new RecruiterCandidateExperienceDto
+                {
+                    Id = e.Id,
+                    JobTitle = e.JobTitle,
+                    CompanyName = e.CompanyName,
+                    Country = e.Country?.NameEn,
+                    City = e.City?.NameEn,
+                    EmploymentType = e.EmploymentType,
+                    StartDate = e.StartDate,
+                    EndDate = e.EndDate,
+                    IsCurrent = e.IsCurrent,
+                    Responsibilities = e.Responsibilities,
+                    DateRange = FormatDateRange(e.StartDate, e.EndDate, e.IsCurrent)
+                }).ToList(),
+
+                Educations = educations.Select(e => new RecruiterCandidateEducationDto
+                {
+                    Id = e.Id,
+                    Institution = e.Institution,
+                    Degree = e.Degree,
+                    FieldOfStudy = e.FieldOfStudy?.NameEn,
+                    GradeOrGPA = e.GradeOrGPA,
+                    StartDate = e.StartDate,
+                    EndDate = e.EndDate,
+                    IsCurrent = e.IsCurrent,
+                    DateRange = FormatDateRange(e.StartDate, e.EndDate, e.IsCurrent)
+                }).ToList(),
+
+                Projects = projects.Select(p => new RecruiterCandidateProjectDto
+                {
+                    Id = p.Id,
+                    Title = p.Title,
+                    TechnologiesUsed = p.TechnologiesUsed,
+                    Description = p.Description,
+                    ProjectLink = p.ProjectLink
+                }).ToList(),
+
+                SocialAccounts = socialAccount != null ? new RecruiterCandidateSocialDto
+                {
+                    LinkedIn = socialAccount.LinkedIn,
+                    Github = socialAccount.Github,
+                    Behance = socialAccount.Behance,
+                    Dribbble = socialAccount.Dribbble,
+                    PersonalWebsite = socialAccount.PersonalWebsite
+                } : null
+            };
+
+            _logger.LogInformation(
+                "Recruiter {RecruiterId} viewed candidate profile {CandidateId}",
+                recruiter.Id, candidateId);
+
+            return Ok(new ApiResponse<RecruiterCandidateProfileDto>(profile));
         }
 
         /// <summary>
@@ -187,10 +368,21 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
             return Ok(new ApiResponse<bool>(true, "Profile view recorded."));
         }
 
-        private int GetCurrentUserId()
+        private static string FormatDateRange(DateTime startDate, DateTime? endDate, bool isCurrent)
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return int.TryParse(userIdClaim, out var userId) ? userId : 0;
+            var culture = new System.Globalization.CultureInfo("en-US");
+            var start = startDate.ToString("MMM yyyy", culture);
+            var end = isCurrent ? "Present" : endDate?.ToString("MMM yyyy", culture) ?? "Present";
+            return $"{start} - {end}";
+        }
+
+        private static string FormatDateRange(DateTime? startDate, DateTime? endDate, bool isCurrent)
+        {
+            if (startDate == null && endDate == null && !isCurrent) return "Unknown Date";
+            var culture = new System.Globalization.CultureInfo("en-US");
+            var start = startDate?.ToString("MMM yyyy", culture) ?? "Unknown";
+            var end = isCurrent ? "Present" : endDate?.ToString("MMM yyyy", culture) ?? "Unknown";
+            return $"{start} - {end}";
         }
     }
 }

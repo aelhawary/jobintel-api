@@ -82,6 +82,7 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                     Institution = dto.Institution.Trim(),
                     Degree = dto.Degree,
                     FieldOfStudyId = dto.FieldOfStudyId,
+                    GradeOrGPA = dto.GradeOrGPA?.Trim(),
                     StartDate = dto.StartDate,
                     EndDate = dto.EndDate,
                     IsCurrent = dto.IsCurrent,
@@ -141,6 +142,7 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                 education.Institution = dto.Institution.Trim();
                 education.Degree = dto.Degree;
                 education.FieldOfStudyId = dto.FieldOfStudyId;
+                education.GradeOrGPA = dto.GradeOrGPA?.Trim();
                 education.StartDate = dto.StartDate;
                 education.EndDate = dto.EndDate;
                 education.IsCurrent = dto.IsCurrent;
@@ -267,6 +269,7 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                 Degree = education.Degree,
                 FieldOfStudyId = education.FieldOfStudyId,
                 FieldOfStudy = education.FieldOfStudy != null ? (isAr ? education.FieldOfStudy.NameAr : education.FieldOfStudy.NameEn) : "",
+                GradeOrGPA = education.GradeOrGPA,
                 StartDate = education.StartDate,
                 EndDate = education.EndDate,
                 IsCurrent = education.IsCurrent,

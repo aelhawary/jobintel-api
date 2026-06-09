@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using RecruitmentPlatformAPI.Controllers.Common;
 using RecruitmentPlatformAPI.DTOs.Common;
 using RecruitmentPlatformAPI.DTOs.JobSeeker;
 using RecruitmentPlatformAPI.Services.JobSeeker;
@@ -10,7 +10,7 @@ namespace RecruitmentPlatformAPI.Controllers.JobSeeker
     [ApiController]
     [Route("api/jobseeker/projects")]
     [Authorize(Roles = "JobSeeker")]
-    public class ProjectsController : ControllerBase
+    public class ProjectsController : BaseApiController
     {
         private readonly IProjectService _projectService;
         private readonly ILogger<ProjectsController> _logger;
@@ -144,13 +144,6 @@ namespace RecruitmentPlatformAPI.Controllers.JobSeeker
 
             var projects = await _projectService.GetProjectsAsync(userId);
             return Ok(new ApiResponse<List<ProjectDto>>(projects!)); // Service always returns non-null list
-        }
-
-        // Helper method to extract user ID from JWT token
-        private int GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return int.TryParse(userIdClaim, out var userId) ? userId : 0;
         }
     }
 }

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using RecruitmentPlatformAPI.Controllers.Common;
 using RecruitmentPlatformAPI.DTOs.Common;
 using RecruitmentPlatformAPI.DTOs.JobSeeker;
 using RecruitmentPlatformAPI.Services.JobSeeker;
@@ -14,7 +14,7 @@ namespace RecruitmentPlatformAPI.Controllers.JobSeeker
     [Route("api/jobseeker/skills")]
     [Produces("application/json")]
     [Authorize(Roles = "JobSeeker")]
-    public class JobSeekerSkillsController : ControllerBase
+    public class JobSeekerSkillsController : BaseApiController
     {
         private readonly IJobSeekerSkillService _skillService;
         private readonly ILogger<JobSeekerSkillsController> _logger;
@@ -106,12 +106,6 @@ namespace RecruitmentPlatformAPI.Controllers.JobSeeker
         {
             var skills = await _skillService.GetAvailableSkillsAsync();
             return Ok(new ApiResponse<List<SkillDto>>(skills, $"Found {skills.Count} available skills"));
-        }
-
-        private int GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return int.TryParse(userIdClaim, out var userId) ? userId : 0;
         }
     }
 }

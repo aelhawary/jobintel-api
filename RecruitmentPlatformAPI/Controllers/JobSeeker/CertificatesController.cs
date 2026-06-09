@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using RecruitmentPlatformAPI.Controllers.Common;
 using RecruitmentPlatformAPI.DTOs.Common;
 using RecruitmentPlatformAPI.DTOs.JobSeeker;
 using RecruitmentPlatformAPI.Services.JobSeeker;
@@ -12,8 +12,9 @@ namespace RecruitmentPlatformAPI.Controllers.JobSeeker
     /// </summary>
     [ApiController]
     [Route("api/jobseeker/certificates")]
+    [Authorize(Roles = "JobSeeker")]
     [Produces("application/json")]
-    public class CertificatesController : ControllerBase
+    public class CertificatesController : BaseApiController
     {
         private readonly ICertificateService _certificateService;
         private readonly ILogger<CertificatesController> _logger;
@@ -165,12 +166,6 @@ namespace RecruitmentPlatformAPI.Controllers.JobSeeker
 
             var (fileStream, contentType, fileName) = fileResult.Value;
             return File(fileStream, contentType, fileName);
-        }
-
-        private int GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return int.TryParse(userIdClaim, out var userId) ? userId : 0;
         }
     }
 }

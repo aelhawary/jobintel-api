@@ -80,6 +80,10 @@ builder.Services.Configure<FileStorageSettings>(builder.Configuration.GetSection
 
 // Configure Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
+if (string.IsNullOrEmpty(jwtSettings?.SecretKey))
+{
+    throw new InvalidOperationException("JWT SecretKey is missing from configuration. Set JwtSettings:SecretKey in appsettings.");
+}
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -95,7 +99,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings?.Issuer,
         ValidAudience = jwtSettings?.Audience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings?.SecretKey ?? ""))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings!.SecretKey))
     };
 
     // Add JWT debugging events
@@ -182,7 +186,10 @@ builder.Services.AddSwaggerGen(c =>
     // Include XML comments for better Swagger documentation
     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    c.IncludeXmlComments(xmlPath);
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
 
     // Configure Swagger to use JWT Bearer token
     c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
@@ -260,10 +267,14 @@ app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 
 // Serve uploaded files (Resumes, Profile Pictures)
+var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "Uploads");
+if (!Directory.Exists(uploadsPath))
+{
+    Directory.CreateDirectory(uploadsPath);
+}
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.Combine(builder.Environment.ContentRootPath, "Uploads")),
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
     RequestPath = "/Uploads"
 });
 

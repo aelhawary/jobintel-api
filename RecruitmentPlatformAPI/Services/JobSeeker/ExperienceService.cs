@@ -95,6 +95,8 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                     CompanyName = dto.CompanyName.Trim(),
                     CountryId = finalCountryId,
                     CityId = finalCityId,
+                    EmploymentType = dto.EmploymentType,
+                    Responsibilities = dto.Responsibilities?.Trim(),
                     StartDate = dto.StartDate,
                     EndDate = dto.EndDate,
                     IsCurrent = dto.IsCurrent,
@@ -166,6 +168,8 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                 experience.CompanyName = dto.CompanyName.Trim();
                 experience.CountryId = finalCountryId;
                 experience.CityId = finalCityId;
+                experience.EmploymentType = dto.EmploymentType;
+                experience.Responsibilities = dto.Responsibilities?.Trim();
                 experience.StartDate = dto.StartDate;
                 experience.EndDate = dto.EndDate;
                 experience.IsCurrent = dto.IsCurrent;
@@ -295,6 +299,8 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                 Country = (isAr && !string.IsNullOrEmpty(experience.Country?.NameAr)) ? experience.Country.NameAr : (experience.Country?.NameEn ?? string.Empty),
                 CityId = experience.CityId,
                 City = (isAr && !string.IsNullOrEmpty(experience.City?.NameAr)) ? experience.City.NameAr : (experience.City?.NameEn ?? string.Empty),
+                EmploymentType = experience.EmploymentType,
+                Responsibilities = experience.Responsibilities,
                 StartDate = experience.StartDate,
                 EndDate = experience.EndDate,
                 IsCurrent = experience.IsCurrent,

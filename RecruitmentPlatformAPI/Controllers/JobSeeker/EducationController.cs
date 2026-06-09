@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using RecruitmentPlatformAPI.Controllers.Common;
 using RecruitmentPlatformAPI.DTOs.Common;
 using RecruitmentPlatformAPI.DTOs.JobSeeker;
 using RecruitmentPlatformAPI.Services.JobSeeker;
@@ -14,7 +14,7 @@ namespace RecruitmentPlatformAPI.Controllers.JobSeeker
     [Route("api/jobseeker/education")]
     [Authorize(Roles = "JobSeeker")]
     [Produces("application/json")]
-    public class EducationController : ControllerBase
+    public class EducationController : BaseApiController
     {
         private readonly IEducationService _educationService;
         private readonly ILogger<EducationController> _logger;
@@ -209,12 +209,6 @@ namespace RecruitmentPlatformAPI.Controllers.JobSeeker
 
             var result = await _educationService.HasEducationAsync(userId);
             return Ok(new ApiResponse<bool>(result));
-        }
-
-        private int GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return int.TryParse(userIdClaim, out var userId) ? userId : 0;
         }
     }
 }

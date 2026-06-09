@@ -57,6 +57,19 @@ namespace RecruitmentPlatformAPI.DTOs.JobSeeker
         public bool IsCurrent { get; set; }
 
         /// <summary>
+        /// Employment type (FullTime, PartTime, Contract, etc.)
+        /// </summary>
+        /// <example>FullTime</example>
+        public EmploymentType EmploymentType { get; set; } = EmploymentType.FullTime;
+
+        /// <summary>
+        /// Key responsibilities and achievements (max 2000 characters)
+        /// </summary>
+        /// <example>Designed and implemented REST APIs, Led a team of 5 developers</example>
+        [MaxLength(2000, ErrorMessage = "Responsibilities cannot exceed 2000 characters")]
+        public string? Responsibilities { get; set; }
+
+        /// <summary>
         /// Display order (lower numbers appear first)
         /// </summary>
         /// <example>0</example>
@@ -116,9 +129,19 @@ namespace RecruitmentPlatformAPI.DTOs.JobSeeker
         public int CityId { get; set; }
 
         /// <summary>
-        /// Name of the City
+        /// City name
         /// </summary>
         public string City { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Employment type
+        /// </summary>
+        public EmploymentType EmploymentType { get; set; }
+
+        /// <summary>
+        /// Key responsibilities and achievements
+        /// </summary>
+        public string? Responsibilities { get; set; }
 
         /// <summary>
         /// Start date of employment

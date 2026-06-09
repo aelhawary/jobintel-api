@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using RecruitmentPlatformAPI.Controllers.Common;
 using RecruitmentPlatformAPI.DTOs.Assessment;
 using RecruitmentPlatformAPI.DTOs.Common;
 using RecruitmentPlatformAPI.Services.Assessment;
@@ -16,7 +16,7 @@ namespace RecruitmentPlatformAPI.Controllers.Assessment
     [Route("api/assessment")]
     [Authorize]
     [Produces("application/json")]
-    public class AssessmentController : ControllerBase
+    public class AssessmentController : BaseApiController
     {
         private readonly IAssessmentService _assessmentService;
         private readonly ILogger<AssessmentController> _logger;
@@ -293,17 +293,6 @@ namespace RecruitmentPlatformAPI.Controllers.Assessment
             if (result == null) return NotFound(new ApiErrorResponse("Assessment result not found or not yet completed"));
 
             return Ok(new ApiResponse<AssessmentResultResponseDto>(result));
-        }
-
-        // ─────────────────────────────────────────────────────────────────────────
-        // PRIVATE HELPERS
-        // ─────────────────────────────────────────────────────────────────────────
-
-        private int GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                            ?? User.FindFirst("sub")?.Value;
-            return int.TryParse(userIdClaim, out var userId) ? userId : 0;
         }
     }
 }

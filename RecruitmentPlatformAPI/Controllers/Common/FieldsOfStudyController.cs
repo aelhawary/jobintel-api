@@ -6,7 +6,7 @@ using RecruitmentPlatformAPI.DTOs.Common;
 namespace RecruitmentPlatformAPI.Controllers.Common
 {
     [ApiController]
-    [Route("api/[controller]")]
+        [Route("api/fields-of-study")]
     [Produces("application/json")]
     public class FieldsOfStudyController : ControllerBase
     {
@@ -34,7 +34,7 @@ namespace RecruitmentPlatformAPI.Controllers.Common
                 .Select(f => new FieldOfStudyDto
                 {
                     Id = f.Id,
-                    Name = isArabic ? f.NameAr : f.NameEn
+                    Name = isArabic ? (f.NameAr ?? f.NameEn) : f.NameEn
                 })
                 .OrderBy(dto => dto.Name)
                 .ToListAsync();

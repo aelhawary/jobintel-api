@@ -7,7 +7,7 @@ using RecruitmentPlatformAPI.Models.Reference;
 namespace RecruitmentPlatformAPI.Controllers.Common
 {
     [ApiController]
-    [Route("api/[controller]")]
+        [Route("api/languages")]
     [Produces("application/json")]
     public class LanguagesController : ControllerBase
     {
@@ -38,7 +38,7 @@ namespace RecruitmentPlatformAPI.Controllers.Common
                 {
                     Id = l.Id,
                     Code = l.Code,
-                    Name = isArabic ? l.NameAr : l.NameEn
+                    Name = isArabic ? (l.NameAr ?? l.NameEn) : l.NameEn
                 })
                 .OrderBy(dto => dto.Name)
                 .ToListAsync();

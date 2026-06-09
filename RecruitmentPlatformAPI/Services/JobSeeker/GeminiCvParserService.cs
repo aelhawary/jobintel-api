@@ -58,6 +58,8 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
       ""companyName"": ""(string)"",
       ""countryName"": ""(string)"",
       ""cityName"": ""(string)"",
+      ""employmentType"": ""(string, one of: FullTime, PartTime, Contract, Freelance, Internship. Infer from context if not explicit.)"",
+      ""responsibilities"": ""(string, comma-separated list of key responsibilities and achievements. Max 2000 chars.)"",
       ""startDate"": ""(string, YYYY-MM-DD)"",
       ""endDate"": ""(string, YYYY-MM-DD, or null if current)"",
       ""isCurrent"": (boolean)
@@ -68,6 +70,7 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
       ""institution"": ""(string)"",
       ""degree"": ""(string, e.g. Bachelor, Master, PhD, Diploma, HighSchool, Associate, Other)"",
       ""fieldOfStudy"": ""(string)"",
+      ""gradeOrGpa"": ""(string, GPA or grade if mentioned, e.g. '3.8/4.0', 'First Class Honours', null if not mentioned)"",
       ""startDate"": ""(string, YYYY-MM-DD)"",
       ""endDate"": ""(string, YYYY-MM-DD, or null if current)"",
       ""isCurrent"": (boolean)
@@ -117,7 +120,7 @@ CV Text:
                 // advises "please try again later". Giving up on the first
                 // failure was the root cause of failed CV parses during peak
                 // load. Non-transient errors (400 / 401 / 403) fail fast.
-                const int maxAttempts = 3;
+                const int maxAttempts = 5;
                 HttpResponseMessage? response = null;
                 for (int attempt = 1; attempt <= maxAttempts; attempt++)
                 {
@@ -139,8 +142,8 @@ CV Text:
                     }
 
                     // Respect server-provided Retry-After when present,
-                    // otherwise fall back to exponential backoff (1s, 2s, 4s).
-                    var delay = TimeSpan.FromSeconds(Math.Pow(2, attempt - 1));
+                    // otherwise fall back to exponential backoff (2s, 4s, 8s, 16s).
+                    var delay = TimeSpan.FromSeconds(2 * Math.Pow(2, attempt - 1));
                     if (response.Headers.RetryAfter is { } retryAfter)
                     {
                         if (retryAfter.Delta.HasValue)
@@ -236,8 +239,14 @@ CV Text:
                             CompanyName = exp.CompanyName,
                             CountryName = exp.CountryName,
                             CityName = exp.CityName,
+                            Responsibilities = exp.Responsibilities,
                             IsCurrent = exp.IsCurrent ?? false
                         };
+
+                        if (Enum.TryParse<RecruitmentPlatformAPI.Enums.EmploymentType>(exp.EmploymentType, true, out var empType))
+                            mappedExp.EmploymentType = empType;
+                        else
+                            mappedExp.EmploymentType = RecruitmentPlatformAPI.Enums.EmploymentType.FullTime;
                         
                         if (DateTime.TryParse(exp.StartDate, out var sDate)) mappedExp.StartDate = sDate;
                         if (DateTime.TryParse(exp.EndDate, out var eDate)) mappedExp.EndDate = eDate;
@@ -261,12 +270,14 @@ CV Text:
 
                 if (parsed.Educations != null)
                 {
+                    var validFieldOfStudyIds = await _context.FieldsOfStudy.Where(f => f.IsActive).Select(f => f.Id).ToHashSetAsync();
                     foreach (var edu in parsed.Educations)
                     {
                         var mappedEdu = new ParsedEducationDto
                         {
                             Institution = edu.Institution,
                             Degree = edu.Degree,
+                            GradeOrGpa = edu.GradeOrGpa,
                             IsCurrent = edu.IsCurrent ?? false
                         };
                         if (!string.IsNullOrWhiteSpace(edu.FieldOfStudy))
@@ -277,6 +288,11 @@ CV Text:
                                 mappedEdu.FieldOfStudyId = fos.Id;
                                 mappedEdu.FieldOfStudyName = fos.NameEn;
                             }
+                        }
+                        if (mappedEdu.FieldOfStudyId.HasValue && !validFieldOfStudyIds.Contains(mappedEdu.FieldOfStudyId.Value))
+                        {
+                            mappedEdu.FieldOfStudyId = null;
+                            mappedEdu.FieldOfStudyName = null;
                         }
                         if (DateTime.TryParse(edu.StartDate, out var sDate)) mappedEdu.StartDate = sDate;
                         if (DateTime.TryParse(edu.EndDate, out var eDate)) mappedEdu.EndDate = eDate;
@@ -301,10 +317,11 @@ CV Text:
 
                 if (parsed.SkillIds != null)
                 {
+                    var validSkillIds = await _context.Skills.Select(s => s.Id).ToHashSetAsync();
                     var limitedSkills = parsed.SkillIds.Distinct().Take(15).ToList();
                     foreach (var skillId in limitedSkills)
                     {
-                        if (!result.SkillIds.Contains(skillId))
+                        if (validSkillIds.Contains(skillId) && !result.SkillIds.Contains(skillId))
                         {
                             result.SkillIds.Add(skillId);
                         }
@@ -368,6 +385,8 @@ CV Text:
             public string? CompanyName { get; set; }
             public string? CountryName { get; set; }
             public string? CityName { get; set; }
+            public string? EmploymentType { get; set; }
+            public string? Responsibilities { get; set; }
             public string? StartDate { get; set; }
             public string? EndDate { get; set; }
             public bool? IsCurrent { get; set; }
@@ -378,6 +397,7 @@ CV Text:
             public string? Institution { get; set; }
             public string? Degree { get; set; }
             public string? FieldOfStudy { get; set; }
+            public string? GradeOrGpa { get; set; }
             public string? StartDate { get; set; }
             public string? EndDate { get; set; }
             public bool? IsCurrent { get; set; }

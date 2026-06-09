@@ -41,13 +41,6 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
         Task<bool> DeleteProfilePictureAsync(int userId);
 
         /// <summary>
-        /// Checks if a user has an uploaded profile picture (not OAuth)
-        /// </summary>
-        /// <param name="userId">The user ID</param>
-        /// <returns>True if user has an uploaded picture</returns>
-        Task<bool> HasUploadedProfilePictureAsync(int userId);
-
-        /// <summary>
         /// Validates an image file before upload
         /// </summary>
         /// <param name="fileStream">The file stream</param>
