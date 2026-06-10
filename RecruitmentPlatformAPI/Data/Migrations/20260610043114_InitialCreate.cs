@@ -75,7 +75,8 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     NameEn = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    NameAr = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true)
+                    NameAr = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    CountryCode = table.Column<string>(type: "nvarchar(2)", maxLength: 2, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -603,28 +604,6 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ProfileView",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    JobSeekerId = table.Column<int>(type: "int", nullable: false),
-                    ViewerRecruiterId = table.Column<int>(type: "int", nullable: true),
-                    ViewType = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    ViewedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ProfileView", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ProfileView_JobSeekers_JobSeekerId",
-                        column: x => x.JobSeekerId,
-                        principalTable: "JobSeekers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Projects",
                 columns: table => new
                 {
@@ -714,6 +693,7 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     RecruiterId = table.Column<int>(type: "int", nullable: false),
                     Title = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    JobTitleId = table.Column<int>(type: "int", nullable: true),
                     Description = table.Column<string>(type: "nvarchar(1200)", maxLength: 1200, nullable: false),
                     Requirements = table.Column<string>(type: "nvarchar(1200)", maxLength: 1200, nullable: false),
                     EmploymentType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
@@ -741,11 +721,45 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
+                        name: "FK_Jobs_JobTitle_JobTitleId",
+                        column: x => x.JobTitleId,
+                        principalTable: "JobTitle",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
                         name: "FK_Jobs_Recruiters_RecruiterId",
                         column: x => x.RecruiterId,
                         principalTable: "Recruiters",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ProfileView",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    JobSeekerId = table.Column<int>(type: "int", nullable: false),
+                    ViewerRecruiterId = table.Column<int>(type: "int", nullable: true),
+                    JobId = table.Column<int>(type: "int", nullable: true),
+                    ViewType = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    ViewedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProfileView", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ProfileView_JobSeekers_JobSeekerId",
+                        column: x => x.JobSeekerId,
+                        principalTable: "JobSeekers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ProfileView_Recruiters_ViewerRecruiterId",
+                        column: x => x.ViewerRecruiterId,
+                        principalTable: "Recruiters",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -813,7 +827,10 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                     JobId = table.Column<int>(type: "int", nullable: false),
                     JobSeekerId = table.Column<int>(type: "int", nullable: false),
                     MatchScore = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: false),
-                    AiReasoning = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    AiReasoning = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    MatchedSkillsJson = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    MissingSkillsJson = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    IsViewed = table.Column<bool>(type: "bit", nullable: false),
                     GeneratedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -1981,6 +1998,11 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 column: "CountryId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Jobs_JobTitleId",
+                table: "Jobs",
+                column: "JobTitleId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Jobs_RecruiterId",
                 table: "Jobs",
                 column: "RecruiterId");
@@ -2056,9 +2078,19 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ProfileView_Dedup",
+                table: "ProfileView",
+                columns: new[] { "JobSeekerId", "ViewerRecruiterId", "ViewType", "ViewedAt" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ProfileView_JobSeeker_Date_Type",
                 table: "ProfileView",
                 columns: new[] { "JobSeekerId", "ViewedAt", "ViewType" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProfileView_ViewerRecruiterId",
+                table: "ProfileView",
+                column: "ViewerRecruiterId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Project_JobSeekerId_IsDeleted",
@@ -2066,15 +2098,15 @@ namespace RecruitmentPlatformAPI.Data.Migrations
                 columns: new[] { "JobSeekerId", "IsDeleted" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Recommendation_JobSeeker_Date",
+                table: "Recommendations",
+                columns: new[] { "JobSeekerId", "GeneratedAt" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Recommendations_JobId_JobSeekerId",
                 table: "Recommendations",
                 columns: new[] { "JobId", "JobSeekerId" },
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Recommendations_JobSeekerId",
-                table: "Recommendations",
-                column: "JobSeekerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Recruiters_CityId",

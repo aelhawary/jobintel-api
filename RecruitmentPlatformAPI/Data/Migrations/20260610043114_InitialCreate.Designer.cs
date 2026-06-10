@@ -12,8 +12,8 @@ using RecruitmentPlatformAPI.Data;
 namespace RecruitmentPlatformAPI.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260608013246_NormalizeJobTitles")]
-    partial class NormalizeJobTitles
+    [Migration("20260610043114_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
