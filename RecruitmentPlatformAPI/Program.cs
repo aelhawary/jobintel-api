@@ -5,6 +5,7 @@ using System.Text;
 using RecruitmentPlatformAPI.Configuration;
 using RecruitmentPlatformAPI.Data;
 using RecruitmentPlatformAPI.Data.Seed;
+using RecruitmentPlatformAPI.Services;
 using RecruitmentPlatformAPI.Services.Auth;
 using RecruitmentPlatformAPI.Services.JobSeeker;
 using RecruitmentPlatformAPI.Services.Recruiter;
@@ -134,6 +135,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddMemoryCache();
 
 // Register services
+builder.Services.AddScoped<SkillMatcher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
@@ -240,11 +242,9 @@ using (var scope = app.Services.CreateScope())
         await LanguageSeeder.SeedAsync(db, logger, env.ContentRootPath);
         await FieldOfStudySeeder.SeedAsync(db, logger, env.ContentRootPath);
 
-        // Seed mock data (development only)
-        if (app.Environment.IsDevelopment())
-        {
-            await MockDataSeeder.SeedAsync(db, logger);
-        }
+        // Seed skills data
+        await SkillSeeder.SeedAsync(db, logger, env.ContentRootPath);
+
     }
     catch (Exception ex)
     {

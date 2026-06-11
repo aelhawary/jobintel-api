@@ -138,6 +138,7 @@ namespace RecruitmentPlatformAPI.Data
                 b.HasOne(e => e.FieldOfStudy)
                  .WithMany()
                  .HasForeignKey(e => e.FieldOfStudyId)
+                 .IsRequired(false)
                  .OnDelete(DeleteBehavior.Restrict);
 
                 // Check constraint: EndDate must be >= StartDate (database-agnostic)
@@ -427,9 +428,6 @@ namespace RecruitmentPlatformAPI.Data
 
             // Seed reference data using dedicated seed classes
             modelBuilder.Entity<JobTitle>().HasData(JobTitleSeed.GetJobTitles());
-            // modelBuilder.Entity<Country>().HasData(CountrySeed.GetCountries()); // Commented out to allow raw SQL seed dataset
-            modelBuilder.Entity<Skill>().HasData(SkillSeed.GetSkills());
-            modelBuilder.Entity<AssessmentQuestion>().HasData(AssessmentQuestionSeed.GetQuestions());
 
             // ============= Assessment Quiz Configuration =============
             

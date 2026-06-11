@@ -82,6 +82,7 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                     Institution = dto.Institution.Trim(),
                     Degree = dto.Degree,
                     FieldOfStudyId = dto.FieldOfStudyId,
+                    FieldOfStudyName = dto.FieldOfStudyId.HasValue && dto.FieldOfStudyId > 0 ? null : dto.FieldOfStudyName?.Trim(),
                     GradeOrGPA = dto.GradeOrGPA?.Trim(),
                     StartDate = dto.StartDate,
                     EndDate = dto.EndDate,
@@ -142,6 +143,7 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                 education.Institution = dto.Institution.Trim();
                 education.Degree = dto.Degree;
                 education.FieldOfStudyId = dto.FieldOfStudyId;
+                education.FieldOfStudyName = dto.FieldOfStudyId.HasValue && dto.FieldOfStudyId > 0 ? null : dto.FieldOfStudyName?.Trim();
                 education.GradeOrGPA = dto.GradeOrGPA?.Trim();
                 education.StartDate = dto.StartDate;
                 education.EndDate = dto.EndDate;
@@ -262,13 +264,17 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
         private static EducationResponseDto MapToResponseDto(Education education, string lang = "en")
         {
             bool isAr = lang.ToLower() == "ar";
+            var fieldOfStudyDisplay = education.FieldOfStudy != null
+                ? (isAr ? education.FieldOfStudy.NameAr : education.FieldOfStudy.NameEn)
+                : education.FieldOfStudyName ?? "";
             return new EducationResponseDto
             {
                 Id = education.Id,
                 Institution = education.Institution,
                 Degree = education.Degree,
                 FieldOfStudyId = education.FieldOfStudyId,
-                FieldOfStudy = education.FieldOfStudy != null ? (isAr ? education.FieldOfStudy.NameAr : education.FieldOfStudy.NameEn) : "",
+                FieldOfStudy = fieldOfStudyDisplay,
+                FieldOfStudyName = education.FieldOfStudyName,
                 GradeOrGPA = education.GradeOrGPA,
                 StartDate = education.StartDate,
                 EndDate = education.EndDate,

@@ -278,7 +278,9 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                     jobSeeker.FirstLanguageProficiency = RecruitmentPlatformAPI.Enums.LanguageProficiency.Advanced;
             }
             if (!string.IsNullOrWhiteSpace(extractedData.Bio))
-                jobSeeker.Bio = extractedData.Bio.Trim();
+                jobSeeker.Bio = extractedData.Bio.Trim().Length > 500
+                    ? extractedData.Bio.Trim()[..500]
+                    : extractedData.Bio.Trim();
             jobSeeker.UpdatedAt = DateTime.UtcNow;
 
             // 2) List sections — soft-delete old, insert new (same strategy as before).
@@ -346,7 +348,8 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                         JobSeekerId = jobSeeker.Id,
                         Institution = !string.IsNullOrWhiteSpace(aiEdu.Institution) ? aiEdu.Institution : "Unknown Institution",
                         Degree = degreeEnum,
-                        FieldOfStudyId = aiEdu.FieldOfStudyId ?? 0,
+                        FieldOfStudyId = aiEdu.FieldOfStudyId,
+                        FieldOfStudyName = !string.IsNullOrWhiteSpace(aiEdu.FieldOfStudyName) ? aiEdu.FieldOfStudyName.Trim() : null,
                         GradeOrGPA = !string.IsNullOrWhiteSpace(aiEdu.GradeOrGpa) ? aiEdu.GradeOrGpa.Trim() : null,
                         StartDate = aiEdu.StartDate,
                         EndDate = aiEdu.IsCurrent ? null : aiEdu.EndDate,
@@ -355,10 +358,7 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow
                     };
-                    if (edu.FieldOfStudyId > 0)
-                    {
-                        _context.Educations.Add(edu);
-                    }
+                    _context.Educations.Add(edu);
                 }
             }
 

@@ -119,7 +119,7 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
                     .ToDictionaryAsync(
                         g => g.Key,
                         g => g.Select(e =>
-                            $"{e.Degree} in {e.FieldOfStudy?.NameEn ?? "N/A"} from {e.Institution}").ToList());
+                            $"{e.Degree} in {e.FieldOfStudy?.NameEn ?? e.FieldOfStudyName ?? "N/A"} from {e.Institution}").ToList());
 
                 var aiRequest = new AIMatchingRequest
                 {

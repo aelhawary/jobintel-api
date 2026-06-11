@@ -294,7 +294,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                     Id = e.Id,
                     Institution = e.Institution,
                     Degree = e.Degree,
-                    FieldOfStudy = e.FieldOfStudy?.NameEn,
+                    FieldOfStudy = e.FieldOfStudy?.NameEn ?? e.FieldOfStudyName,
                     GradeOrGPA = e.GradeOrGPA,
                     StartDate = e.StartDate,
                     EndDate = e.EndDate,

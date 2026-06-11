@@ -25,11 +25,17 @@ namespace RecruitmentPlatformAPI.DTOs.JobSeeker
         public Degree Degree { get; set; }
 
         /// <summary>
-        /// Field of Study / Major
+        /// Field of Study / Major (ID from reference table, null if custom)
         /// </summary>
         /// <example>Computer Science</example>
-        [Required(ErrorMessage = "Field of study is required")]
-        public int FieldOfStudyId { get; set; }
+        public int? FieldOfStudyId { get; set; }
+
+        /// <summary>
+        /// Custom field of study text (used when FieldOfStudyId is 0)
+        /// </summary>
+        /// <example>Computer and Communication Engineering</example>
+        [MaxLength(150)]
+        public string? FieldOfStudyName { get; set; }
 
         /// <summary>
         /// Start date (YYYY-MM format accepted)
@@ -108,7 +114,12 @@ namespace RecruitmentPlatformAPI.DTOs.JobSeeker
         /// <summary>
         /// Field of Study ID
         /// </summary>
-        public int FieldOfStudyId { get; set; }
+        public int? FieldOfStudyId { get; set; }
+
+        /// <summary>
+        /// Raw field of study text (used when no DB match is found)
+        /// </summary>
+        public string? FieldOfStudyName { get; set; }
 
         /// <summary>
         /// Start date

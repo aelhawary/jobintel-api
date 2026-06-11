@@ -12,8 +12,9 @@ namespace RecruitmentPlatformAPI.Models.JobSeeker
         public string Institution { get; set; } = string.Empty;
         [Required]
         public Degree Degree { get; set; }
-        [Required]
-        public int FieldOfStudyId { get; set; }
+        public int? FieldOfStudyId { get; set; }
+        [MaxLength(150)]
+        public string? FieldOfStudyName { get; set; }
         [MaxLength(50)]
         public string? GradeOrGPA { get; set; }
         public DateTime? StartDate { get; set; }
@@ -28,6 +29,6 @@ namespace RecruitmentPlatformAPI.Models.JobSeeker
 
         // Navigation properties
         public JobSeeker JobSeeker { get; set; } = null!;
-        public Reference.FieldOfStudy FieldOfStudy { get; set; } = null!;
+        public Reference.FieldOfStudy? FieldOfStudy { get; set; }
     }
 }
