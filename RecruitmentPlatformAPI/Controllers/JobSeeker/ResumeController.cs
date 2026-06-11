@@ -97,7 +97,7 @@ namespace RecruitmentPlatformAPI.Controllers.JobSeeker
         /// <item>Experiences (soft-delete old, insert new)</item>
         /// <item>Educations (soft-delete old, insert new)</item>
         /// <item>Projects (soft-delete old, insert new)</item>
-        /// <item>Skills (hard-replace; max 15; tagged source = "AI")</item>
+        /// <item>Skills (hard-replace; max 25; tagged source = "AI")</item>
         /// <item>Social Accounts (hard-replace)</item>
         /// </list>
         /// The user must have already uploaded a resume via <c>POST /resume/upload</c>

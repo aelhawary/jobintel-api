@@ -13,7 +13,7 @@ namespace RecruitmentPlatformAPI.DTOs.JobSeeker
         /// <example>[1, 5, 12, 23]</example>
         [Required(ErrorMessage = "At least one skill must be selected")]
         [MinLength(1, ErrorMessage = "At least one skill must be selected")]
-        [MaxLength(15, ErrorMessage = "Maximum 15 skills allowed.")]
+        [MaxLength(25, ErrorMessage = "Maximum 25 skills allowed.")]
         public List<int> SkillIds { get; set; } = new();
     }
 

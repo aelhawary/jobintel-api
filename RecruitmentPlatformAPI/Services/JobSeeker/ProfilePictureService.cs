@@ -16,6 +16,11 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
         private readonly FileStorageSettings _fileSettings;
         private readonly ILogger<ProfilePictureService> _logger;
         private readonly string _storagePath;
+        private readonly string _defaultPicturePath;
+        private readonly string _defaultPictureUrl;
+
+        // Default profile picture path relative to wwwroot
+        private const string DefaultPictureRelativePath = "images/default-profile.png";
 
         // Image magic bytes for validation
         private static readonly Dictionary<string, byte[][]> ImageMagicBytes = new()
@@ -31,12 +36,15 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
         public ProfilePictureService(
             AppDbContext context,
             IOptions<FileStorageSettings> fileSettings,
-            ILogger<ProfilePictureService> logger)
+            ILogger<ProfilePictureService> logger,
+            IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
             _fileSettings = fileSettings.Value;
             _logger = logger;
             _storagePath = _fileSettings.GetProfilePicturesStoragePath();
+            _defaultPicturePath = Path.Combine(webHostEnvironment.WebRootPath, DefaultPictureRelativePath);
+            _defaultPictureUrl = $"/{DefaultPictureRelativePath}";
             
             // Ensure storage directory exists
             if (!Directory.Exists(_storagePath))
@@ -130,9 +138,13 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
             // Check if user has any profile picture URL
             if (string.IsNullOrEmpty(user.ProfilePictureUrl))
             {
+                // Return default profile picture
                 return new ProfilePictureResponseDto
                 {
-                    HasProfilePicture = false
+                    HasProfilePicture = true,
+                    IsDefaultPicture = true,
+                    Url = $"{_fileSettings.BaseUrl}{_defaultPictureUrl}",
+                    ContentType = "image/png"
                 };
             }
 
@@ -170,8 +182,19 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
         public async Task<(Stream? stream, string? contentType, string? fileName)?> GetProfilePictureFileAsync(int userId)
         {
             var user = await _context.Users.FindAsync(userId);
-            if (user == null || string.IsNullOrEmpty(user.ProfilePictureUrl))
+            if (user == null)
             {
+                return null;
+            }
+
+            // If no profile picture URL, serve the default picture
+            if (string.IsNullOrEmpty(user.ProfilePictureUrl))
+            {
+                if (File.Exists(_defaultPicturePath))
+                {
+                    var stream = new FileStream(_defaultPicturePath, FileMode.Open, FileAccess.Read);
+                    return (stream, "image/png", "default-profile.png");
+                }
                 return null;
             }
 
@@ -189,9 +212,9 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
             }
 
             var contentType = GetContentTypeFromExtension(fileInfo.Extension);
-            var stream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read);
+            var fileStream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read);
 
-            return (stream, contentType, fileInfo.Name);
+            return (fileStream, contentType, fileInfo.Name);
         }
 
         public async Task<bool> DeleteProfilePictureAsync(int userId)

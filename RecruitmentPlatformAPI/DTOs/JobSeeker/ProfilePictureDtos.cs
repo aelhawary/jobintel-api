@@ -23,6 +23,11 @@ namespace RecruitmentPlatformAPI.DTOs.JobSeeker
         public bool IsOAuthPicture { get; set; }
 
         /// <summary>
+        /// Indicates if this is the system default profile picture (user has no custom picture)
+        /// </summary>
+        public bool IsDefaultPicture { get; set; }
+
+        /// <summary>
         /// Original filename (only for uploaded pictures, not OAuth)
         /// </summary>
         public string? OriginalFileName { get; set; }

@@ -12,11 +12,9 @@ namespace RecruitmentPlatformAPI.Models.JobSeeker
         public string JobTitle { get; set; } = string.Empty;
         [Required, MaxLength(100)]
         public string CompanyName { get; set; } = string.Empty;
-        [Required]
-        public int CountryId { get; set; }
+        public int? CountryId { get; set; }
         
-        [Required]
-        public int CityId { get; set; }
+        public int? CityId { get; set; }
         [Required]
         public EmploymentType EmploymentType { get; set; } = EmploymentType.FullTime;
         [Required]
@@ -33,7 +31,7 @@ namespace RecruitmentPlatformAPI.Models.JobSeeker
 
         // Navigation properties
         public JobSeeker JobSeeker { get; set; } = null!;
-        public RecruitmentPlatformAPI.Models.Reference.Country Country { get; set; } = null!;
-        public RecruitmentPlatformAPI.Models.Reference.City City { get; set; } = null!;
+        public RecruitmentPlatformAPI.Models.Reference.Country? Country { get; set; }
+        public RecruitmentPlatformAPI.Models.Reference.City? City { get; set; }
     }
 }

@@ -260,165 +260,245 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
         /// </summary>
         private async Task ApplyExtractedDataAsync(RecruitmentPlatformAPI.Models.JobSeeker.JobSeeker jobSeeker, ParsedResumeDataDto extractedData)
         {
-            // 1) Personal Info (top-level fields on JobSeeker)
-            if (extractedData.JobTitleId.HasValue && extractedData.JobTitleId.Value > 0)
-                jobSeeker.JobTitleId = extractedData.JobTitleId;
-            if (extractedData.YearsOfExperience.HasValue)
-                jobSeeker.YearsOfExperience = extractedData.YearsOfExperience.Value;
-            if (extractedData.CountryId.HasValue && extractedData.CountryId.Value > 0)
-                jobSeeker.CountryId = extractedData.CountryId;
-            if (extractedData.CityId.HasValue && extractedData.CityId.Value > 0)
-                jobSeeker.CityId = extractedData.CityId;
-            if (!string.IsNullOrWhiteSpace(extractedData.PhoneNumber))
-                jobSeeker.PhoneNumber = extractedData.PhoneNumber.Trim();
-            if (extractedData.FirstLanguageId.HasValue && extractedData.FirstLanguageId.Value > 0)
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                jobSeeker.FirstLanguageId = extractedData.FirstLanguageId;
-                if (jobSeeker.FirstLanguageProficiency == null)
-                    jobSeeker.FirstLanguageProficiency = RecruitmentPlatformAPI.Enums.LanguageProficiency.Advanced;
-            }
-            if (!string.IsNullOrWhiteSpace(extractedData.Bio))
-                jobSeeker.Bio = extractedData.Bio.Trim().Length > 500
-                    ? extractedData.Bio.Trim()[..500]
-                    : extractedData.Bio.Trim();
-            jobSeeker.UpdatedAt = DateTime.UtcNow;
-
-            // 2) List sections — soft-delete old, insert new (same strategy as before).
-            var oldEducations = await _context.Educations
-                .Where(e => e.JobSeekerId == jobSeeker.Id && !e.IsDeleted)
-                .ToListAsync();
-            var oldExperiences = await _context.Experiences
-                .Where(e => e.JobSeekerId == jobSeeker.Id && !e.IsDeleted)
-                .ToListAsync();
-            var oldProjects = await _context.Projects
-                .Where(p => p.JobSeekerId == jobSeeker.Id && !p.IsDeleted)
-                .ToListAsync();
-            var oldSkills = await _context.JobSeekerSkills
-                .Where(s => s.JobSeekerId == jobSeeker.Id)
-                .ToListAsync();
-            var oldSocialAccount = await _context.SocialAccounts
-                .FirstOrDefaultAsync(s => s.JobSeekerId == jobSeeker.Id);
-
-            foreach (var e in oldEducations) { e.IsDeleted = true; e.DeletedAt = DateTime.UtcNow; e.UpdatedAt = DateTime.UtcNow; }
-            foreach (var e in oldExperiences) { e.IsDeleted = true; e.DeletedAt = DateTime.UtcNow; e.UpdatedAt = DateTime.UtcNow; }
-            foreach (var p in oldProjects) { p.IsDeleted = true; p.DeletedAt = DateTime.UtcNow; p.UpdatedAt = DateTime.UtcNow; }
-            if (oldSkills.Any()) _context.JobSeekerSkills.RemoveRange(oldSkills);
-            if (oldSocialAccount != null) _context.SocialAccounts.Remove(oldSocialAccount);
-
-            // 3) Experiences
-            if (extractedData.Experiences.Any())
-            {
-                for (int i = 0; i < extractedData.Experiences.Count; i++)
+                // 1) Personal Info (top-level fields on JobSeeker) — with validation
+                if (extractedData.JobTitleId.HasValue && extractedData.JobTitleId.Value > 0)
+                    jobSeeker.JobTitleId = extractedData.JobTitleId;
+                if (extractedData.YearsOfExperience.HasValue && extractedData.YearsOfExperience.Value >= 0 && extractedData.YearsOfExperience.Value <= 60)
+                    jobSeeker.YearsOfExperience = extractedData.YearsOfExperience.Value;
+                if (extractedData.CountryId.HasValue && extractedData.CountryId.Value > 0)
+                    jobSeeker.CountryId = extractedData.CountryId;
+                if (extractedData.CityId.HasValue && extractedData.CityId.Value > 0)
+                    jobSeeker.CityId = extractedData.CityId;
+                if (!string.IsNullOrWhiteSpace(extractedData.PhoneNumber))
                 {
-                    var aiExp = extractedData.Experiences[i];
-                    var exp = new Experience
+                    var phone = extractedData.PhoneNumber.Trim();
+                    if (phone.Length <= 20)
+                        jobSeeker.PhoneNumber = phone;
+                }
+                if (extractedData.FirstLanguageId.HasValue && extractedData.FirstLanguageId.Value > 0)
+                {
+                    jobSeeker.FirstLanguageId = extractedData.FirstLanguageId;
+                    if (jobSeeker.FirstLanguageProficiency == null)
+                        jobSeeker.FirstLanguageProficiency = RecruitmentPlatformAPI.Enums.LanguageProficiency.Advanced;
+                }
+                if (!string.IsNullOrWhiteSpace(extractedData.Bio))
+                    jobSeeker.Bio = TruncateBioSentenceAware(extractedData.Bio.Trim(), 500);
+                jobSeeker.UpdatedAt = DateTime.UtcNow;
+
+                // 2) List sections — soft-delete old, insert new (same strategy as before).
+                var oldEducations = await _context.Educations
+                    .Where(e => e.JobSeekerId == jobSeeker.Id && !e.IsDeleted)
+                    .ToListAsync();
+                var oldExperiences = await _context.Experiences
+                    .Where(e => e.JobSeekerId == jobSeeker.Id && !e.IsDeleted)
+                    .ToListAsync();
+                var oldProjects = await _context.Projects
+                    .Where(p => p.JobSeekerId == jobSeeker.Id && !p.IsDeleted)
+                    .ToListAsync();
+                var oldSkills = await _context.JobSeekerSkills
+                    .Where(s => s.JobSeekerId == jobSeeker.Id)
+                    .ToListAsync();
+                var oldSocialAccount = await _context.SocialAccounts
+                    .FirstOrDefaultAsync(s => s.JobSeekerId == jobSeeker.Id);
+
+                foreach (var e in oldEducations) { e.IsDeleted = true; e.DeletedAt = DateTime.UtcNow; e.UpdatedAt = DateTime.UtcNow; }
+                foreach (var e in oldExperiences) { e.IsDeleted = true; e.DeletedAt = DateTime.UtcNow; e.UpdatedAt = DateTime.UtcNow; }
+                foreach (var p in oldProjects) { p.IsDeleted = true; p.DeletedAt = DateTime.UtcNow; p.UpdatedAt = DateTime.UtcNow; }
+                if (oldSkills.Any()) _context.JobSeekerSkills.RemoveRange(oldSkills);
+                if (oldSocialAccount != null) _context.SocialAccounts.Remove(oldSocialAccount);
+
+                // 3) Experiences — with validation, no silent drops.
+                // When country/city can't be matched from the LLM text, fall back to the
+                // user's personal country/city since it's usually correct for their career context.
+                if (extractedData.Experiences.Any())
+                {
+                    for (int i = 0; i < extractedData.Experiences.Count; i++)
                     {
-                        JobSeekerId = jobSeeker.Id,
-                        JobTitle = !string.IsNullOrWhiteSpace(aiExp.JobTitle) ? aiExp.JobTitle : "Unknown Title",
-                        CompanyName = !string.IsNullOrWhiteSpace(aiExp.CompanyName) ? aiExp.CompanyName : "Unknown Company",
-                        CountryId = aiExp.CountryId > 0 ? aiExp.CountryId.Value : (jobSeeker.CountryId ?? 0),
-                        CityId = aiExp.CityId > 0 ? aiExp.CityId.Value : (jobSeeker.CityId ?? 0),
-                        EmploymentType = aiExp.EmploymentType,
-                        Responsibilities = !string.IsNullOrWhiteSpace(aiExp.Responsibilities) ? aiExp.Responsibilities.Trim() : null,
-                        StartDate = aiExp.StartDate ?? new DateTime(2000, 1, 1),
-                        EndDate = aiExp.IsCurrent ? null : aiExp.EndDate,
-                        IsCurrent = aiExp.IsCurrent,
-                        DisplayOrder = i,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
-                    };
-                    if (exp.CountryId > 0 && exp.CityId > 0)
-                    {
+                        var aiExp = extractedData.Experiences[i];
+                        int? finalCountryId = aiExp.CountryId > 0 ? aiExp.CountryId : (jobSeeker.CountryId > 0 ? jobSeeker.CountryId : null);
+                        int? finalCityId = aiExp.CityId > 0 ? aiExp.CityId : (jobSeeker.CityId > 0 ? jobSeeker.CityId : null);
+                        if (aiExp.CountryId <= 0 || aiExp.CityId <= 0)
+                        {
+                            _logger.LogInformation("Experience '{Title}' at '{Company}' location fell back to user profile (CountryId={CountryId}, CityId={CityId}).",
+                                aiExp.JobTitle, aiExp.CompanyName, finalCountryId, finalCityId);
+                        }
+
+                        var startDate = ValidateAndNormalizeDate(aiExp.StartDate, new DateTime(2000, 1, 1)) ?? new DateTime(2000, 1, 1);
+                        var endDate = aiExp.IsCurrent ? null : ValidateAndNormalizeDate(aiExp.EndDate, null);
+                        if (endDate.HasValue && endDate.Value < startDate)
+                        {
+                            endDate = startDate;
+                        }
+
+                        var exp = new Experience
+                        {
+                            JobSeekerId = jobSeeker.Id,
+                            JobTitle = !string.IsNullOrWhiteSpace(aiExp.JobTitle) ? aiExp.JobTitle : "Unknown Title",
+                            CompanyName = !string.IsNullOrWhiteSpace(aiExp.CompanyName) ? aiExp.CompanyName : "Unknown Company",
+                            CountryId = finalCountryId,
+                            CityId = finalCityId,
+                            EmploymentType = aiExp.EmploymentType,
+                            Responsibilities = !string.IsNullOrWhiteSpace(aiExp.Responsibilities) ? aiExp.Responsibilities.Trim() : null,
+                            StartDate = startDate,
+                            EndDate = endDate,
+                            IsCurrent = aiExp.IsCurrent,
+                            DisplayOrder = i,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow
+                        };
                         _context.Experiences.Add(exp);
                     }
                 }
-            }
 
-            // 4) Educations
-            if (extractedData.Educations.Any())
-            {
-                for (int i = 0; i < extractedData.Educations.Count; i++)
+                // 4) Educations — with date validation
+                if (extractedData.Educations.Any())
                 {
-                    var aiEdu = extractedData.Educations[i];
-                    var degreeEnum = Enum.TryParse<RecruitmentPlatformAPI.Enums.Degree>(aiEdu.Degree, true, out var d)
-                        ? d
-                        : RecruitmentPlatformAPI.Enums.Degree.Other;
-                    var edu = new Education
+                    for (int i = 0; i < extractedData.Educations.Count; i++)
+                    {
+                        var aiEdu = extractedData.Educations[i];
+                        var degreeEnum = Enum.TryParse<RecruitmentPlatformAPI.Enums.Degree>(aiEdu.Degree, true, out var d)
+                            ? d
+                            : RecruitmentPlatformAPI.Enums.Degree.Other;
+                        var startDate = ValidateAndNormalizeDate(aiEdu.StartDate, null);
+                        var endDate = aiEdu.IsCurrent ? null : ValidateAndNormalizeDate(aiEdu.EndDate, null);
+                        if (startDate.HasValue && endDate.HasValue && endDate.Value < startDate.Value)
+                        {
+                            endDate = startDate;
+                        }
+
+                        var edu = new Education
+                        {
+                            JobSeekerId = jobSeeker.Id,
+                            Institution = !string.IsNullOrWhiteSpace(aiEdu.Institution) ? aiEdu.Institution : "Unknown Institution",
+                            Degree = degreeEnum,
+                            FieldOfStudyId = aiEdu.FieldOfStudyId,
+                            FieldOfStudyName = !string.IsNullOrWhiteSpace(aiEdu.FieldOfStudyName) ? aiEdu.FieldOfStudyName.Trim() : null,
+                            GradeOrGPA = !string.IsNullOrWhiteSpace(aiEdu.GradeOrGpa) ? aiEdu.GradeOrGpa.Trim() : null,
+                            StartDate = startDate,
+                            EndDate = endDate,
+                            IsCurrent = aiEdu.IsCurrent,
+                            DisplayOrder = i,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow
+                        };
+                        _context.Educations.Add(edu);
+                    }
+                }
+
+                // 5) Projects
+                if (extractedData.Projects.Any())
+                {
+                    for (int i = 0; i < extractedData.Projects.Count; i++)
+                    {
+                        var aiProj = extractedData.Projects[i];
+                        var proj = new Project
+                        {
+                            JobSeekerId = jobSeeker.Id,
+                            Title = !string.IsNullOrWhiteSpace(aiProj.Title) ? aiProj.Title : "Unknown Project",
+                            TechnologiesUsed = aiProj.TechnologiesUsed,
+                            Description = aiProj.Description,
+                            ProjectLink = aiProj.ProjectLink,
+                            DisplayOrder = i,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow
+                        };
+                        _context.Projects.Add(proj);
+                    }
+                }
+
+                // 6) Skills (hard replace, source tagged "AI" for analytics)
+                if (extractedData.SkillIds.Any())
+                {
+                    foreach (var skillId in extractedData.SkillIds.Distinct().Take(25))
+                    {
+                        _context.JobSeekerSkills.Add(new JobSeekerSkill
+                        {
+                            JobSeekerId = jobSeeker.Id,
+                            SkillId = skillId,
+                            Source = "AI"
+                        });
+                    }
+                }
+
+                // 7) Social accounts
+                if (extractedData.SocialAccounts != null &&
+                    (!string.IsNullOrWhiteSpace(extractedData.SocialAccounts.LinkedIn) ||
+                     !string.IsNullOrWhiteSpace(extractedData.SocialAccounts.Github) ||
+                     !string.IsNullOrWhiteSpace(extractedData.SocialAccounts.Behance) ||
+                     !string.IsNullOrWhiteSpace(extractedData.SocialAccounts.Dribbble) ||
+                     !string.IsNullOrWhiteSpace(extractedData.SocialAccounts.PersonalWebsite)))
+                {
+                    _context.SocialAccounts.Add(new SocialAccount
                     {
                         JobSeekerId = jobSeeker.Id,
-                        Institution = !string.IsNullOrWhiteSpace(aiEdu.Institution) ? aiEdu.Institution : "Unknown Institution",
-                        Degree = degreeEnum,
-                        FieldOfStudyId = aiEdu.FieldOfStudyId,
-                        FieldOfStudyName = !string.IsNullOrWhiteSpace(aiEdu.FieldOfStudyName) ? aiEdu.FieldOfStudyName.Trim() : null,
-                        GradeOrGPA = !string.IsNullOrWhiteSpace(aiEdu.GradeOrGpa) ? aiEdu.GradeOrGpa.Trim() : null,
-                        StartDate = aiEdu.StartDate,
-                        EndDate = aiEdu.IsCurrent ? null : aiEdu.EndDate,
-                        IsCurrent = aiEdu.IsCurrent,
-                        DisplayOrder = i,
+                        LinkedIn = extractedData.SocialAccounts.LinkedIn,
+                        Github = extractedData.SocialAccounts.Github,
+                        Behance = extractedData.SocialAccounts.Behance,
+                        Dribbble = extractedData.SocialAccounts.Dribbble,
+                        PersonalWebsite = extractedData.SocialAccounts.PersonalWebsite,
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow
-                    };
-                    _context.Educations.Add(edu);
-                }
-            }
-
-            // 5) Projects
-            if (extractedData.Projects.Any())
-            {
-                for (int i = 0; i < extractedData.Projects.Count; i++)
-                {
-                    var aiProj = extractedData.Projects[i];
-                    var proj = new Project
-                    {
-                        JobSeekerId = jobSeeker.Id,
-                        Title = !string.IsNullOrWhiteSpace(aiProj.Title) ? aiProj.Title : "Unknown Project",
-                        TechnologiesUsed = aiProj.TechnologiesUsed,
-                        Description = aiProj.Description,
-                        ProjectLink = aiProj.ProjectLink,
-                        DisplayOrder = i,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
-                    };
-                    _context.Projects.Add(proj);
-                }
-            }
-
-            // 6) Skills (hard replace, source tagged "AI" for analytics)
-            if (extractedData.SkillIds.Any())
-            {
-                foreach (var skillId in extractedData.SkillIds.Distinct().Take(15))
-                {
-                    _context.JobSeekerSkills.Add(new JobSeekerSkill
-                    {
-                        JobSeekerId = jobSeeker.Id,
-                        SkillId = skillId,
-                        Source = "AI"
                     });
                 }
-            }
 
-            // 7) Social accounts
-            if (extractedData.SocialAccounts != null &&
-                (!string.IsNullOrWhiteSpace(extractedData.SocialAccounts.LinkedIn) ||
-                 !string.IsNullOrWhiteSpace(extractedData.SocialAccounts.Github) ||
-                 !string.IsNullOrWhiteSpace(extractedData.SocialAccounts.Behance) ||
-                 !string.IsNullOrWhiteSpace(extractedData.SocialAccounts.Dribbble) ||
-                 !string.IsNullOrWhiteSpace(extractedData.SocialAccounts.PersonalWebsite)))
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (Exception)
             {
-                _context.SocialAccounts.Add(new SocialAccount
-                {
-                    JobSeekerId = jobSeeker.Id,
-                    LinkedIn = extractedData.SocialAccounts.LinkedIn,
-                    Github = extractedData.SocialAccounts.Github,
-                    Behance = extractedData.SocialAccounts.Behance,
-                    Dribbble = extractedData.SocialAccounts.Dribbble,
-                    PersonalWebsite = extractedData.SocialAccounts.PersonalWebsite,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                });
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Truncates bio text to <paramref name="maxLength"/> characters, respecting sentence boundaries.
+        /// </summary>
+        private static string TruncateBioSentenceAware(string text, int maxLength)
+        {
+            if (text.Length <= maxLength)
+                return text;
+
+            // Find the last sentence-ending punctuation within the limit
+            var truncated = text[..maxLength];
+            var lastSentenceEnd = Math.Max(
+                truncated.LastIndexOf('.'),
+                Math.Max(truncated.LastIndexOf('!'), truncated.LastIndexOf('?')));
+
+            // If we found a sentence boundary in the second half of the truncated text, use it
+            if (lastSentenceEnd > maxLength / 2)
+            {
+                return truncated[..(lastSentenceEnd + 1)].Trim();
             }
 
-            await _context.SaveChangesAsync();
+            // Otherwise, fall back to last word boundary
+            var lastSpace = truncated.LastIndexOf(' ');
+            if (lastSpace > maxLength / 2)
+            {
+                return truncated[..lastSpace].Trim();
+            }
+
+            return truncated.Trim();
+        }
+
+        /// <summary>
+        /// Validates a DateTime and returns a normalized value, or a fallback if invalid/out-of-range.
+        /// </summary>
+        private static DateTime? ValidateAndNormalizeDate(DateTime? date, DateTime? fallback)
+        {
+            if (!date.HasValue)
+                return fallback;
+
+            // Sanity check: not in the future, not before 1900
+            if (date.Value > DateTime.UtcNow.AddYears(1))
+                return fallback;
+            if (date.Value.Year < 1900)
+                return fallback;
+
+            return date;
         }
 
         /// <inheritdoc />

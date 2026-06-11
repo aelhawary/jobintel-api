@@ -20,6 +20,9 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
     [Authorize(Roles = "Recruiter")]
     public class RecruiterCandidatesController : BaseApiController
     {
+        // Default profile picture URL — full URL required because frontend runs on a different port (Vite)
+        private const string DefaultProfilePictureUrl = "http://localhost:5217/images/default-profile.png";
+
         private readonly IAIMatchingService _aiMatchingService;
         private readonly IEngagementService _engagementService;
         private readonly AppDbContext _context;
@@ -122,7 +125,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                 {
                     JobSeekerId = jobSeeker.Id,
                     FullName = $"{jobSeeker.User.FirstName} {jobSeeker.User.LastName}",
-                    ProfilePictureUrl = jobSeeker.User.ProfilePictureUrl,
+                    ProfilePictureUrl = jobSeeker.User.ProfilePictureUrl ?? DefaultProfilePictureUrl,
                     JobTitle = jobSeeker.JobTitle?.TitleEn,
                     Bio = jobSeeker.Bio,
                     YearsOfExperience = jobSeeker.YearsOfExperience,
@@ -242,7 +245,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                 FirstName = jobSeeker.User.FirstName,
                 LastName = jobSeeker.User.LastName,
                 Email = jobSeeker.User.Email,
-                ProfilePictureUrl = jobSeeker.User.ProfilePictureUrl,
+                ProfilePictureUrl = jobSeeker.User.ProfilePictureUrl ?? DefaultProfilePictureUrl,
                 PhoneNumber = jobSeeker.PhoneNumber,
                 Bio = jobSeeker.Bio,
 

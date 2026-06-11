@@ -15,20 +15,25 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
         private readonly LlmSettings _settings;
         private readonly ILogger<GeminiCvParserService> _logger;
         private readonly SkillMatcher _skillMatcher;
+        private readonly CvTextSkillValidator _skillValidator;
         private static readonly Random _rng = new();
+        private static readonly SemaphoreSlim _circuitLock = new(1, 1);
 
-        // Circuit breaker: track consecutive failures
+        // Circuit breaker: track consecutive failures (thread-safe via SemaphoreSlim)
         private static int _consecutiveFailures;
         private static DateTime _circuitOpenUntil = DateTime.MinValue;
         private const int FailureThreshold = 3;
         private const int CircuitOpenSeconds = 60;
+
+        // Maximum characters to send to the LLM (prevents context overflow)
+        private const int MaxCvTextLength = 15000;
 
         private const string SystemPrompt =
 @"You are an expert HR CV parser. Extract structured data from a CV/resume and return ONLY a raw JSON object — no markdown fences, no commentary.
 
 SCHEMA (return exactly this shape):
 {
-  ""jobTitle"": ""string — the candidate's primary job title or role (e.g. 'Frontend Developer', 'DevOps Engineer'). Return empty string if unclear."",
+  ""jobTitle"": ""string — The candidate's primary standard role. MUST map to one of these exact strings if possible: 'Backend Developer', 'Frontend Developer', 'Full Stack Developer', 'Mobile Developer', 'Data Scientist', 'DevOps Engineer', 'QA Engineer', 'UI/UX Designer'. If no exact match fits, use their exact title."",
   ""yearsOfExperience"": 0,
   ""phoneNumber"": """",
   ""countryName"": """",
@@ -80,7 +85,13 @@ SCHEMA (return exactly this shape):
 CRITICAL RULES:
 1. Return ONLY the JSON object — no markdown, no explanation.
 2. bio: Write a 2-3 sentence professional summary BASED ONLY ON THE ACTUAL CV CONTENT. Do NOT invent skills, technologies, or qualifications that are not explicitly mentioned in the CV.
-3. skills: Extract ONLY specific technology/tool names EXACTLY as they appear in the CV (e.g. if the CV says 'JavaScript', extract 'JavaScript' — NOT 'Java'). Use the EXACT name from the CV text. Do NOT extract: soft skills, conceptual patterns (Clean Architecture, Repository Pattern, SOLID), phrases (.NET ecosystem, RESTful endpoints), version numbers (just 'ASP.NET Core' not 'ASP.NET Core 8'), or similar-sounding but DIFFERENT technologies (e.g. 'Java' ≠ 'JavaScript', 'FigJam' ≠ 'Figma'). If unsure whether a word is a technology mentioned in the CV, do NOT extract it. Max 15 skills.
+3. skills: Extract ONLY specific technology/tool names (e.g. 'C#', 'ASP.NET Core', 'SQL Server', 'React', 'Docker'). Copy each skill name EXACTLY as written in the CV text — do NOT substitute related or parent technologies. Do NOT extract: soft skills, conceptual patterns (Clean Architecture, Repository Pattern, SOLID), phrases (.NET ecosystem, RESTful endpoints), or version numbers (just 'ASP.NET Core' not 'ASP.NET Core 8'). Max 25 skills.
+   IMPORTANT: Never hallucinate skills. Examples of WRONG extractions:
+   - CV says 'JavaScript' → you extract 'Java' ← WRONG (Java is a different language)
+   - CV says 'Figma' → you extract 'FigJam' ← WRONG (FigJam is a different tool)
+   - CV says 'GitHub' → you extract 'Git' ← WRONG unless 'Git' also appears separately
+   - CV says 'TypeScript' → you extract 'JavaScript' ← WRONG unless 'JavaScript' also appears separately
+   Only extract a skill if you can point to the EXACT text in the CV that says it.
 4. phone: extract the full phone number with country code if present.
 5. If a field is missing from the CV, use empty string (or null for dates).
 6. employmentType: infer from context if not explicit.
@@ -92,13 +103,15 @@ CRITICAL RULES:
             AppDbContext context,
             IOptions<LlmSettings> settings,
             ILogger<GeminiCvParserService> logger,
-            SkillMatcher skillMatcher)
+            SkillMatcher skillMatcher,
+            CvTextSkillValidator skillValidator)
         {
             _httpClient = httpClient;
             _context = context;
             _settings = settings.Value;
             _logger = logger;
             _skillMatcher = skillMatcher;
+            _skillValidator = skillValidator;
         }
 
         public async Task<ParsedResumeDataDto?> ParseResumeTextAsync(string text)
@@ -124,7 +137,21 @@ CRITICAL RULES:
 
             try
             {
-                var userPrompt = $"Extract structured data from this CV:\n\n{text}";
+                // Keep a reference to the raw CV text for post-LLM skill validation
+                var rawCvText = text;
+
+                // Truncate very long CV text to prevent context overflow
+                var truncatedText = text.Length > MaxCvTextLength
+                    ? text[..MaxCvTextLength]
+                    : text;
+
+                if (text.Length > MaxCvTextLength)
+                {
+                    _logger.LogWarning("CV text truncated from {Original} to {Truncated} chars for LLM processing.",
+                        text.Length, MaxCvTextLength);
+                }
+
+                var userPrompt = $"Extract structured data from this CV:\n\n{truncatedText}";
 
                 var requestBody = new
                 {
@@ -137,6 +164,7 @@ CRITICAL RULES:
                         temperature = 0.1,
                         topK = 1,
                         topP = 1,
+                        maxOutputTokens = 8000,
                         responseMimeType = "application/json"
                     }
                 };
@@ -218,6 +246,16 @@ CRITICAL RULES:
                     return null;
                 }
 
+                // Validate critical fields are not null/empty
+                if (string.IsNullOrWhiteSpace(parsed.JobTitle) && string.IsNullOrWhiteSpace(parsed.Bio)
+                    && (parsed.Experiences == null || parsed.Experiences.Count == 0)
+                    && (parsed.Skills == null || parsed.Skills.Count == 0))
+                {
+                    _logger.LogWarning("Gemini: response contained no meaningful data. Possibly a malformed CV or empty response.");
+                    RecordFailure();
+                    return null;
+                }
+
                 RecordSuccess();
 
                 _logger.LogInformation("Gemini parsed: JobTitle='{JT}', YoE={YoE}, Phone='{Ph}', Country='{Co}', City='{Ci}', Lang='{La}', Bio='{Bio}', Exps={ExpCount}, Edus={EduCount}, Projs={ProjCount}, Skills={SkillCount}, Social={HasSocial}",
@@ -226,8 +264,8 @@ CRITICAL RULES:
                     parsed.Experiences?.Count ?? 0, parsed.Educations?.Count ?? 0, parsed.Projects?.Count ?? 0, parsed.Skills?.Count ?? 0,
                     parsed.SocialAccounts != null);
 
-                // Map to DB IDs via fuzzy matching
-                return await MapToDtoAsync(parsed, text);
+                // Map to DB IDs via fuzzy matching, with post-LLM skill validation
+                return await MapToDtoAsync(parsed, rawCvText);
             }
             catch (Exception ex)
             {
@@ -237,7 +275,7 @@ CRITICAL RULES:
             }
         }
 
-        private async Task<ParsedResumeDataDto> MapToDtoAsync(GeminiExtractedData parsed, string cvText)
+        private async Task<ParsedResumeDataDto> MapToDtoAsync(GeminiExtractedData parsed, string rawCvText)
         {
             var result = new ParsedResumeDataDto
             {
@@ -375,15 +413,21 @@ CRITICAL RULES:
                 }
             }
 
-            // Skills — validate against CV text, then match to DB IDs via SkillMatcher
+            // Skills — validate against CV text first, then match to DB IDs via SkillMatcher
             if (parsed.Skills != null && parsed.Skills.Count > 0)
             {
-                var validated = ValidateSkillsAgainstCvText(parsed.Skills, cvText);
-                _logger.LogInformation("Gemini extracted {Extracted} skills, {Validated} validated against CV text",
-                    parsed.Skills.Count, validated.Count);
-                result.SkillIds = await _skillMatcher.MatchSkillsAsync(validated);
-                _logger.LogInformation("Gemini CV parsing: matched {Matched}/{Validated} skills to DB",
-                    result.SkillIds.Count, validated.Count);
+                _logger.LogInformation("Gemini extracted {Count} skills: [{Skills}]",
+                    parsed.Skills.Count, string.Join(", ", parsed.Skills));
+
+                // Post-LLM validation: filter out hallucinated skills
+                var validatedSkills = _skillValidator.ValidateSkills(parsed.Skills, rawCvText);
+
+                _logger.LogInformation("After CV-text validation: {Valid}/{Extracted} skills remain",
+                    validatedSkills.Count, parsed.Skills.Count);
+
+                result.SkillIds = await _skillMatcher.MatchSkillsAsync(validatedSkills);
+                _logger.LogInformation("Gemini CV parsing: matched {Matched}/{Validated} validated skills to DB",
+                    result.SkillIds.Count, validatedSkills.Count);
             }
 
             // Social Accounts
@@ -410,67 +454,35 @@ CRITICAL RULES:
 
         private void RecordFailure()
         {
-            _consecutiveFailures++;
-            if (_consecutiveFailures >= FailureThreshold)
+            _circuitLock.Wait();
+            try
             {
-                _circuitOpenUntil = DateTime.UtcNow.AddSeconds(CircuitOpenSeconds);
-                _logger.LogWarning("Gemini circuit breaker OPEN: {Failures} consecutive failures. Skipping for {Seconds}s.",
-                    _consecutiveFailures, CircuitOpenSeconds);
+                _consecutiveFailures++;
+                if (_consecutiveFailures >= FailureThreshold)
+                {
+                    _circuitOpenUntil = DateTime.UtcNow.AddSeconds(CircuitOpenSeconds);
+                    _logger.LogWarning("Gemini circuit breaker OPEN: {Failures} consecutive failures. Skipping for {Seconds}s.",
+                        _consecutiveFailures, CircuitOpenSeconds);
+                }
+            }
+            finally
+            {
+                _circuitLock.Release();
             }
         }
 
         private void RecordSuccess()
         {
-            _consecutiveFailures = 0;
-            _circuitOpenUntil = DateTime.MinValue;
-        }
-
-        private List<string> ValidateSkillsAgainstCvText(List<string> skills, string cvText)
-        {
-            // Normalize: collapse lone newlines (PDF extracts "Java\nScript" from "JavaScript")
-            var normalizedCv = System.Text.RegularExpressions.Regex.Replace(cvText, @"\r?\n(?!\r?\n)", " ");
-            var cvLower = normalizedCv.ToLowerInvariant();
-            var validated = new List<string>();
-            var dropped = new List<string>();
-
-            foreach (var skill in skills)
+            _circuitLock.Wait();
+            try
             {
-                if (string.IsNullOrWhiteSpace(skill)) continue;
-
-                var skillLower = skill.ToLowerInvariant().Trim();
-
-                // Check 1: word-boundary match
-                var pattern = @"\b" + System.Text.RegularExpressions.Regex.Escape(skillLower) + @"\b";
-                if (System.Text.RegularExpressions.Regex.IsMatch(cvLower, pattern))
-                {
-                    validated.Add(skill.Trim());
-                    continue;
-                }
-
-                // Check 2: substring match (for multi-word skills like "Tailwind CSS")
-                if (cvLower.Contains(skillLower))
-                {
-                    // Guard: reject if skill is just a prefix of a longer word
-                    // "java" in "javascript" → dropped; "react" in "react.js" → kept (followed by ".", not a letter)
-                    var prefixPattern = @"\b" + System.Text.RegularExpressions.Regex.Escape(skillLower) + @"[a-z]";
-                    if (System.Text.RegularExpressions.Regex.IsMatch(cvLower, prefixPattern))
-                    {
-                        dropped.Add(skill);
-                        continue;
-                    }
-                    validated.Add(skill.Trim());
-                    continue;
-                }
-
-                dropped.Add(skill);
+                _consecutiveFailures = 0;
+                _circuitOpenUntil = DateTime.MinValue;
             }
-
-            if (dropped.Count > 0)
+            finally
             {
-                _logger.LogWarning("Skills dropped (not found in CV text): {Dropped}", string.Join(", ", dropped));
+                _circuitLock.Release();
             }
-
-            return validated;
         }
 
         private class GeminiExtractedData

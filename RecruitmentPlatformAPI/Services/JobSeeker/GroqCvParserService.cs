@@ -16,13 +16,18 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
         private readonly LlmSettings _settings;
         private readonly ILogger<GroqCvParserService> _logger;
         private readonly SkillMatcher _skillMatcher;
+        private readonly CvTextSkillValidator _skillValidator;
         private static readonly Random _rng = new();
+        private static readonly SemaphoreSlim _circuitLock = new(1, 1);
 
-        // Circuit breaker
+        // Circuit breaker (thread-safe via SemaphoreSlim)
         private static int _consecutiveFailures;
         private static DateTime _circuitOpenUntil = DateTime.MinValue;
         private const int FailureThreshold = 3;
         private const int CircuitOpenSeconds = 60;
+
+        // Maximum characters to send to the LLM (prevents context overflow)
+        private const int MaxCvTextLength = 15000;
 
         private const string SystemPrompt =
 @"You are an expert HR CV parser. Extract structured data from a CV/resume.
@@ -34,7 +39,7 @@ Return valid JSON wrapped in ```json``` code fences. Example:
 ```
 
 FIELDS:
-- jobTitle: primary role from CV, empty string if unclear
+- jobTitle: string — The candidate's primary standard role. MUST map to one of these exact strings if possible: 'Backend Developer', 'Frontend Developer', 'Full Stack Developer', 'Mobile Developer', 'Data Scientist', 'DevOps Engineer', 'QA Engineer', 'UI/UX Designer'. If no exact match fits, use their exact title.
 - yearsOfExperience: total years
 - phoneNumber: with country code
 - countryName: from CV
@@ -44,7 +49,7 @@ FIELDS:
 - experiences: ALL work experiences listed, with comma-separated responsibilities (max 2000 chars)
 - educations: ALL entries with raw fieldOfStudy text
 - projects: ALL with comma-separated technologiesUsed
-- skills: Max 15. Extract ONLY technology/tool names EXACTLY as they appear in the CV. If the CV says 'JavaScript', extract 'JavaScript' — NOT 'Java'. Do NOT extract: soft skills, conceptual patterns, phrases, similar-sounding but different technologies (e.g. 'Java' ≠ 'JavaScript', 'FigJam' ≠ 'Figma'). If unsure, do NOT extract it.
+- skills: Max 25. EXACT technology/tool names (C#, React, Docker). Do NOT extract: soft skills, conceptual patterns (Clean Architecture, Repository Pattern, SOLID), or phrases (.NET ecosystem, RESTful endpoints).
 - socialAccounts: URLs or empty strings
 
 CRITICAL RULES:
@@ -59,13 +64,15 @@ CRITICAL RULES:
             AppDbContext context,
             IOptions<LlmSettings> settings,
             ILogger<GroqCvParserService> logger,
-            SkillMatcher skillMatcher)
+            SkillMatcher skillMatcher,
+            CvTextSkillValidator skillValidator)
         {
             _httpClient = httpClient;
             _context = context;
             _settings = settings.Value;
             _logger = logger;
             _skillMatcher = skillMatcher;
+            _skillValidator = skillValidator;
         }
 
         public async Task<ParsedResumeDataDto?> ParseResumeTextAsync(string text)
@@ -86,6 +93,15 @@ CRITICAL RULES:
             {
                 _logger.LogWarning("Empty CV text provided.");
                 return null;
+            }
+
+            // Truncate very long CV text to prevent context overflow
+            var rawCvText = text;
+            if (text.Length > MaxCvTextLength)
+            {
+                _logger.LogWarning("CV text truncated from {Original} to {Truncated} chars for LLM processing.",
+                    text.Length, MaxCvTextLength);
+                text = text[..MaxCvTextLength];
             }
 
             var userPrompt = $"Extract structured data from this CV:\n\n{text}";
@@ -200,10 +216,10 @@ CRITICAL RULES:
                 parsed.Experiences?.Count ?? 0, parsed.Educations?.Count ?? 0, parsed.Projects?.Count ?? 0, parsed.Skills?.Count ?? 0,
                 parsed.SocialAccounts != null);
 
-            return await MapToDtoAsync(parsed, text);
+            return await MapToDtoAsync(parsed, rawCvText);
         }
 
-        private async Task<ParsedResumeDataDto> MapToDtoAsync(GroqExtractedData parsed, string cvText)
+        private async Task<ParsedResumeDataDto> MapToDtoAsync(GroqExtractedData parsed, string rawCvText)
         {
             var result = new ParsedResumeDataDto
             {
@@ -336,12 +352,18 @@ CRITICAL RULES:
 
             if (parsed.Skills != null && parsed.Skills.Count > 0)
             {
-                var validated = ValidateSkillsAgainstCvText(parsed.Skills, cvText);
-                _logger.LogInformation("Groq extracted {Extracted} skills, {Validated} validated against CV text",
-                    parsed.Skills.Count, validated.Count);
-                result.SkillIds = await _skillMatcher.MatchSkillsAsync(validated);
-                _logger.LogInformation("Groq CV parsing: matched {Matched}/{Validated} skills to DB",
-                    result.SkillIds.Count, validated.Count);
+                _logger.LogInformation("Groq extracted {Count} skills: [{Skills}]",
+                    parsed.Skills.Count, string.Join(", ", parsed.Skills));
+
+                // Post-LLM validation: filter out hallucinated skills (same as Gemini)
+                var validatedSkills = _skillValidator.ValidateSkills(parsed.Skills, rawCvText);
+
+                _logger.LogInformation("After CV-text validation: {Valid}/{Extracted} skills remain",
+                    validatedSkills.Count, parsed.Skills.Count);
+
+                result.SkillIds = await _skillMatcher.MatchSkillsAsync(validatedSkills);
+                _logger.LogInformation("Groq CV parsing: matched {Matched}/{Validated} validated skills to DB",
+                    result.SkillIds.Count, validatedSkills.Count);
             }
 
             if (parsed.SocialAccounts != null)
@@ -374,66 +396,35 @@ CRITICAL RULES:
 
         private void RecordFailure()
         {
-            _consecutiveFailures++;
-            if (_consecutiveFailures >= FailureThreshold)
+            _circuitLock.Wait();
+            try
             {
-                _circuitOpenUntil = DateTime.UtcNow.AddSeconds(CircuitOpenSeconds);
-                _logger.LogWarning("Groq circuit breaker OPEN: {Failures} consecutive failures. Skipping for {Seconds}s.",
-                    _consecutiveFailures, CircuitOpenSeconds);
+                _consecutiveFailures++;
+                if (_consecutiveFailures >= FailureThreshold)
+                {
+                    _circuitOpenUntil = DateTime.UtcNow.AddSeconds(CircuitOpenSeconds);
+                    _logger.LogWarning("Groq circuit breaker OPEN: {Failures} consecutive failures. Skipping for {Seconds}s.",
+                        _consecutiveFailures, CircuitOpenSeconds);
+                }
+            }
+            finally
+            {
+                _circuitLock.Release();
             }
         }
 
         private void RecordSuccess()
         {
-            _consecutiveFailures = 0;
-            _circuitOpenUntil = DateTime.MinValue;
-        }
-
-        private List<string> ValidateSkillsAgainstCvText(List<string> skills, string cvText)
-        {
-            // Normalize: collapse lone newlines (PDF extracts "Java\nScript" from "JavaScript")
-            var normalizedCv = System.Text.RegularExpressions.Regex.Replace(cvText, @"\r?\n(?!\r?\n)", " ");
-            var cvLower = normalizedCv.ToLowerInvariant();
-            var validated = new List<string>();
-            var dropped = new List<string>();
-
-            foreach (var skill in skills)
+            _circuitLock.Wait();
+            try
             {
-                if (string.IsNullOrWhiteSpace(skill)) continue;
-
-                var skillLower = skill.ToLowerInvariant().Trim();
-
-                // Check 1: word-boundary match
-                var pattern = @"\b" + System.Text.RegularExpressions.Regex.Escape(skillLower) + @"\b";
-                if (System.Text.RegularExpressions.Regex.IsMatch(cvLower, pattern))
-                {
-                    validated.Add(skill.Trim());
-                    continue;
-                }
-
-                // Check 2: substring match (for multi-word skills like "Tailwind CSS")
-                if (cvLower.Contains(skillLower))
-                {
-                    // Guard: reject if skill is just a prefix of a longer word
-                    var prefixPattern = @"\b" + System.Text.RegularExpressions.Regex.Escape(skillLower) + @"[a-z]";
-                    if (System.Text.RegularExpressions.Regex.IsMatch(cvLower, prefixPattern))
-                    {
-                        dropped.Add(skill);
-                        continue;
-                    }
-                    validated.Add(skill.Trim());
-                    continue;
-                }
-
-                dropped.Add(skill);
+                _consecutiveFailures = 0;
+                _circuitOpenUntil = DateTime.MinValue;
             }
-
-            if (dropped.Count > 0)
+            finally
             {
-                _logger.LogWarning("Skills dropped (not found in CV text): {Dropped}", string.Join(", ", dropped));
+                _circuitLock.Release();
             }
-
-            return validated;
         }
 
         private static string ExtractJsonFromMarkdown(string text)

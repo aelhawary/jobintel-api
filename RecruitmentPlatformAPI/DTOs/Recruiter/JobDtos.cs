@@ -80,10 +80,10 @@ namespace RecruitmentPlatformAPI.DTOs.Recruiter
         public int? CityId { get; set; }
 
         /// <summary>
-        /// List of skill IDs to associate with this job (optional, max 15)
+        /// List of skill IDs to associate with this job (optional, max 25)
         /// </summary>
         /// <example>[1, 5, 12]</example>
-        [MaxLength(15, ErrorMessage = "Maximum 15 skills allowed per job")]
+        [MaxLength(25, ErrorMessage = "Maximum 25 skills allowed per job")]
         public List<int>? SkillIds { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

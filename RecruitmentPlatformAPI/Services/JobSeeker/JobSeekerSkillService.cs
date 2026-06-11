@@ -72,8 +72,8 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                 if (requestedIds.Count == 0)
                     return SkillsResponseDto.FailureResult("At least one skill must be selected");
                     
-                if (requestedIds.Count > 15)
-                    return SkillsResponseDto.FailureResult("You can select a maximum of 15 skills.");
+                if (requestedIds.Count > 25)
+                    return SkillsResponseDto.FailureResult("You can select a maximum of 25 skills.");
 
                 // Validate all skill IDs exist
                 var validSkills = await _context.Skills

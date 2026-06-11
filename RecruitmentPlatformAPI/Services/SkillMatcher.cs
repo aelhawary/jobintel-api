@@ -13,6 +13,7 @@ namespace RecruitmentPlatformAPI.Services
     {
         private readonly AppDbContext _context;
         private readonly ILogger<SkillMatcher> _logger;
+        private readonly SemaphoreSlim _loadLock = new(1, 1);
 
         // In-memory lookup caches (loaded once, refreshed on demand)
         private Dictionary<string, int>? _exactNameIndex;
@@ -30,7 +31,7 @@ namespace RecruitmentPlatformAPI.Services
 
         /// <summary>
         /// Matches a list of extracted skill names against the DB.
-        /// Returns a list of matched skill IDs (deduplicated, max 15).
+        /// Returns a list of matched skill IDs (deduplicated, max 25).
         /// </summary>
         public async Task<List<int>> MatchSkillsAsync(List<string> extractedSkillNames)
         {
@@ -38,17 +39,19 @@ namespace RecruitmentPlatformAPI.Services
 
             var matchedIds = new List<int>();
             var unmatched = new List<string>();
+            var matchDetails = new List<string>();
 
-            foreach (var rawName in extractedSkillNames.Take(15))
+            foreach (var rawName in extractedSkillNames.Take(25))
             {
                 if (string.IsNullOrWhiteSpace(rawName)) continue;
 
                 var trimmed = rawName.Trim();
-                var skillId = await MatchSingleSkillAsync(trimmed);
+                var (skillId, matchLayer) = await MatchSingleSkillWithLayerAsync(trimmed);
 
                 if (skillId.HasValue && !matchedIds.Contains(skillId.Value))
                 {
                     matchedIds.Add(skillId.Value);
+                    matchDetails.Add($"'{trimmed}' → ID {skillId.Value} (Layer {matchLayer})");
                 }
                 else if (!skillId.HasValue)
                 {
@@ -56,13 +59,19 @@ namespace RecruitmentPlatformAPI.Services
                 }
             }
 
+            if (matchDetails.Count > 0)
+            {
+                _logger.LogInformation("Skill matching details: [{Details}]",
+                    string.Join(", ", matchDetails));
+            }
+
             if (unmatched.Count > 0)
             {
-                _logger.LogInformation("Unmatched skills ({Count}): {Skills}",
+                _logger.LogWarning("Unmatched skills ({Count}): [{Skills}]",
                     unmatched.Count, string.Join(", ", unmatched));
             }
 
-            _logger.LogInformation("Skill matching: {Matched}/{Total} matched",
+            _logger.LogInformation("Skill matching summary: {Matched}/{Total} matched",
                 matchedIds.Count, extractedSkillNames.Count);
 
             return matchedIds;
@@ -70,15 +79,16 @@ namespace RecruitmentPlatformAPI.Services
 
         /// <summary>
         /// Matches a single skill name using the 5-layer pipeline.
+        /// Returns the matched skill ID and the layer number that matched.
         /// </summary>
-        private async Task<int?> MatchSingleSkillAsync(string skillName)
+        private async Task<(int? skillId, int layer)> MatchSingleSkillWithLayerAsync(string skillName)
         {
             // Layer 1: Exact match (case-insensitive)
             if (_exactNameIndex != null &&
                 _exactNameIndex.TryGetValue(skillName.ToLowerInvariant(), out var exactId))
             {
                 _logger.LogDebug("Layer 1 (exact): '{Name}' -> ID {Id}", skillName, exactId);
-                return exactId;
+                return (exactId, 1);
             }
 
             // Layer 2: Normalized match
@@ -88,7 +98,7 @@ namespace RecruitmentPlatformAPI.Services
             {
                 _logger.LogDebug("Layer 2 (normalized): '{Name}' ({Norm}) -> ID {Id}",
                     skillName, normalized, normId);
-                return normId;
+                return (normId, 2);
             }
 
             // Layer 3: Alias lookup
@@ -96,7 +106,7 @@ namespace RecruitmentPlatformAPI.Services
                 _aliasIndex.TryGetValue(skillName.ToLowerInvariant(), out var aliasId))
             {
                 _logger.LogDebug("Layer 3 (alias): '{Name}' -> ID {Id}", skillName, aliasId);
-                return aliasId;
+                return (aliasId, 3);
             }
 
             // Layer 4: Word-set match (order-invariant)
@@ -107,33 +117,45 @@ namespace RecruitmentPlatformAPI.Services
                 {
                     foreach (var skill in _allSkills)
                     {
-                        var dbNormalized = NormalizeForSkill(skill.Name);
-                        var dbWords = dbNormalized.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                        var candidates = new List<string> { skill.Name };
+                        if (!string.IsNullOrWhiteSpace(skill.Aliases))
+                            candidates.AddRange(skill.Aliases.Split(',', StringSplitOptions.RemoveEmptyEntries));
 
-                        if (extractedWords.Length == dbWords.Length &&
-                            extractedWords.OrderBy(w => w).SequenceEqual(dbWords.OrderBy(w => w)))
+                        foreach (var cand in candidates)
                         {
-                            _logger.LogDebug("Layer 4 (word-set): '{Name}' -> ID {Id} ({DbName})",
-                                skillName, skill.Id, skill.Name);
-                            return skill.Id;
+                            var dbNormalized = NormalizeForSkill(cand);
+                            var dbWords = dbNormalized.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                            if (extractedWords.Length == dbWords.Length &&
+                                extractedWords.OrderBy(w => w).SequenceEqual(dbWords.OrderBy(w => w)))
+                            {
+                                _logger.LogDebug("Layer 4 (word-set): '{Name}' -> ID {Id} (via '{Cand}')",
+                                    skillName, skill.Id, cand);
+                                return (skill.Id, 4);
+                            }
                         }
                     }
                 }
             }
 
-            // Layer 5: Fuzzy match (Levenshtein, tight threshold)
+            // Layer 5: Fuzzy match (Levenshtein, length-scaled threshold)
             if (_allSkills != null)
             {
-                var (bestMatch, distance) = FindBestFuzzyMatch(normalized, _allSkills);
-                if (bestMatch != null && distance <= 2)
+                var (bestId, matchName, distance) = FindBestFuzzyMatch(normalized, _allSkills);
+                
+                // Scale allowed distance based on word length to prevent aggressive matching on short words
+                int maxAllowedDistance = normalized.Length <= 4 ? 0 :
+                                         normalized.Length <= 8 ? 1 : 2;
+
+                if (bestId > 0 && distance <= maxAllowedDistance)
                 {
-                    _logger.LogDebug("Layer 5 (fuzzy): '{Name}' -> ID {Id} ({DbName}, distance={Dist})",
-                        skillName, bestMatch.Id, bestMatch.Name, distance);
-                    return bestMatch.Id;
+                    _logger.LogDebug("Layer 5 (fuzzy): '{Name}' -> ID {Id} ({MatchName}, distance={Dist})",
+                        skillName, bestId, matchName, distance);
+                    return (bestId, 5);
                 }
             }
 
-            return null;
+            return (null, 0);
         }
 
         /// <summary>
@@ -144,45 +166,69 @@ namespace RecruitmentPlatformAPI.Services
             if (_allSkills != null && DateTime.UtcNow - _lastLoaded < _cacheTtl)
                 return;
 
-            _allSkills = await _context.Skills.ToListAsync();
-            _logger.LogInformation("Loaded {Count} skills from DB", _allSkills.Count);
-
-            // Layer 1: Exact name index (lowercase)
-            _exactNameIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            foreach (var skill in _allSkills)
+            await _loadLock.WaitAsync();
+            try
             {
-                var key = skill.Name.ToLowerInvariant().Trim();
-                if (!_exactNameIndex.ContainsKey(key))
-                    _exactNameIndex[key] = skill.Id;
-            }
+                // Double-check after acquiring lock
+                if (_allSkills != null && DateTime.UtcNow - _lastLoaded < _cacheTtl)
+                    return;
 
-            // Layer 2: Normalized name index
-            _normalizedIndex = new Dictionary<string, int>();
-            foreach (var skill in _allSkills)
-            {
-                var norm = NormalizeForSkill(skill.Name);
-                if (!string.IsNullOrEmpty(norm) && !_normalizedIndex.ContainsKey(norm))
-                    _normalizedIndex[norm] = skill.Id;
-            }
+                _allSkills = await _context.Skills.ToListAsync();
+                _logger.LogInformation("Loaded {Count} skills from DB", _allSkills.Count);
 
-            // Layer 3: Alias index
-            _aliasIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            foreach (var skill in _allSkills)
-            {
-                if (string.IsNullOrWhiteSpace(skill.Aliases)) continue;
-
-                var aliases = skill.Aliases.Split(',', StringSplitOptions.RemoveEmptyEntries);
-                foreach (var alias in aliases)
+                // Layer 1: Exact name index (lowercase)
+                _exactNameIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                foreach (var skill in _allSkills)
                 {
-                    var key = alias.Trim().ToLowerInvariant();
-                    if (!string.IsNullOrEmpty(key) && !_aliasIndex.ContainsKey(key))
-                        _aliasIndex[key] = skill.Id;
+                    var key = skill.Name.ToLowerInvariant().Trim();
+                    if (!_exactNameIndex.ContainsKey(key))
+                        _exactNameIndex[key] = skill.Id;
                 }
-            }
 
-            _lastLoaded = DateTime.UtcNow;
-            _logger.LogInformation("Skill indices built: {Exact} exact, {Norm} normalized, {Alias} aliases",
-                _exactNameIndex.Count, _normalizedIndex.Count, _aliasIndex.Count);
+                // Layer 2: Normalized name index
+                _normalizedIndex = new Dictionary<string, int>();
+                foreach (var skill in _allSkills)
+                {
+                    var norm = NormalizeForSkill(skill.Name);
+                    if (!string.IsNullOrEmpty(norm) && !_normalizedIndex.ContainsKey(norm))
+                        _normalizedIndex[norm] = skill.Id;
+
+                    // Also add aliases to normalized index for better resilience against formatting
+                    if (!string.IsNullOrWhiteSpace(skill.Aliases))
+                    {
+                        var aliases = skill.Aliases.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var alias in aliases)
+                        {
+                            var normAlias = NormalizeForSkill(alias);
+                            if (!string.IsNullOrEmpty(normAlias) && !_normalizedIndex.ContainsKey(normAlias))
+                                _normalizedIndex[normAlias] = skill.Id;
+                        }
+                    }
+                }
+
+                // Layer 3: Alias index
+                _aliasIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                foreach (var skill in _allSkills)
+                {
+                    if (string.IsNullOrWhiteSpace(skill.Aliases)) continue;
+
+                    var aliases = skill.Aliases.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var alias in aliases)
+                    {
+                        var key = alias.Trim().ToLowerInvariant();
+                        if (!string.IsNullOrEmpty(key) && !_aliasIndex.ContainsKey(key))
+                            _aliasIndex[key] = skill.Id;
+                    }
+                }
+
+                _lastLoaded = DateTime.UtcNow;
+                _logger.LogInformation("Skill indices built: {Exact} exact, {Norm} normalized, {Alias} aliases",
+                    _exactNameIndex.Count, _normalizedIndex.Count, _aliasIndex.Count);
+            }
+            finally
+            {
+                _loadLock.Release();
+            }
         }
 
         /// <summary>
@@ -207,27 +253,38 @@ namespace RecruitmentPlatformAPI.Services
         }
 
         /// <summary>
-        /// Finds the best fuzzy match using Levenshtein distance.
-        /// Returns the best match and its distance.
+        /// Finds the best fuzzy match using Levenshtein distance across primary names and aliases.
+        /// Returns the best match ID, the specific name/alias that matched, and its distance.
         /// </summary>
-        private static (Skill? skill, int distance) FindBestFuzzyMatch(string normalizedInput, List<Skill> skills)
+        private static (int skillId, string matchName, int distance) FindBestFuzzyMatch(string normalizedInput, List<Skill> skills)
         {
-            Skill? best = null;
+            int bestId = 0;
+            string bestName = string.Empty;
             int bestDistance = int.MaxValue;
 
             foreach (var skill in skills)
             {
-                var normalizedDb = NormalizeForSkill(skill.Name);
-                var distance = CalculateLevenshteinDistance(normalizedInput, normalizedDb);
+                var candidates = new List<string> { skill.Name };
+                if (!string.IsNullOrWhiteSpace(skill.Aliases))
+                    candidates.AddRange(skill.Aliases.Split(',', StringSplitOptions.RemoveEmptyEntries));
 
-                if (distance < bestDistance)
+                foreach (var cand in candidates)
                 {
-                    bestDistance = distance;
-                    best = skill;
+                    var normalizedDb = NormalizeForSkill(cand);
+                    if (string.IsNullOrEmpty(normalizedDb)) continue;
+
+                    var distance = CalculateLevenshteinDistance(normalizedInput, normalizedDb);
+
+                    if (distance < bestDistance)
+                    {
+                        bestDistance = distance;
+                        bestId = skill.Id;
+                        bestName = cand;
+                    }
                 }
             }
 
-            return (best, bestDistance);
+            return (bestId, bestName, bestDistance);
         }
 
         /// <summary>

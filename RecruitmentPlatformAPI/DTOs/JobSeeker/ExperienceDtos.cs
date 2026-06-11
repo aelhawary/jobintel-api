@@ -116,7 +116,7 @@ namespace RecruitmentPlatformAPI.DTOs.JobSeeker
         /// <summary>
         /// Country ID
         /// </summary>
-        public int CountryId { get; set; }
+        public int? CountryId { get; set; }
 
         /// <summary>
         /// Name of the Country
@@ -126,7 +126,7 @@ namespace RecruitmentPlatformAPI.DTOs.JobSeeker
         /// <summary>
         /// City ID
         /// </summary>
-        public int CityId { get; set; }
+        public int? CityId { get; set; }
 
         /// <summary>
         /// City name

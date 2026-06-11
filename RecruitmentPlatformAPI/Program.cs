@@ -136,6 +136,7 @@ builder.Services.AddMemoryCache();
 
 // Register services
 builder.Services.AddScoped<SkillMatcher>();
+builder.Services.AddScoped<CvTextSkillValidator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
@@ -265,6 +266,9 @@ app.UseHttpsRedirection();
 
 // Enable CORS
 app.UseCors("AllowFrontend");
+
+// Serve default static files from wwwroot (default profile picture, etc.)
+app.UseStaticFiles();
 
 // Serve uploaded files (Resumes, Profile Pictures)
 var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "Uploads");

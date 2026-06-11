@@ -491,10 +491,10 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
             }
 
             var requestedIds = skillIds.Distinct().ToList();
-            if (requestedIds.Count > 15)
+            if (requestedIds.Count > 25)
             {
                 return JobServiceResult<List<int>>.Fail(
-                    "Maximum 15 skills allowed per job.",
+                    "Maximum 25 skills allowed per job.",
                     JobServiceErrorCode.Validation);
             }
 
