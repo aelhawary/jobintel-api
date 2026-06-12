@@ -96,8 +96,8 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                     await fileStream.CopyToAsync(fileStreamWriter);
                 }
 
-                // Use role-specific route so stored URL matches the actual controller endpoint.
-                var pictureUrl = BuildProfilePictureUrl(user.AccountType);
+                // Use static file route so the URL can be accessed globally without role-specific authentication
+                var pictureUrl = BuildProfilePictureUrl(storedFileName);
                 user.ProfilePictureUrl = pictureUrl;
                 user.UpdatedAt = DateTime.UtcNow;
 
@@ -157,11 +157,15 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                 var fileInfo = GetUploadedPictureFileInfo(userId);
                 if (fileInfo != null)
                 {
+                    var actualUrl = user.ProfilePictureUrl.Contains("/api/") 
+                        ? BuildProfilePictureUrl(fileInfo.Name) 
+                        : user.ProfilePictureUrl;
+
                     return new ProfilePictureResponseDto
                     {
                         HasProfilePicture = true,
                         IsOAuthPicture = false,
-                        Url = user.ProfilePictureUrl,
+                        Url = actualUrl,
                         OriginalFileName = fileInfo.Name,
                         ContentType = GetContentTypeFromExtension(fileInfo.Extension),
                         FileSizeBytes = fileInfo.Length,
@@ -421,13 +425,9 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                 : false;
         }
 
-        private string BuildProfilePictureUrl(AccountType accountType)
+        private string BuildProfilePictureUrl(string fileName)
         {
-            var routePrefix = accountType == AccountType.Recruiter
-                ? "recruiter"
-                : "jobseeker";
-
-            return $"{_fileSettings.BaseUrl}/api/{routePrefix}/picture";
+            return $"{_fileSettings.BaseUrl}/Uploads/ProfilePictures/{fileName}";
         }
 
         private string GetContentTypeFromExtension(string extension)

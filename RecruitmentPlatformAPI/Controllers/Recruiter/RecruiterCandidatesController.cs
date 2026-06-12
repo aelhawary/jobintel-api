@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RecruitmentPlatformAPI.Controllers.Common;
@@ -7,6 +8,8 @@ using RecruitmentPlatformAPI.DTOs.Common;
 using RecruitmentPlatformAPI.DTOs.Recruiter;
 using RecruitmentPlatformAPI.Services.Recruiter;
 using RecruitmentPlatformAPI.Services.JobSeeker;
+using RecruitmentPlatformAPI.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace RecruitmentPlatformAPI.Controllers.Recruiter
 {
@@ -20,24 +23,29 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
     [Authorize(Roles = "Recruiter")]
     public class RecruiterCandidatesController : BaseApiController
     {
-        // Default profile picture URL — full URL required because frontend runs on a different port (Vite)
-        private const string DefaultProfilePictureUrl = "http://localhost:5217/images/default-profile.png";
+        // Default profile picture — relative path served by the API static files middleware
+        private const string DefaultPictureRelativePath = "/images/default-profile.png";
+        private readonly string _defaultProfilePictureUrl;
 
         private readonly IAIMatchingService _aiMatchingService;
         private readonly IEngagementService _engagementService;
         private readonly AppDbContext _context;
         private readonly ILogger<RecruiterCandidatesController> _logger;
+        private readonly FileStorageSettings _fileSettings;
 
         public RecruiterCandidatesController(
             IAIMatchingService aiMatchingService,
             IEngagementService engagementService,
             AppDbContext context,
-            ILogger<RecruiterCandidatesController> logger)
+            ILogger<RecruiterCandidatesController> logger,
+            IOptions<FileStorageSettings> fileSettings)
         {
             _aiMatchingService = aiMatchingService;
             _engagementService = engagementService;
             _context = context;
             _logger = logger;
+            _fileSettings = fileSettings.Value;
+            _defaultProfilePictureUrl = $"{_fileSettings.BaseUrl}{DefaultPictureRelativePath}";
         }
 
         /// <summary>
@@ -80,9 +88,93 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
             // Call the AI matching engine
             var aiResponse = await _aiMatchingService.GetMatchesAsync(jobId, maxResults);
 
+            // ── Fallback: if AI API is unavailable, load from Recommendations table ──
             if (aiResponse == null)
-                return StatusCode(StatusCodes.Status502BadGateway,
-                    new ApiErrorResponse("AI matching engine is currently unavailable. Please try again later."));
+            {
+                _logger.LogWarning(
+                    "AI matching engine unavailable for Job {JobId}. Falling back to Recommendations table.",
+                    jobId);
+
+                var recommendations = await _context.Recommendations
+                    .Where(r => r.JobId == jobId)
+                    .Include(r => r.JobSeeker)
+                        .ThenInclude(js => js.User)
+                    .Include(r => r.JobSeeker)
+                        .ThenInclude(js => js.JobTitle)
+                    .Include(r => r.JobSeeker)
+                        .ThenInclude(js => js.Country)
+                    .Include(r => r.JobSeeker)
+                        .ThenInclude(js => js.City)
+                    .OrderByDescending(r => r.MatchScore)
+                    .Take(maxResults)
+                    .ToListAsync();
+
+                if (!recommendations.Any())
+                {
+                    return StatusCode(StatusCodes.Status502BadGateway,
+                        new ApiErrorResponse("AI matching engine is currently unavailable. Please try again later."));
+                }
+
+                var recCandidateIds = recommendations.Select(r => r.JobSeekerId).ToList();
+                var recSkills = await _context.JobSeekerSkills
+                    .Where(jss => recCandidateIds.Contains(jss.JobSeekerId))
+                    .Include(jss => jss.Skill)
+                    .GroupBy(jss => jss.JobSeekerId)
+                    .ToDictionaryAsync(
+                        g => g.Key,
+                        g => g.Select(jss => jss.Skill.Name).ToList());
+
+                var fallbackCandidates = recommendations.Select(rec =>
+                {
+                    var js = rec.JobSeeker;
+                    recSkills.TryGetValue(js.Id, out var skills);
+
+                    var matchedSkills = !string.IsNullOrEmpty(rec.MatchedSkillsJson)
+                        ? JsonSerializer.Deserialize<List<string>>(rec.MatchedSkillsJson) ?? new List<string>()
+                        : new List<string>();
+
+                    var missingSkills = !string.IsNullOrEmpty(rec.MissingSkillsJson)
+                        ? JsonSerializer.Deserialize<List<string>>(rec.MissingSkillsJson) ?? new List<string>()
+                        : new List<string>();
+
+                    return new MatchedCandidateDto
+                    {
+                        JobSeekerId = js.Id,
+                        FullName = $"{js.User.FirstName} {js.User.LastName}",
+                        ProfilePictureUrl = js.User.ProfilePictureUrl ?? _defaultProfilePictureUrl,
+                        JobTitle = js.JobTitle?.TitleEn,
+                        Bio = js.Bio,
+                        YearsOfExperience = js.YearsOfExperience,
+                        CountryName = js.Country?.NameEn,
+                        CityName = js.City?.NameEn,
+                        AssessmentScore = js.CurrentAssessmentScore,
+                        Skills = skills ?? new List<string>(),
+                        MatchScore = rec.MatchScore,
+                        MatchedSkills = matchedSkills,
+                        MissingSkills = missingSkills,
+                        AiReasoning = rec.AiReasoning
+                    };
+                }).ToList();
+
+                // Record search appearances for fallback candidates
+                var fallbackCandidateIds = fallbackCandidates.Select(c => c.JobSeekerId).ToList();
+                await _engagementService.RecordSearchAppearancesAsync(fallbackCandidateIds, recruiter.Id, jobId);
+
+                _logger.LogInformation(
+                    "Recruiter {RecruiterId} viewed {Count} candidates (fallback) for Job {JobId}",
+                    recruiter.Id, fallbackCandidates.Count, jobId);
+
+                return Ok(new ApiResponse<CandidateMatchResponseDto>(new CandidateMatchResponseDto
+                {
+                    JobId = job.Id,
+                    JobTitle = job.Title,
+                    JobTitleId = job.JobTitleId,
+                    JobTitleName = job.JobTitle?.TitleEn,
+                    TotalPreFiltered = recommendations.Count,
+                    TotalMatched = fallbackCandidates.Count,
+                    Candidates = fallbackCandidates
+                }));
+            }
 
             // Map AI results to our internal DTO with full profile data
             var matchedCandidates = new List<MatchedCandidateDto>();
@@ -125,7 +217,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                 {
                     JobSeekerId = jobSeeker.Id,
                     FullName = $"{jobSeeker.User.FirstName} {jobSeeker.User.LastName}",
-                    ProfilePictureUrl = jobSeeker.User.ProfilePictureUrl ?? DefaultProfilePictureUrl,
+                    ProfilePictureUrl = jobSeeker.User.ProfilePictureUrl ?? _defaultProfilePictureUrl,
                     JobTitle = jobSeeker.JobTitle?.TitleEn,
                     Bio = jobSeeker.Bio,
                     YearsOfExperience = jobSeeker.YearsOfExperience,
@@ -196,24 +288,28 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
 
             // Load the candidate with all related data in batch queries
             var jobSeeker = await _context.JobSeekers
+                .AsNoTracking()
                 .Include(js => js.User)
                 .Include(js => js.JobTitle)
                 .Include(js => js.Country)
                 .Include(js => js.City)
                 .Include(js => js.FirstLanguage)
                 .Include(js => js.SecondLanguage)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(js => js.Id == candidateId);
 
             if (jobSeeker == null)
                 return NotFound(new ApiErrorResponse("Candidate not found."));
 
-            // Batch-load related entities (3 queries instead of N+1)
+            // Batch-load related entities (5 queries instead of N+1)
             var skills = await _context.JobSeekerSkills
+                .AsNoTracking()
                 .Where(jss => jss.JobSeekerId == candidateId)
                 .Include(jss => jss.Skill)
                 .ToListAsync();
 
             var experiences = await _context.Experiences
+                .AsNoTracking()
                 .Include(e => e.Country)
                 .Include(e => e.City)
                 .Where(e => e.JobSeekerId == candidateId && !e.IsDeleted)
@@ -222,6 +318,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                 .ToListAsync();
 
             var educations = await _context.Educations
+                .AsNoTracking()
                 .Include(e => e.FieldOfStudy)
                 .Where(e => e.JobSeekerId == candidateId && !e.IsDeleted)
                 .OrderBy(e => e.DisplayOrder)
@@ -229,15 +326,26 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                 .ToListAsync();
 
             var projects = await _context.Projects
+                .AsNoTracking()
                 .Where(p => p.JobSeekerId == candidateId && !p.IsDeleted)
                 .OrderBy(p => p.DisplayOrder)
                 .ToListAsync();
 
             var socialAccount = await _context.SocialAccounts
+                .AsNoTracking()
                 .FirstOrDefaultAsync(sa => sa.JobSeekerId == candidateId);
 
-            // Record profile click for engagement tracking (1-hour dedup)
-            await _engagementService.RecordProfileViewAsync(candidateId, recruiter.Id, jobId);
+            // Load resume (latest uploaded)
+            var resume = await _context.Resumes
+                .AsNoTracking()
+                .Where(r => r.JobSeekerId == candidateId)
+                .OrderByDescending(r => r.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            // Load AI match recommendation for this specific job
+            var recommendation = await _context.Recommendations
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.JobId == jobId && r.JobSeekerId == candidateId);
 
             var profile = new RecruiterCandidateProfileDto
             {
@@ -245,7 +353,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                 FirstName = jobSeeker.User.FirstName,
                 LastName = jobSeeker.User.LastName,
                 Email = jobSeeker.User.Email,
-                ProfilePictureUrl = jobSeeker.User.ProfilePictureUrl ?? DefaultProfilePictureUrl,
+                ProfilePictureUrl = jobSeeker.User.ProfilePictureUrl ?? _defaultProfilePictureUrl,
                 PhoneNumber = jobSeeker.PhoneNumber,
                 Bio = jobSeeker.Bio,
 
@@ -321,7 +429,22 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                     Behance = socialAccount.Behance,
                     Dribbble = socialAccount.Dribbble,
                     PersonalWebsite = socialAccount.PersonalWebsite
-                } : null
+                } : null,
+
+                // Resume
+                ResumeFileName = resume?.FileName,
+                ResumeFilePath = resume != null ? $"{_fileSettings.BaseUrl}/Uploads/{resume.FilePath.Replace('\\', '/')}" : null,
+                ResumeFileSizeBytes = resume?.FileSizeBytes,
+
+                // AI Match
+                MatchScore = recommendation?.MatchScore,
+                MatchedSkills = !string.IsNullOrEmpty(recommendation?.MatchedSkillsJson)
+                    ? JsonSerializer.Deserialize<List<string>>(recommendation.MatchedSkillsJson) ?? new()
+                    : new(),
+                MissingSkills = !string.IsNullOrEmpty(recommendation?.MissingSkillsJson)
+                    ? JsonSerializer.Deserialize<List<string>>(recommendation.MissingSkillsJson) ?? new()
+                    : new(),
+                AiReasoning = recommendation?.AiReasoning
             };
 
             _logger.LogInformation(
@@ -369,6 +492,31 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
             await _engagementService.RecordProfileViewAsync(candidateId, recruiter.Id, jobId);
 
             return Ok(new ApiResponse<bool>(true, "Profile view recorded."));
+        }
+
+        /// <summary>
+        /// Download a candidate's resume directly
+        /// </summary>
+        [HttpGet("jobs/{jobId}/candidates/{candidateId}/resume/download")]
+        [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DownloadCandidateResume(int jobId, int candidateId)
+        {
+            var userId = GetCurrentUserId();
+            var recruiter = await _context.Recruiters.FirstOrDefaultAsync(r => r.UserId == userId);
+            if (recruiter == null) return Forbid();
+
+            var job = await _context.Jobs.FirstOrDefaultAsync(j => j.Id == jobId && j.RecruiterId == recruiter.Id);
+            if (job == null) return NotFound(new ApiErrorResponse("Job not found or access denied."));
+
+            var resume = await _context.Resumes.FirstOrDefaultAsync(r => r.JobSeekerId == candidateId);
+            if (resume == null || string.IsNullOrEmpty(resume.FilePath)) return NotFound(new ApiErrorResponse("Resume not found."));
+
+            var absolutePath = Path.Combine(_fileSettings.BasePath, resume.FilePath);
+            if (!System.IO.File.Exists(absolutePath)) return NotFound(new ApiErrorResponse("Resume file not found on server."));
+
+            var stream = new FileStream(absolutePath, FileMode.Open, FileAccess.Read);
+            return File(stream, resume.ContentType ?? "application/pdf", resume.FileName);
         }
 
         private static string FormatDateRange(DateTime startDate, DateTime? endDate, bool isCurrent)
