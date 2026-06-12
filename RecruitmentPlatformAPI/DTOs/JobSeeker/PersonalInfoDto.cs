@@ -34,16 +34,12 @@ namespace RecruitmentPlatformAPI.DTOs.JobSeeker
         /// The candidate's desired work models (Remote, Hybrid, OnSite).
         /// </summary>
         /// <example>["Remote", "Hybrid"]</example>
-        [Required]
-        [MinLength(1, ErrorMessage = "At least one work preference must be selected")]
         public List<WorkModel> WorkPreferences { get; set; } = new List<WorkModel>();
 
         /// <summary>
         /// The candidate's desired employment types (FullTime, PartTime, Freelance, Internship).
         /// </summary>
         /// <example>["FullTime", "PartTime"]</example>
-        [Required]
-        [MinLength(1, ErrorMessage = "At least one employment type must be selected")]
         public List<EmploymentType> DesiredEmploymentTypes { get; set; } = new List<EmploymentType>();
 
         // === Geographic Data ===

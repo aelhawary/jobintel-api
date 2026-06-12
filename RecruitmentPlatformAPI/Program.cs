@@ -147,7 +147,7 @@ builder.Services.AddScoped<ISocialAccountService, SocialAccountService>();
 builder.Services.AddScoped<IResumeService, ResumeService>();
 builder.Services.AddHttpClient<ICvParserService, GeminiCvParserService>(client =>
 {
-    var timeout = builder.Configuration.GetValue<int>("LlmSettings:TimeoutSeconds", 45);
+    var timeout = builder.Configuration.GetValue<int>("LlmSettings:TimeoutSeconds", 30);
     client.Timeout = TimeSpan.FromSeconds(timeout);
 });
 builder.Services.AddScoped<IProfilePictureService, ProfilePictureService>();

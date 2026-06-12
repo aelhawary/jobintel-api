@@ -29,11 +29,13 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
         private const int MaxCvTextLength = 15000;
 
         private const string SystemPrompt =
-@"You are an expert HR CV parser. Extract structured data from a CV/resume and return ONLY a raw JSON object — no markdown fences, no commentary.
+@"You are an expert HR CV parser. Extract structured data from a CV/resume.
+
+Return ONLY a valid JSON object. Do NOT use markdown fences (no ```json```). The output must be raw parseable JSON.
 
 SCHEMA (return exactly this shape):
 {
-  ""jobTitle"": ""string — The candidate's primary standard role. MUST map to one of these exact strings if possible: 'Backend Developer', 'Frontend Developer', 'Full Stack Developer', 'Mobile Developer', 'Data Scientist', 'DevOps Engineer', 'QA Engineer', 'UI/UX Designer'. If no exact match fits, use their exact title."",
+  ""jobTitle"": ""string — The candidate's primary standard role. MUST map to one of these exact strings if possible: 'Backend Developer', 'Frontend Developer', 'Full Stack Developer', 'Mobile Developer', 'Data Scientist', 'DevOps Engineer', 'QA Engineer', 'UI/UX Designer'. If no standard role fits, use the exact title from the CV."",
   ""yearsOfExperience"": 0,
   ""phoneNumber"": """",
   ""countryName"": """",
@@ -47,9 +49,9 @@ SCHEMA (return exactly this shape):
       ""countryName"": """",
       ""cityName"": """",
       ""employmentType"": ""FullTime|PartTime|Contract|Freelance|Internship"",
-      ""responsibilities"": ""comma-separated list, max 2000 chars"",
+      ""responsibilities"": ""comma-separated list of key responsibilities, max 2000 chars"",
       ""startDate"": ""YYYY-MM-DD"",
-      ""endDate"": ""YYYY-MM-DD or null"",
+      ""endDate"": ""YYYY-MM-DD or null if current"",
       ""isCurrent"": false
     }
   ],
@@ -57,7 +59,7 @@ SCHEMA (return exactly this shape):
     {
       ""institution"": """",
       ""degree"": ""Bachelor|Master|PhD|Diploma|HighSchool|Associate|Other"",
-      ""fieldOfStudy"": ""string — the raw field/major name from the CV"",
+      ""fieldOfStudy"": ""string — copy the RAW field/major name exactly as written in the CV"",
       ""gradeOrGpa"": ""null if not mentioned"",
       ""startDate"": ""YYYY-MM-DD"",
       ""endDate"": ""YYYY-MM-DD or null"",
@@ -67,7 +69,7 @@ SCHEMA (return exactly this shape):
   ""projects"": [
     {
       ""title"": """",
-      ""technologiesUsed"": ""comma-separated"",
+      ""technologiesUsed"": ""comma-separated list of technologies"",
       ""description"": """",
       ""projectLink"": """"
     }
@@ -83,20 +85,18 @@ SCHEMA (return exactly this shape):
 }
 
 CRITICAL RULES:
-1. Return ONLY the JSON object — no markdown, no explanation.
-2. bio: Write a 2-3 sentence professional summary BASED ONLY ON THE ACTUAL CV CONTENT. Do NOT invent skills, technologies, or qualifications that are not explicitly mentioned in the CV.
-3. skills: Extract ONLY specific technology/tool names (e.g. 'C#', 'ASP.NET Core', 'SQL Server', 'React', 'Docker'). Copy each skill name EXACTLY as written in the CV text — do NOT substitute related or parent technologies. Do NOT extract: soft skills, conceptual patterns (Clean Architecture, Repository Pattern, SOLID), phrases (.NET ecosystem, RESTful endpoints), or version numbers (just 'ASP.NET Core' not 'ASP.NET Core 8'). Max 25 skills.
-   IMPORTANT: Never hallucinate skills. Examples of WRONG extractions:
-   - CV says 'JavaScript' → you extract 'Java' ← WRONG (Java is a different language)
-   - CV says 'Figma' → you extract 'FigJam' ← WRONG (FigJam is a different tool)
-   - CV says 'GitHub' → you extract 'Git' ← WRONG unless 'Git' also appears separately
-   - CV says 'TypeScript' → you extract 'JavaScript' ← WRONG unless 'JavaScript' also appears separately
-   Only extract a skill if you can point to the EXACT text in the CV that says it.
-4. phone: extract the full phone number with country code if present.
-5. If a field is missing from the CV, use empty string (or null for dates).
-6. employmentType: infer from context if not explicit.
-7. fieldOfStudy: use the RAW name from the CV (e.g. 'Computer and Communication Engineering').
-8. experiences: Extract ALL work experiences listed.";
+1. Output MUST be a raw JSON object. Do not include markdown fences or explanatory text.
+2. yearsOfExperience: Calculate accurately as an integer by summing total unique time worked across all valid work experiences, discounting concurrent/overlapping roles.
+3. bio: Write a 2-3 sentence professional summary BASED ONLY ON THE ACTUAL CV CONTENT. Do NOT invent skills, technologies, or qualifications that are not explicitly mentioned.
+4. skills: Extract ONLY specific technology/tool names (e.g. 'C#', 'ASP.NET Core', 'SQL Server', 'React'). Copy each skill name EXACTLY as written in the CV. Do NOT substitute related parent technologies. Do NOT extract: soft skills, conceptual patterns (Clean Architecture), or version numbers. Max 25 skills.
+   IMPORTANT: Never hallucinate skills. Only extract a skill if you can point to the EXACT text in the CV that explicitly states it.
+5. dates: ALL dates MUST be in YYYY-MM-DD format. If only year is given, use YYYY-01-01. If year and month, use YYYY-MM-01. If date is unknown, use null.
+6. degree: MUST be one of these exact values: Bachelor, Master, PhD, Diploma, HighSchool, Associate, Other. Never use free-text like 'Bachelor's Degree'.
+7. phoneNumber: Extract the full phone number with country code if present. Use plain digits and + sign only.
+8. firstLanguage: Extract the candidate's primary spoken language (e.g. 'Arabic', 'English'). Do NOT put programming languages here.
+9. If a field is missing from the CV, use an empty string (or null for dates/numbers). Never guess or invent missing information.
+10. employmentType: Infer from context if not explicit (e.g. 'intern' -> 'Internship', 'part time' -> 'PartTime').
+11. experiences: Extract ALL work experiences listed in the CV, ordered chronologically (newest first).";
 
         public GeminiCvParserService(
             HttpClient httpClient,

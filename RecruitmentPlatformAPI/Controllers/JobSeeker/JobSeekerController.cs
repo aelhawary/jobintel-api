@@ -104,6 +104,58 @@ namespace RecruitmentPlatformAPI.Controllers.JobSeeker
             return Ok(new ApiResponse<PersonalInfoDto>(personalInfo));
         }
 
+        [HttpPut("personal-info/bio")]
+        [ProducesResponseType(typeof(ProfileResponseDto), StatusCodes.Status200OK)]
+        public async Task<IActionResult> UpdateBio([FromBody] UpdateBioDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var userId = GetCurrentUserId();
+            if (userId == 0) return Unauthorized(new ApiErrorResponse("User not authenticated"));
+
+            var result = await _jobSeekerService.UpdateBioAsync(userId, dto);
+            if (!result.Success) return BadRequest(result);
+            return Ok(result);
+        }
+
+        [HttpPut("personal-info/languages")]
+        [ProducesResponseType(typeof(ProfileResponseDto), StatusCodes.Status200OK)]
+        public async Task<IActionResult> UpdateLanguages([FromBody] UpdateLanguagesDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var userId = GetCurrentUserId();
+            if (userId == 0) return Unauthorized(new ApiErrorResponse("User not authenticated"));
+
+            var result = await _jobSeekerService.UpdateLanguagesAsync(userId, dto);
+            if (!result.Success) return BadRequest(result);
+            return Ok(result);
+        }
+
+        [HttpPut("personal-info/basic")]
+        [ProducesResponseType(typeof(ProfileResponseDto), StatusCodes.Status200OK)]
+        public async Task<IActionResult> UpdateBasicInfo([FromBody] UpdateBasicInfoDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var userId = GetCurrentUserId();
+            if (userId == 0) return Unauthorized(new ApiErrorResponse("User not authenticated"));
+
+            var result = await _jobSeekerService.UpdateBasicInfoAsync(userId, dto);
+            if (!result.Success) return BadRequest(result);
+            return Ok(result);
+        }
+
+        [HttpPut("personal-info/preferences")]
+        [ProducesResponseType(typeof(ProfileResponseDto), StatusCodes.Status200OK)]
+        public async Task<IActionResult> UpdatePreferences([FromBody] UpdatePreferencesDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var userId = GetCurrentUserId();
+            if (userId == 0) return Unauthorized(new ApiErrorResponse("User not authenticated"));
+
+            var result = await _jobSeekerService.UpdatePreferencesAsync(userId, dto);
+            if (!result.Success) return BadRequest(result);
+            return Ok(result);
+        }
+
         /// <summary>
         /// Get profile completion wizard status (4 steps: Personal Info, Experience and Education, Projects, Skills and Social and Certificates)
         /// </summary>

@@ -242,6 +242,100 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                 };
             }
         }
+        public async Task<ProfileResponseDto> UpdateBioAsync(int userId, UpdateBioDto dto)
+        {
+            var jobSeeker = await _context.JobSeekers.FirstOrDefaultAsync(js => js.UserId == userId);
+            if (jobSeeker == null) return new ProfileResponseDto { Success = false, Message = "Job seeker not found" };
+
+            jobSeeker.Bio = dto.Bio?.Trim();
+            jobSeeker.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return new ProfileResponseDto { Success = true, Message = "Bio updated successfully" };
+        }
+
+        public async Task<ProfileResponseDto> UpdateLanguagesAsync(int userId, UpdateLanguagesDto dto)
+        {
+            var jobSeeker = await _context.JobSeekers.FirstOrDefaultAsync(js => js.UserId == userId);
+            if (jobSeeker == null) return new ProfileResponseDto { Success = false, Message = "Job seeker not found" };
+
+            var languageIds = new List<int> { dto.FirstLanguageId };
+            if (dto.SecondLanguageId.HasValue) languageIds.Add(dto.SecondLanguageId.Value);
+
+            var validLanguagesCount = await _context.Languages.CountAsync(l => languageIds.Contains(l.Id) && l.IsActive);
+            if (validLanguagesCount != languageIds.Count)
+                return new ProfileResponseDto { Success = false, Message = "Invalid language selection" };
+
+            jobSeeker.FirstLanguageId = dto.FirstLanguageId;
+            jobSeeker.FirstLanguageProficiency = dto.FirstLanguageProficiency;
+            jobSeeker.SecondLanguageId = dto.SecondLanguageId;
+            jobSeeker.SecondLanguageProficiency = dto.SecondLanguageProficiency;
+            jobSeeker.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return new ProfileResponseDto { Success = true, Message = "Languages updated successfully" };
+        }
+
+        public async Task<ProfileResponseDto> UpdateBasicInfoAsync(int userId, UpdateBasicInfoDto dto)
+        {
+            var jobSeeker = await _context.JobSeekers.FirstOrDefaultAsync(js => js.UserId == userId);
+            if (jobSeeker == null) return new ProfileResponseDto { Success = false, Message = "Job seeker not found" };
+
+            var jobTitleExists = await _context.JobTitles.AnyAsync(jt => jt.Id == dto.JobTitleId && jt.IsActive);
+            var countryExists = await _context.Countries.AnyAsync(c => c.Id == dto.CountryId);
+
+            if (!jobTitleExists) return new ProfileResponseDto { Success = false, Message = "Invalid job title" };
+            if (!countryExists) return new ProfileResponseDto { Success = false, Message = "Invalid country" };
+
+            bool criteriaChanged = jobSeeker.JobTitleId != dto.JobTitleId ||
+                                   jobSeeker.YearsOfExperience != dto.YearsOfExperience ||
+                                   jobSeeker.CountryId != dto.CountryId ||
+                                   jobSeeker.CityId != dto.CityId;
+
+            if (criteriaChanged)
+            {
+                var existingRecommendations = await _context.Recommendations
+                    .Where(r => r.JobSeekerId == jobSeeker.Id).ToListAsync();
+                if (existingRecommendations.Any()) _context.Recommendations.RemoveRange(existingRecommendations);
+            }
+
+            jobSeeker.JobTitleId = dto.JobTitleId;
+            jobSeeker.YearsOfExperience = dto.YearsOfExperience;
+            jobSeeker.CountryId = dto.CountryId;
+            jobSeeker.CityId = dto.CityId;
+            jobSeeker.PhoneNumber = NormalizePhoneNumber(dto.PhoneNumber);
+            jobSeeker.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return new ProfileResponseDto { Success = true, Message = "Basic info updated successfully" };
+        }
+
+        public async Task<ProfileResponseDto> UpdatePreferencesAsync(int userId, UpdatePreferencesDto dto)
+        {
+            var jobSeeker = await _context.JobSeekers.FirstOrDefaultAsync(js => js.UserId == userId);
+            if (jobSeeker == null) return new ProfileResponseDto { Success = false, Message = "Job seeker not found" };
+
+            var oldWorkPrefs = jobSeeker.WorkPreferences?.OrderBy(w => w).ToList() ?? new List<WorkModel>();
+            var newWorkPrefs = dto.WorkPreferences?.OrderBy(w => w).ToList() ?? new List<WorkModel>();
+            var oldEmpTypes = jobSeeker.DesiredEmploymentTypes?.OrderBy(e => e).ToList() ?? new List<EmploymentType>();
+            var newEmpTypes = dto.DesiredEmploymentTypes?.OrderBy(e => e).ToList() ?? new List<EmploymentType>();
+
+            bool criteriaChanged = !oldWorkPrefs.SequenceEqual(newWorkPrefs) || !oldEmpTypes.SequenceEqual(newEmpTypes);
+
+            if (criteriaChanged)
+            {
+                var existingRecommendations = await _context.Recommendations
+                    .Where(r => r.JobSeekerId == jobSeeker.Id).ToListAsync();
+                if (existingRecommendations.Any()) _context.Recommendations.RemoveRange(existingRecommendations);
+            }
+
+            jobSeeker.WorkPreferences = dto.WorkPreferences ?? [];
+            jobSeeker.DesiredEmploymentTypes = dto.DesiredEmploymentTypes ?? [];
+            jobSeeker.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return new ProfileResponseDto { Success = true, Message = "Preferences updated successfully" };
+        }
 
         public async Task<PersonalInfoDto?> GetPersonalInfoAsync(int userId, string language = "en")
         {
