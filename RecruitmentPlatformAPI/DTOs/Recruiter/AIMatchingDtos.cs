@@ -147,6 +147,8 @@ namespace RecruitmentPlatformAPI.DTOs.Recruiter
 
         /// <summary>AI reasoning explaining the match quality.</summary>
         public string? AiReasoning { get; set; }
+
+        public bool IsShortlisted { get; set; }
     }
 
     /// <summary>

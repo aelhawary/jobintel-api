@@ -10,6 +10,7 @@ using RecruitmentPlatformAPI.Services.Recruiter;
 using RecruitmentPlatformAPI.Services.JobSeeker;
 using RecruitmentPlatformAPI.Configuration;
 using Microsoft.Extensions.Options;
+using RecruitmentPlatformAPI.Models.Recruiter;
 
 namespace RecruitmentPlatformAPI.Controllers.Recruiter
 {
@@ -124,6 +125,11 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                         g => g.Key,
                         g => g.Select(jss => jss.Skill.Name).ToList());
 
+                var shortlistedIds = await _context.ShortlistedCandidates
+                    .Where(sc => sc.JobId == jobId && sc.RecruiterId == recruiter.Id && recCandidateIds.Contains(sc.JobSeekerId))
+                    .Select(sc => sc.JobSeekerId)
+                    .ToListAsync();
+
                 var fallbackCandidates = recommendations.Select(rec =>
                 {
                     var js = rec.JobSeeker;
@@ -152,7 +158,8 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                         MatchScore = rec.MatchScore,
                         MatchedSkills = matchedSkills,
                         MissingSkills = missingSkills,
-                        AiReasoning = rec.AiReasoning
+                        AiReasoning = rec.AiReasoning,
+                        IsShortlisted = shortlistedIds.Contains(js.Id)
                     };
                 }).ToList();
 
@@ -203,6 +210,11 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                     g => g.Key,
                     g => g.Select(jss => jss.Skill.Name).ToList());
 
+            var aiShortlistedIds = await _context.ShortlistedCandidates
+                .Where(sc => sc.JobId == jobId && sc.RecruiterId == recruiter.Id && allCandidateIds.Contains(sc.JobSeekerId))
+                .Select(sc => sc.JobSeekerId)
+                .ToListAsync();
+
             foreach (var result in aiResponse.Results)
             {
                 if (!int.TryParse(result.CandidateId, out var candidateId))
@@ -228,7 +240,8 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                     MatchScore = result.FinalScore,
                     MatchedSkills = result.MatchedSkills,
                     MissingSkills = result.MissingSkills,
-                    AiReasoning = result.Reason
+                    AiReasoning = result.Reason,
+                    IsShortlisted = aiShortlistedIds.Contains(jobSeeker.Id)
                 });
             }
 
@@ -444,7 +457,8 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                 MissingSkills = !string.IsNullOrEmpty(recommendation?.MissingSkillsJson)
                     ? JsonSerializer.Deserialize<List<string>>(recommendation.MissingSkillsJson) ?? new()
                     : new(),
-                AiReasoning = recommendation?.AiReasoning
+                AiReasoning = recommendation?.AiReasoning,
+                IsShortlisted = await _context.ShortlistedCandidates.AnyAsync(sc => sc.JobId == jobId && sc.JobSeekerId == candidateId && sc.RecruiterId == recruiter.Id)
             };
 
             _logger.LogInformation(
@@ -453,6 +467,61 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
 
             return Ok(new ApiResponse<RecruiterCandidateProfileDto>(profile));
         }
+
+        [HttpPost("jobs/{jobId}/candidates/{candidateId}/toggle-shortlist")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<ApiResponse<bool>>> ToggleShortlist(int jobId, int candidateId)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+
+            var recruiter = await _context.Recruiters
+                .FirstOrDefaultAsync(r => r.UserId == userId);
+
+            if (recruiter == null)
+                return Forbid();
+
+            var job = await _context.Jobs
+                .FirstOrDefaultAsync(j => j.Id == jobId && j.RecruiterId == recruiter.Id);
+
+            if (job == null)
+                return NotFound(new ApiErrorResponse("Job not found or access denied."));
+
+            var jobSeekerExists = await _context.JobSeekers.AnyAsync(js => js.Id == candidateId);
+            if (!jobSeekerExists)
+                return NotFound(new ApiErrorResponse("Candidate not found."));
+
+            var existingShortlist = await _context.ShortlistedCandidates
+                .FirstOrDefaultAsync(sc => sc.JobId == jobId && sc.JobSeekerId == candidateId && sc.RecruiterId == recruiter.Id);
+
+            bool isShortlisted = false;
+
+            if (existingShortlist != null)
+            {
+                _context.ShortlistedCandidates.Remove(existingShortlist);
+            }
+            else
+            {
+                _context.ShortlistedCandidates.Add(new ShortlistedCandidate
+                {
+                    JobId = jobId,
+                    JobSeekerId = candidateId,
+                    RecruiterId = recruiter.Id,
+                    ShortlistedAt = DateTime.UtcNow
+                });
+                isShortlisted = true;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new ApiResponse<bool>(isShortlisted, isShortlisted ? "Candidate shortlisted successfully." : "Candidate removed from shortlist."));
+        }
+
+        // ── Helper Methods ──
 
         /// <summary>
         /// Record that the recruiter clicked into a specific candidate's profile.

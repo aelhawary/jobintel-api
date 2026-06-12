@@ -30,6 +30,7 @@ namespace RecruitmentPlatformAPI.Data
         public DbSet<Job> Jobs { get; set; }
         public DbSet<JobSkill> JobSkills { get; set; }
         public DbSet<Recommendation> Recommendations { get; set; }
+        public DbSet<ShortlistedCandidate> ShortlistedCandidates { get; set; }
         public DbSet<EmailVerification> EmailVerifications { get; set; }
         public DbSet<PasswordReset> PasswordResets { get; set; }
         public DbSet<JobTitle> JobTitles { get; set; }
@@ -327,6 +328,30 @@ namespace RecruitmentPlatformAPI.Data
                 // Index for querying recommendations by job seeker (for engagement stats)
                 b.HasIndex(r => new { r.JobSeekerId, r.GeneratedAt })
                  .HasDatabaseName("IX_Recommendation_JobSeeker_Date");
+            });
+
+            // ShortlistedCandidate
+            modelBuilder.Entity<ShortlistedCandidate>(b =>
+            {
+                b.ToTable("ShortlistedCandidate");
+                b.HasKey(sc => sc.Id);
+
+                b.HasOne(sc => sc.Job)
+                 .WithMany()
+                 .HasForeignKey(sc => sc.JobId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasOne(sc => sc.JobSeeker)
+                 .WithMany()
+                 .HasForeignKey(sc => sc.JobSeekerId)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasOne(sc => sc.Recruiter)
+                 .WithMany()
+                 .HasForeignKey(sc => sc.RecruiterId)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasIndex(sc => new { sc.JobId, sc.JobSeekerId }).IsUnique();
             });
 
             // EmailVerification - one-to-many with User

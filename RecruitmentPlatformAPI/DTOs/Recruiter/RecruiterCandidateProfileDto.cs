@@ -69,6 +69,7 @@ namespace RecruitmentPlatformAPI.DTOs.Recruiter
         public List<string> MatchedSkills { get; set; } = new();
         public List<string> MissingSkills { get; set; } = new();
         public string? AiReasoning { get; set; }
+        public bool IsShortlisted { get; set; }
     }
 
     public class RecruiterCandidateSkillDto
