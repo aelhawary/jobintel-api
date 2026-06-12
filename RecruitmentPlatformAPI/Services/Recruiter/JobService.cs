@@ -10,11 +10,16 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
     {
         private readonly AppDbContext _context;
         private readonly ILogger<JobService> _logger;
+        private readonly IAiRecommendationService _aiService;
 
-        public JobService(AppDbContext context, ILogger<JobService> logger)
+
+
+
+        public JobService(AppDbContext context, ILogger<JobService> logger, IAiRecommendationService aiService)
         {
             _context = context;
             _logger = logger;
+            _aiService = aiService;
         }
 
         // ═══════════════════════════════════════════════════════════
@@ -359,18 +364,18 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
         {
             try
             {
-                // 1️⃣ الوظيفة موجودة وبتاعة الـ Recruiter ده؟
+
                 var job = await GetOwnedJobAsync(userId, jobId);
                 if (job == null) return null;
 
-                // 2️⃣ الـ Job Seeker ده متوصى بيه على الوظيفة دي؟
+
                 var recommendation = await _context.Recommendations
                     .AsNoTracking()
                     .FirstOrDefaultAsync(r => r.JobId == jobId && r.JobSeekerId == jobSeekerId);
 
                 if (recommendation == null) return null;
 
-                // 3️⃣ جيب بيانات الـ Job Seeker كلها في query واحدة
+
                 var jobSeeker = await _context.JobSeekers
                     .AsNoTracking()
                     .Include(js => js.User)
@@ -382,7 +387,7 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
 
                 if (jobSeeker == null) return null;
 
-                // 4️⃣ جيب الـ related data (كلها مع IsDeleted = false)
+
                 var skills = await _context.JobSeekerSkills
                     .AsNoTracking()
                     .Where(s => s.JobSeekerId == jobSeekerId)
@@ -485,7 +490,6 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
                     })
                     .FirstOrDefaultAsync();
 
-                // 5️⃣ ركّب الـ response
                 return new CandidateProfileDto
                 {
                     // AI match info
@@ -536,6 +540,170 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
                 _logger.LogError(ex,
                     "Error getting candidate profile. UserId={UserId} JobId={JobId} JobSeekerId={JobSeekerId}",
                     userId, jobId, jobSeekerId);
+                return null;
+            }
+        }
+        // ═══════════════════════════════════════════════════════════
+        //  أضف الـ method دي جوّا JobService class
+        //  بعد GetCandidateProfileAsync مباشرةً
+        //
+        //  لازم تضيف في constructor:
+        //    private readonly IAiRecommendationService _aiService;
+        //  وتضيفه في الـ constructor parameters بردو
+        // ═══════════════════════════════════════════════════════════
+
+        public async Task<JobRecommendationsDto?> GetAiRecommendationsAsync(
+            int userId, int jobId, int maxResults = 10)
+        {
+            try
+            {
+                // 1️⃣ الوظيفة موجودة وبتاعة الـ Recruiter ده؟
+                var job = await GetOwnedJobAsync(userId, jobId);
+                if (job == null) return null;
+
+                // 2️⃣ جيب الـ skills بتاعة الوظيفة
+                var jobSkillNames = await _context.JobSkills
+                    .AsNoTracking()
+                    .Where(js => js.JobId == jobId)
+                    .Join(_context.Skills,
+                        js => js.SkillId,
+                        s => s.Id,
+                        (js, s) => s.Name)
+                    .ToListAsync();
+
+                // 3️⃣ Pre-filter: JobSeekers اللي عندهم skill واحدة على الأقل مشتركة
+                var skillIds = await _context.JobSkills
+                    .AsNoTracking()
+                    .Where(js => js.JobId == jobId)
+                    .Select(js => js.SkillId)
+                    .ToListAsync();
+
+                var matchingJobSeekerIds = await _context.JobSeekerSkills
+                    .AsNoTracking()
+                    .Where(jss => skillIds.Contains(jss.SkillId))
+                    .Select(jss => jss.JobSeekerId)
+                    .Distinct()
+                    .ToListAsync();
+
+                if (!matchingJobSeekerIds.Any())
+                {
+                    // مفيش candidates مناسبين — رجّع response فاضي
+                    return new JobRecommendationsDto
+                    {
+                        JobId = job.Id,
+                        JobTitle = job.Title,
+                        TotalCandidatesEvaluated = 0,
+                        Recommendations = new()
+                    };
+                }
+
+                // 4️⃣ جيب بيانات الـ candidates المفلترين
+                var candidates = await _context.JobSeekers
+                    .AsNoTracking()
+                    .Where(js => matchingJobSeekerIds.Contains(js.Id))
+                    .Include(js => js.User)
+                    .Include(js => js.JobTitle)
+                    .ToListAsync();
+
+                // 5️⃣ جيب skills لكل candidate في query واحدة
+                var allCandidateSkills = await _context.JobSeekerSkills
+                    .AsNoTracking()
+                    .Where(jss => matchingJobSeekerIds.Contains(jss.JobSeekerId))
+                    .Join(_context.Skills,
+                        jss => jss.SkillId,
+                        s => s.Id,
+                        (jss, s) => new { jss.JobSeekerId, SkillName = s.Name })
+                    .ToListAsync();
+
+                // جيب experience details لكل candidate
+                var allExperiences = await _context.Experiences
+                    .AsNoTracking()
+                    .Where(e => matchingJobSeekerIds.Contains(e.JobSeekerId) && !e.IsDeleted)
+                    .ToListAsync();
+
+                // جيب education لكل candidate
+                var allEducations = await _context.Educations
+                    .AsNoTracking()
+                    .Where(e => matchingJobSeekerIds.Contains(e.JobSeekerId) && !e.IsDeleted)
+                    .ToListAsync();
+
+                // 6️⃣ ركّب الـ AI request
+                var aiCandidates = candidates.Select(js =>
+                {
+                    var skills = allCandidateSkills
+                        .Where(s => s.JobSeekerId == js.Id)
+                        .Select(s => s.SkillName)
+                        .ToList();
+
+                    var experienceDetails = allExperiences
+                        .Where(e => e.JobSeekerId == js.Id)
+                        .OrderByDescending(e => e.StartDate)
+                        .Select(e => $"{e.JobTitle} at {e.CompanyName}")
+                        .ToList();
+
+                    var educationDetails = allEducations
+                        .Where(e => e.JobSeekerId == js.Id)
+                        .OrderByDescending(e => e.StartDate)
+                        .Select(e => $"{e.Degree} in {e.Major} from {e.Institution}")
+                        .ToList();
+
+                    return new AiCandidateInputDto
+                    {
+                        CandidateId = js.Id.ToString(),
+                        FullName = $"{js.User.FirstName} {js.User.LastName}",
+                        TotalYearsExp = js.YearsOfExperience ?? 0,
+                        Bio = js.Bio ?? string.Empty,
+                        ExperienceDetails = string.Join(". ", experienceDetails),
+                        Skills = string.Join(", ", skills),
+                        Education = string.Join(". ", educationDetails),
+                        TestScore = (double)(js.CurrentAssessmentScore ?? 0)
+                    };
+                }).ToList();
+
+                var aiRequest = new AiRecommendationRequestDto
+                {
+                    Job = new AiJobDto
+                    {
+                        Id = job.Id,
+                        Title = job.Title,
+                        Description = job.Description,
+                        MinYearsOfExperience = job.MinYearsOfExperience,
+                        RequiredSkills = jobSkillNames
+                    },
+                    MaxResults = maxResults,
+                    Candidates = aiCandidates
+                };
+
+                // 7️⃣ ابعت للـ AI API
+                var aiResponse = await _aiService.GetRecommendationsAsync(aiRequest);
+
+                if (aiResponse == null)
+                {
+                    _logger.LogWarning("AI API returned null for JobId={JobId}", jobId);
+                    return null;
+                }
+
+                // 8️⃣ ركّب الـ final response للـ Recruiter
+                return new JobRecommendationsDto
+                {
+                    JobId = job.Id,
+                    JobTitle = job.Title,
+                    TotalCandidatesEvaluated = aiCandidates.Count,
+                    Recommendations = aiResponse.Results.Select(r => new CandidateRecommendationDto
+                    {
+                        JobSeekerId = int.Parse(r.CandidateId),
+                        FullName = r.FullName,
+                        FinalScore = r.FinalScore,
+                        MatchedSkills = r.MatchedSkills,
+                        MissingSkills = r.MissingSkills,
+                        Reason = r.Reason
+                    }).ToList()
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Error getting AI recommendations for JobId={JobId}", jobId);
                 return null;
             }
         }

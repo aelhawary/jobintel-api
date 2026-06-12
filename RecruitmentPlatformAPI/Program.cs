@@ -136,6 +136,7 @@ builder.Services.AddScoped<IJobService, JobService>();
 builder.Services.AddScoped<ICertificateService, CertificateService>();
 builder.Services.AddScoped<IJobSeekerSkillService, JobSeekerSkillService>();
 builder.Services.AddScoped<IAssessmentService, AssessmentService>();
+builder.Services.AddHttpClient<IAiRecommendationService, AiRecommendationService>();
 
 // Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
@@ -174,6 +175,8 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+
+
 var app = builder.Build();
 
 // Apply migrations on startup.
@@ -185,7 +188,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         logger.LogInformation("Applying SQL Server migrations...");
-        //db.Database.Migrate();
+        db.Database.Migrate();
         logger.LogInformation("Database migration completed successfully.");
     }
     catch (Exception ex)

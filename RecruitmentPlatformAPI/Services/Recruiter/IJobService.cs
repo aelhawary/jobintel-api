@@ -54,5 +54,14 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
         /// or no Recommendation exists linking this job seeker to this job.
         /// </summary>
         Task<CandidateProfileDto?> GetCandidateProfileAsync(int userId, int jobId, int jobSeekerId);
+
+        /// <summary>
+        /// Pre-filters candidates by skill match, calls the AI API,
+        /// and returns ranked recommendations for a specific job.
+        /// Returns null if the job doesn't belong to this recruiter.
+        /// </summary>
+        Task<JobRecommendationsDto?> GetAiRecommendationsAsync(int userId, int jobId, int maxResults = 10);
+
+
     }
 }

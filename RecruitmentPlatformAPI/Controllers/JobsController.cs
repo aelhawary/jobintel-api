@@ -239,5 +239,36 @@ namespace RecruitmentPlatformAPI.Controllers
                               ?? User.FindFirst("sub")?.Value;
             return int.TryParse(userIdClaim, out var userId) ? userId : 0;
         }
+
+        /// <summary>
+        /// Trigger AI recommendations for a specific job.
+        /// Pre-filters candidates by skill match then calls the AI API.
+        /// </summary>
+        /// <param name="jobId">Your job ID</param>
+        /// <param name="maxResults">Max number of candidates to return (default: 10)</param>
+        [HttpPost("{jobId}/recommendations")]
+        [Authorize]
+        [ProducesResponseType(typeof(ApiResponse<JobRecommendationsDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status502BadGateway)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetAiRecommendations(
+            int jobId,
+            [FromQuery] int maxResults = 10)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+
+            maxResults = Math.Clamp(maxResults, 1, 50);
+
+            var result = await _jobService.GetAiRecommendationsAsync(userId, jobId, maxResults);
+
+            if (result == null)
+                return StatusCode(502, new ApiErrorResponse(
+                    "Job not found, does not belong to you, or the AI service is unavailable."));
+
+            return Ok(new ApiResponse<JobRecommendationsDto>(result));
+        }
     }
 }
