@@ -215,13 +215,27 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                 skillsByJobSeekerId.TryGetValue(candidateId, out var skills);
 
                 var dto = MapToMatchedCandidateDto(jobSeeker, null, skills, aiShortlistedIds.Contains(jobSeeker.Id), _defaultProfilePictureUrl);
+                
                 // Override match data with AI-computed values
-                dto.MatchScore = result.FinalScore;
+                var aiScore = result.FinalScore;
+                
+                // Fairness Calculation: Apply a 20% penalty for unassessed candidates
+                // This ensures they don't unfairly outrank candidates who actually took the test.
+                if (jobSeeker.CurrentAssessmentScore == null)
+                {
+                    aiScore = Math.Round(aiScore * 0.8m, 2);
+                }
+                
+                dto.MatchScore = aiScore;
                 dto.MatchedSkills = result.MatchedSkills;
                 dto.MissingSkills = result.MissingSkills;
                 dto.AiReasoning = result.Reason;
                 matchedCandidates.Add(dto);
             }
+
+            // Re-sort the candidates descending by our newly adjusted MatchScore
+            matchedCandidates = matchedCandidates.OrderByDescending(c => c.MatchScore).ToList();
+
 
             // Store recommendations in the database
             await _engagementService.StoreRecommendationsAsync(jobId, matchedCandidates);
@@ -478,6 +492,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                 return Ok(new ApiResponse<List<MatchedCandidateDto>>(new List<MatchedCandidateDto>()));
 
             var jobSeekers = await _context.JobSeekers
+                .AsNoTracking()
                 .Include(js => js.User)
                 .Include(js => js.JobTitle)
                 .Include(js => js.Country)

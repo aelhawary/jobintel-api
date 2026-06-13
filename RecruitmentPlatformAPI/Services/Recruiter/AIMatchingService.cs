@@ -105,6 +105,7 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
                 //    - Job title within the same role family (if the job specifies a title)
                 //    - Assessment score is optional — unassessed candidates still participate
                 var preFilteredCandidates = await _context.JobSeekers
+                    .AsNoTracking()
                     .Include(js => js.User)
                     .Include(js => js.JobTitle)
                     .Include(js => js.Country)
@@ -178,7 +179,12 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
                         Education = allEducations.ContainsKey(js.Id)
                             ? string.Join("; ", allEducations[js.Id])
                             : string.Empty,
-                        TestScoreSoftTech = js.CurrentAssessmentScore
+                        // The external AI API requires this field to be a valid float.
+                        // For unassessed candidates, we pass an average placeholder score (75) 
+                        // so the AI still evaluates them fairly based on their experience and skills,
+                        // without crashing or immediately discarding them with a 0.
+                        // The frontend knows they are unassessed via the separate IsAssessed flag.
+                        TestScoreSoftTech = js.CurrentAssessmentScore ?? 75m
                     }).ToList()
                 };
 
