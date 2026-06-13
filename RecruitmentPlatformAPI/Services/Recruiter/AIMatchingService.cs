@@ -264,7 +264,9 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
                 Id = job.Id,
                 Title = job.Title,
                 Description = job.Description,
-                MinYearsOfExperience = job.MinYearsOfExperience,
+                // Apply the exact same 1-year tolerance to the AI payload so the AI engine 
+                // doesn't internally hard-reject the candidates we just pre-filtered for it.
+                MinYearsOfExperience = Math.Max(0, job.MinYearsOfExperience - 1),
                 RequiredSkills = requiredSkillNames
             };
         }
