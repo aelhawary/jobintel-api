@@ -110,10 +110,25 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                     .Take(maxResults)
                     .ToListAsync();
 
+                // No cached recommendations for a brand-new job: return a friendly empty state
+                // instead of a hard 502, so the UI shows "Recommendations are being generated"
+                // rather than a generic error screen.
                 if (!recommendations.Any())
                 {
-                    return StatusCode(StatusCodes.Status502BadGateway,
-                        new ApiErrorResponse("AI matching engine is currently unavailable. Please try again later."));
+                    _logger.LogInformation(
+                        "No cached recommendations for Job {JobId}. AI is unavailable and no fallback data exists.",
+                        jobId);
+
+                    return Ok(new ApiResponse<CandidateMatchResponseDto>(new CandidateMatchResponseDto
+                    {
+                        JobId = job.Id,
+                        JobTitle = job.Title,
+                        JobTitleId = job.JobTitleId,
+                        JobTitleName = job.JobTitle?.TitleEn,
+                        TotalPreFiltered = 0,
+                        TotalMatched = 0,
+                        Candidates = new List<MatchedCandidateDto>()
+                    }, "AI matching engine is temporarily unavailable. Recommendations will appear once the service recovers."));
                 }
 
                 var recCandidateIds = recommendations.Select(r => r.JobSeekerId).ToList();
@@ -134,33 +149,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                 {
                     var js = rec.JobSeeker;
                     recSkills.TryGetValue(js.Id, out var skills);
-
-                    var matchedSkills = !string.IsNullOrEmpty(rec.MatchedSkillsJson)
-                        ? JsonSerializer.Deserialize<List<string>>(rec.MatchedSkillsJson) ?? new List<string>()
-                        : new List<string>();
-
-                    var missingSkills = !string.IsNullOrEmpty(rec.MissingSkillsJson)
-                        ? JsonSerializer.Deserialize<List<string>>(rec.MissingSkillsJson) ?? new List<string>()
-                        : new List<string>();
-
-                    return new MatchedCandidateDto
-                    {
-                        JobSeekerId = js.Id,
-                        FullName = $"{js.User.FirstName} {js.User.LastName}",
-                        ProfilePictureUrl = js.User.ProfilePictureUrl ?? _defaultProfilePictureUrl,
-                        JobTitle = js.JobTitle?.TitleEn,
-                        Bio = js.Bio,
-                        YearsOfExperience = js.YearsOfExperience,
-                        CountryName = js.Country?.NameEn,
-                        CityName = js.City?.NameEn,
-                        AssessmentScore = js.CurrentAssessmentScore,
-                        Skills = skills ?? new List<string>(),
-                        MatchScore = rec.MatchScore,
-                        MatchedSkills = matchedSkills,
-                        MissingSkills = missingSkills,
-                        AiReasoning = rec.AiReasoning,
-                        IsShortlisted = shortlistedIds.Contains(js.Id)
-                    };
+                    return MapToMatchedCandidateDto(js, rec, skills, shortlistedIds.Contains(js.Id), _defaultProfilePictureUrl);
                 }).ToList();
 
                 // Record search appearances for fallback candidates
@@ -225,24 +214,13 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
 
                 skillsByJobSeekerId.TryGetValue(candidateId, out var skills);
 
-                matchedCandidates.Add(new MatchedCandidateDto
-                {
-                    JobSeekerId = jobSeeker.Id,
-                    FullName = $"{jobSeeker.User.FirstName} {jobSeeker.User.LastName}",
-                    ProfilePictureUrl = jobSeeker.User.ProfilePictureUrl ?? _defaultProfilePictureUrl,
-                    JobTitle = jobSeeker.JobTitle?.TitleEn,
-                    Bio = jobSeeker.Bio,
-                    YearsOfExperience = jobSeeker.YearsOfExperience,
-                    CountryName = jobSeeker.Country?.NameEn,
-                    CityName = jobSeeker.City?.NameEn,
-                    AssessmentScore = jobSeeker.CurrentAssessmentScore,
-                    Skills = skills ?? new List<string>(),
-                    MatchScore = result.FinalScore,
-                    MatchedSkills = result.MatchedSkills,
-                    MissingSkills = result.MissingSkills,
-                    AiReasoning = result.Reason,
-                    IsShortlisted = aiShortlistedIds.Contains(jobSeeker.Id)
-                });
+                var dto = MapToMatchedCandidateDto(jobSeeker, null, skills, aiShortlistedIds.Contains(jobSeeker.Id), _defaultProfilePictureUrl);
+                // Override match data with AI-computed values
+                dto.MatchScore = result.FinalScore;
+                dto.MatchedSkills = result.MatchedSkills;
+                dto.MissingSkills = result.MissingSkills;
+                dto.AiReasoning = result.Reason;
+                matchedCandidates.Add(dto);
             }
 
             // Store recommendations in the database
@@ -525,33 +503,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
             {
                 skillsByJobSeekerId.TryGetValue(js.Id, out var skills);
                 recommendations.TryGetValue(js.Id, out var rec);
-
-                var matchedSkills = !string.IsNullOrEmpty(rec?.MatchedSkillsJson)
-                    ? JsonSerializer.Deserialize<List<string>>(rec.MatchedSkillsJson) ?? new List<string>()
-                    : new List<string>();
-
-                var missingSkills = !string.IsNullOrEmpty(rec?.MissingSkillsJson)
-                    ? JsonSerializer.Deserialize<List<string>>(rec.MissingSkillsJson) ?? new List<string>()
-                    : new List<string>();
-
-                matchedCandidates.Add(new MatchedCandidateDto
-                {
-                    JobSeekerId = js.Id,
-                    FullName = $"{js.User.FirstName} {js.User.LastName}",
-                    ProfilePictureUrl = js.User.ProfilePictureUrl ?? _defaultProfilePictureUrl,
-                    JobTitle = js.JobTitle?.TitleEn,
-                    Bio = js.Bio,
-                    YearsOfExperience = js.YearsOfExperience,
-                    CountryName = js.Country?.NameEn,
-                    CityName = js.City?.NameEn,
-                    AssessmentScore = js.CurrentAssessmentScore,
-                    Skills = skills ?? new List<string>(),
-                    MatchScore = rec?.MatchScore ?? 0,
-                    MatchedSkills = matchedSkills,
-                    MissingSkills = missingSkills,
-                    AiReasoning = rec?.AiReasoning,
-                    IsShortlisted = true
-                });
+                matchedCandidates.Add(MapToMatchedCandidateDto(js, rec, skills, isShortlisted: true, _defaultProfilePictureUrl));
             }
 
             return Ok(new ApiResponse<List<MatchedCandidateDto>>(matchedCandidates));
@@ -692,6 +644,47 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
             var start = startDate?.ToString("MMM yyyy", culture) ?? "Unknown";
             var end = isCurrent ? "Present" : endDate?.ToString("MMM yyyy", culture) ?? "Unknown";
             return $"{start} - {end}";
+        }
+
+        /// <summary>
+        /// Shared helper: maps a JobSeeker + optional cached Recommendation into a MatchedCandidateDto.
+        /// Centralises JSON deserialisation and DTO assembly that was previously duplicated in three places:
+        /// the AI-success path, the fallback path, and GetShortlistedCandidates.
+        /// </summary>
+        private static MatchedCandidateDto MapToMatchedCandidateDto(
+            Models.JobSeeker.JobSeeker js,
+            Models.Jobs.Recommendation? rec,
+            List<string>? skills,
+            bool isShortlisted,
+            string defaultPicUrl)
+        {
+            var matchedSkills = !string.IsNullOrEmpty(rec?.MatchedSkillsJson)
+                ? JsonSerializer.Deserialize<List<string>>(rec!.MatchedSkillsJson) ?? new List<string>()
+                : new List<string>();
+
+            var missingSkills = !string.IsNullOrEmpty(rec?.MissingSkillsJson)
+                ? JsonSerializer.Deserialize<List<string>>(rec!.MissingSkillsJson) ?? new List<string>()
+                : new List<string>();
+
+            return new MatchedCandidateDto
+            {
+                JobSeekerId     = js.Id,
+                FullName        = $"{js.User.FirstName} {js.User.LastName}",
+                ProfilePictureUrl = js.User.ProfilePictureUrl ?? defaultPicUrl,
+                JobTitle        = js.JobTitle?.TitleEn,
+                Bio             = js.Bio,
+                YearsOfExperience = js.YearsOfExperience,
+                CountryName     = js.Country?.NameEn,
+                CityName        = js.City?.NameEn,
+                AssessmentScore = js.CurrentAssessmentScore,
+                IsAssessed      = js.CurrentAssessmentScore.HasValue,
+                Skills          = skills ?? new List<string>(),
+                MatchScore      = rec?.MatchScore ?? 0,
+                MatchedSkills   = matchedSkills,
+                MissingSkills   = missingSkills,
+                AiReasoning     = rec?.AiReasoning,
+                IsShortlisted   = isShortlisted
+            };
         }
     }
 }

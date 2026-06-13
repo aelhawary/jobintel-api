@@ -149,6 +149,12 @@ namespace RecruitmentPlatformAPI.DTOs.Recruiter
         public string? AiReasoning { get; set; }
 
         public bool IsShortlisted { get; set; }
+
+        /// <summary>
+        /// Whether the candidate has completed the platform technical assessment.
+        /// False means they are visible but not yet assessed.
+        /// </summary>
+        public bool IsAssessed { get; set; }
     }
 
     /// <summary>

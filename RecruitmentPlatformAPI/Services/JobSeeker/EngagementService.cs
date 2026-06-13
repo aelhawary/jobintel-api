@@ -102,6 +102,9 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
 
         public async Task StoreRecommendationsAsync(int jobId, List<MatchedCandidateDto> candidates)
         {
+            // Use a serializable transaction to prevent race conditions when two recruiters
+            // load the same job's candidates simultaneously (delete-then-insert must be atomic).
+            using var tx = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             try
             {
                 // Remove existing recommendations for this job (idempotent re-run)
@@ -110,9 +113,7 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                     .ToListAsync();
 
                 if (existing.Any())
-                {
                     _context.Recommendations.RemoveRange(existing);
-                }
 
                 // Insert fresh recommendations from AI results
                 var recommendations = candidates.Select(c => new Recommendation
@@ -129,6 +130,7 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
 
                 _context.Recommendations.AddRange(recommendations);
                 await _context.SaveChangesAsync();
+                await tx.CommitAsync();
 
                 _logger.LogInformation(
                     "Stored {Count} recommendations for Job {JobId}",
@@ -136,6 +138,7 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
             }
             catch (Exception ex)
             {
+                await tx.RollbackAsync();
                 _logger.LogError(ex, "Failed to store recommendations for Job {JobId}", jobId);
             }
         }

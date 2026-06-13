@@ -16,7 +16,8 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
 
         private const string AI_API_URL = "https://alikhaled123-ai-recruitment-api.hf.space/api/recommend";
         private const string CACHE_KEY_PREFIX = "JobMatches_";
-        private static readonly TimeSpan CACHE_DURATION = TimeSpan.FromMinutes(30);
+        // 5-minute TTL balances data freshness (new candidates appear quickly) with API cost savings
+        private static readonly TimeSpan CACHE_DURATION = TimeSpan.FromMinutes(5);
 
         public AIMatchingService(
             AppDbContext context,
@@ -32,12 +33,12 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
 
         public async Task<AIMatchingResponse?> GetMatchesAsync(int jobId, int maxResults = 10)
         {
-            // ── Check cache first ──
-            var cacheKey = $"{CACHE_KEY_PREFIX}{jobId}";
+            // ── Check cache first (key includes maxResults to prevent wrong-count cache reuse) ──
+            var cacheKey = $"{CACHE_KEY_PREFIX}{jobId}_{maxResults}";
             if (_cache.TryGetValue(cacheKey, out CachedMatchResult? cached) && cached != null)
             {
-                _logger.LogInformation("Cache HIT for Job {JobId}. Returning cached AI match results ({Count} candidates).",
-                    jobId, cached.Response?.Results?.Count ?? 0);
+                _logger.LogInformation("Cache HIT for Job {JobId} (maxResults={MaxResults}). Returning {Count} cached candidates.",
+                    jobId, maxResults, cached.Response?.Results?.Count ?? 0);
                 return cached.Response;
             }
 
@@ -45,7 +46,7 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
 
             try
             {
-                // 1. Load the job with its skills
+                // 1. Load the job with its skills and title (to derive role family)
                 var job = await _context.Jobs
                     .Include(j => j.JobSkills).ThenInclude(js => js.Skill)
                     .Include(j => j.JobTitle)
@@ -61,8 +62,28 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
 
                 var requiredSkillNames = job.JobSkills.Select(js => js.Skill.Name).ToList();
 
-                // 2. Pre-filter candidates from our database
-                //    Criteria: has assessment score, years of experience >= min, user is active
+                // 2. Resolve all job title IDs that share the same RoleFamily as the job.
+                //    This allows, e.g., a "Backend Developer" job to consider "Full-Stack Developer"
+                //    and "Database Administrator" candidates — all in RoleFamily.Backend.
+                List<int>? roleFamilyTitleIds = null;
+                if (job.JobTitleId.HasValue && job.JobTitle != null)
+                {
+                    var targetFamily = job.JobTitle.RoleFamily;
+                    roleFamilyTitleIds = await _context.JobTitles
+                        .Where(jt => jt.RoleFamily == targetFamily && jt.IsActive)
+                        .Select(jt => jt.Id)
+                        .ToListAsync();
+
+                    _logger.LogInformation(
+                        "Job {JobId} (family={Family}): expanded title filter to {Count} related titles.",
+                        jobId, targetFamily, roleFamilyTitleIds.Count);
+                }
+
+                // 3. Pre-filter candidates:
+                //    - Active account
+                //    - Years of experience >= job minimum (±1 year tolerance)
+                //    - Job title within the same role family (if the job specifies a title)
+                //    - Assessment score is optional — unassessed candidates still participate
                 var preFilteredCandidates = await _context.JobSeekers
                     .Include(js => js.User)
                     .Include(js => js.JobTitle)
@@ -70,10 +91,9 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
                     .Include(js => js.City)
                     .Where(js =>
                         js.User.IsActive &&
-                        js.CurrentAssessmentScore != null &&
                         js.YearsOfExperience != null &&
-                        js.YearsOfExperience >= job.MinYearsOfExperience &&
-                        (!job.JobTitleId.HasValue || js.JobTitleId == job.JobTitleId))
+                        js.YearsOfExperience >= (job.MinYearsOfExperience - 1) &&
+                        (roleFamilyTitleIds == null || (js.JobTitleId.HasValue && roleFamilyTitleIds.Contains(js.JobTitleId.Value))))
                     .ToListAsync();
 
                 if (!preFilteredCandidates.Any())
