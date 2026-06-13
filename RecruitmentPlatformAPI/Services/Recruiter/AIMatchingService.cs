@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using RecruitmentPlatformAPI.Data;
 using RecruitmentPlatformAPI.DTOs.Recruiter;
+using RecruitmentPlatformAPI.Enums;
 
 namespace RecruitmentPlatformAPI.Services.Recruiter
 {
@@ -62,21 +63,40 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
 
                 var requiredSkillNames = job.JobSkills.Select(js => js.Skill.Name).ToList();
 
-                // 2. Resolve all job title IDs that share the same RoleFamily as the job.
-                //    This allows, e.g., a "Backend Developer" job to consider "Full-Stack Developer"
-                //    and "Database Administrator" candidates — all in RoleFamily.Backend.
+                // 2. Resolve all job title IDs that share the same RoleFamily as the job,
+                //    plus any closely related families.
+                //
+                //    Rationale: FullStack developers are universally considered for Backend AND
+                //    Frontend roles. Similarly, a FullStack job opening can accept pure Backend
+                //    or Frontend candidates. This map encodes those industry-standard overlaps.
                 List<int>? roleFamilyTitleIds = null;
                 if (job.JobTitleId.HasValue && job.JobTitle != null)
                 {
                     var targetFamily = job.JobTitle.RoleFamily;
+
+                    // Define which families are cross-eligible for each family.
+                    // A job in family X will also consider candidates from any family in this list.
+                    var relatedFamilies = new Dictionary<JobTitleRoleFamily, List<JobTitleRoleFamily>>
+                    {
+                        [JobTitleRoleFamily.Backend]   = new() { JobTitleRoleFamily.FullStack },
+                        [JobTitleRoleFamily.Frontend]  = new() { JobTitleRoleFamily.FullStack },
+                        [JobTitleRoleFamily.FullStack] = new() { JobTitleRoleFamily.Backend, JobTitleRoleFamily.Frontend },
+                        [JobTitleRoleFamily.DevOps]    = new() { JobTitleRoleFamily.Backend },
+                        [JobTitleRoleFamily.Data]      = new() { JobTitleRoleFamily.Backend },
+                    };
+
+                    var familiesToInclude = new HashSet<JobTitleRoleFamily> { targetFamily };
+                    if (relatedFamilies.TryGetValue(targetFamily, out var extras))
+                        foreach (var f in extras) familiesToInclude.Add(f);
+
                     roleFamilyTitleIds = await _context.JobTitles
-                        .Where(jt => jt.RoleFamily == targetFamily && jt.IsActive)
+                        .Where(jt => familiesToInclude.Contains(jt.RoleFamily) && jt.IsActive)
                         .Select(jt => jt.Id)
                         .ToListAsync();
 
                     _logger.LogInformation(
-                        "Job {JobId} (family={Family}): expanded title filter to {Count} related titles.",
-                        jobId, targetFamily, roleFamilyTitleIds.Count);
+                        "Job {JobId} (family={Family}): expanded title filter to {Count} related titles across {FamilyCount} families.",
+                        jobId, targetFamily, roleFamilyTitleIds.Count, familiesToInclude.Count);
                 }
 
                 // 3. Pre-filter candidates:
@@ -219,9 +239,15 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
 
         public Task InvalidateCacheAsync(int jobId)
         {
-            var cacheKey = $"{CACHE_KEY_PREFIX}{jobId}";
-            _cache.Remove(cacheKey);
-            _logger.LogInformation("Cache invalidated for Job {JobId}. Next request will re-fetch from AI API.", jobId);
+            // The cache key now includes maxResults (e.g. "JobMatches_5_10", "JobMatches_5_20").
+            // IMemoryCache has no wildcard removal, so we remove the most common maxResults values.
+            // This covers all practical cases without requiring a distributed cache.
+            var commonMaxResults = new[] { 5, 10, 15, 20, 25, 50 };
+            foreach (var n in commonMaxResults)
+            {
+                _cache.Remove($"{CACHE_KEY_PREFIX}{jobId}_{n}");
+            }
+            _logger.LogInformation("Cache invalidated for Job {JobId} (all maxResults variants).", jobId);
             return Task.CompletedTask;
         }
 
