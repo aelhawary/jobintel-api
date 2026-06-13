@@ -468,6 +468,95 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
             return Ok(new ApiResponse<RecruiterCandidateProfileDto>(profile));
         }
 
+        [HttpGet("jobs/{jobId}/candidates/shortlisted")]
+        [ProducesResponseType(typeof(ApiResponse<List<MatchedCandidateDto>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetShortlistedCandidates(int jobId)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+
+            var recruiter = await _context.Recruiters
+                .FirstOrDefaultAsync(r => r.UserId == userId);
+
+            if (recruiter == null)
+                return Forbid();
+
+            var job = await _context.Jobs
+                .FirstOrDefaultAsync(j => j.Id == jobId && j.RecruiterId == recruiter.Id);
+
+            if (job == null)
+                return NotFound(new ApiErrorResponse("Job not found or access denied."));
+
+            var shortlistedCandidateIds = await _context.ShortlistedCandidates
+                .Where(sc => sc.JobId == jobId && sc.RecruiterId == recruiter.Id)
+                .Select(sc => sc.JobSeekerId)
+                .ToListAsync();
+
+            if (!shortlistedCandidateIds.Any())
+                return Ok(new ApiResponse<List<MatchedCandidateDto>>(new List<MatchedCandidateDto>()));
+
+            var jobSeekers = await _context.JobSeekers
+                .Include(js => js.User)
+                .Include(js => js.JobTitle)
+                .Include(js => js.Country)
+                .Include(js => js.City)
+                .Where(js => shortlistedCandidateIds.Contains(js.Id))
+                .ToListAsync();
+
+            var skillsByJobSeekerId = await _context.JobSeekerSkills
+                .Where(jss => shortlistedCandidateIds.Contains(jss.JobSeekerId))
+                .Include(jss => jss.Skill)
+                .GroupBy(jss => jss.JobSeekerId)
+                .ToDictionaryAsync(
+                    g => g.Key,
+                    g => g.Select(jss => jss.Skill.Name).ToList());
+
+            var recommendations = await _context.Recommendations
+                .Where(r => r.JobId == jobId && shortlistedCandidateIds.Contains(r.JobSeekerId))
+                .ToDictionaryAsync(r => r.JobSeekerId);
+
+            var matchedCandidates = new List<MatchedCandidateDto>();
+
+            foreach (var js in jobSeekers)
+            {
+                skillsByJobSeekerId.TryGetValue(js.Id, out var skills);
+                recommendations.TryGetValue(js.Id, out var rec);
+
+                var matchedSkills = !string.IsNullOrEmpty(rec?.MatchedSkillsJson)
+                    ? JsonSerializer.Deserialize<List<string>>(rec.MatchedSkillsJson) ?? new List<string>()
+                    : new List<string>();
+
+                var missingSkills = !string.IsNullOrEmpty(rec?.MissingSkillsJson)
+                    ? JsonSerializer.Deserialize<List<string>>(rec.MissingSkillsJson) ?? new List<string>()
+                    : new List<string>();
+
+                matchedCandidates.Add(new MatchedCandidateDto
+                {
+                    JobSeekerId = js.Id,
+                    FullName = $"{js.User.FirstName} {js.User.LastName}",
+                    ProfilePictureUrl = js.User.ProfilePictureUrl ?? _defaultProfilePictureUrl,
+                    JobTitle = js.JobTitle?.TitleEn,
+                    Bio = js.Bio,
+                    YearsOfExperience = js.YearsOfExperience,
+                    CountryName = js.Country?.NameEn,
+                    CityName = js.City?.NameEn,
+                    AssessmentScore = js.CurrentAssessmentScore,
+                    Skills = skills ?? new List<string>(),
+                    MatchScore = rec?.MatchScore ?? 0,
+                    MatchedSkills = matchedSkills,
+                    MissingSkills = missingSkills,
+                    AiReasoning = rec?.AiReasoning,
+                    IsShortlisted = true
+                });
+            }
+
+            return Ok(new ApiResponse<List<MatchedCandidateDto>>(matchedCandidates));
+        }
+
         [HttpPost("jobs/{jobId}/candidates/{candidateId}/toggle-shortlist")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
