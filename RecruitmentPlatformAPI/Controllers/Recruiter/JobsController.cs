@@ -61,7 +61,8 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
         public async Task<IActionResult> GetMyJobs(
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10,
-            [FromQuery] bool? isActive = null)
+            [FromQuery] bool? isActive = null,
+            [FromQuery] string? search = null)
         {
             var userId = GetCurrentUserId();
             if (userId == 0) return Unauthorized(new ApiErrorResponse("User not authenticated"));
@@ -69,7 +70,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
             page = Math.Max(1, page);
             pageSize = Math.Clamp(pageSize, 1, 50);
 
-            var result = await _jobService.GetMyJobsAsync(userId, page, pageSize, isActive);
+            var result = await _jobService.GetMyJobsAsync(userId, page, pageSize, isActive, search);
             return MapJobResult(result, data => Ok(new ApiResponse<JobListResponseDto>(data, result.Message)));
         }
 

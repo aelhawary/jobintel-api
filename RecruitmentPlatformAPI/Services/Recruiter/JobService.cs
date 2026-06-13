@@ -291,7 +291,7 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
             }
         }
 
-        public async Task<JobServiceResult<JobListResponseDto>> GetMyJobsAsync(int userId, int page = 1, int pageSize = 10, bool? isActive = null)
+        public async Task<JobServiceResult<JobListResponseDto>> GetMyJobsAsync(int userId, int page = 1, int pageSize = 10, bool? isActive = null, string? search = null)
         {
             try
             {
@@ -302,6 +302,19 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
 
                 var query = _context.Jobs.Where(j => j.RecruiterId == recruiter.Id);
                 if (isActive.HasValue) query = query.Where(j => j.IsActive == isActive.Value);
+
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    search = search.Trim();
+                    if (int.TryParse(search, out int searchId))
+                    {
+                        query = query.Where(j => j.Id == searchId);
+                    }
+                    else
+                    {
+                        query = query.Where(j => j.Title.Contains(search) || (j.JobTitle != null && j.JobTitle.TitleEn.Contains(search)));
+                    }
+                }
 
                 var totalCount = await query.CountAsync();
                 var jobs = await query

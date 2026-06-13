@@ -36,7 +36,7 @@ namespace RecruitmentPlatformAPI.Services.Recruiter
         /// Get paginated list of jobs owned by the authenticated recruiter.
         /// Returns null if the user is not a recruiter.
         /// </summary>
-        Task<JobServiceResult<JobListResponseDto>> GetMyJobsAsync(int userId, int page = 1, int pageSize = 10, bool? isActive = null);
+        Task<JobServiceResult<JobListResponseDto>> GetMyJobsAsync(int userId, int page = 1, int pageSize = 10, bool? isActive = null, string? search = null);
 
         /// <summary>
         /// Get a specific job posting (own jobs only)
