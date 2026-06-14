@@ -21,6 +21,7 @@ namespace RecruitmentPlatformAPI.DTOs.Auth
         /// </summary>
         /// <example>SecurePass123!</example>
         [Required(ErrorMessage = "Password is required")]
+        [StringLength(100, MinimumLength = 1, ErrorMessage = "Password cannot exceed 100 characters")]
         public string Password { get; set; } = string.Empty;
     }
 }

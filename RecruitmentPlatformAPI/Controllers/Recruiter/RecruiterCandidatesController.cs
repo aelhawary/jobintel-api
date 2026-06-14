@@ -644,6 +644,9 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
         public async Task<IActionResult> DownloadCandidateResume(int jobId, int candidateId)
         {
             var userId = GetCurrentUserId();
+            if (userId == 0)
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+
             var recruiter = await _context.Recruiters.FirstOrDefaultAsync(r => r.UserId == userId);
             if (recruiter == null) return Forbid();
 

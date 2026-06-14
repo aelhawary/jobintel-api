@@ -454,6 +454,11 @@ namespace RecruitmentPlatformAPI.Data
                 b.ToTable("AssessmentQuestionsV2");
                 b.HasKey(q => q.Id);
                 b.HasIndex(q => new { q.SkillId, q.Difficulty, q.IsActive });
+
+                b.HasOne(q => q.Skill)
+                 .WithMany()
+                 .HasForeignKey(q => q.SkillId)
+                 .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<AssessmentAttemptV2>(b =>
@@ -464,6 +469,16 @@ namespace RecruitmentPlatformAPI.Data
                 b.Property(a => a.TechnicalScore).HasPrecision(5, 2);
                 b.Property(a => a.SoftSkillsScore).HasPrecision(5, 2);
                 b.HasIndex(a => new { a.JobSeekerId, a.Status, a.IsActive });
+
+                b.HasOne(a => a.JobSeeker)
+                 .WithMany()
+                 .HasForeignKey(a => a.JobSeekerId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasOne(a => a.JobTitle)
+                 .WithMany()
+                 .HasForeignKey(a => a.JobTitleId)
+                 .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<AssessmentAnswerV2>(b =>

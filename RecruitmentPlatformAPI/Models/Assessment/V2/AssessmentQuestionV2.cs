@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using RecruitmentPlatformAPI.Models.Reference;
 
 namespace RecruitmentPlatformAPI.Models.Assessment.V2
 {
@@ -38,5 +39,8 @@ namespace RecruitmentPlatformAPI.Models.Assessment.V2
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        // Navigation properties
+        public Skill? Skill { get; set; }
     }
 }

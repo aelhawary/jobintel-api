@@ -1,6 +1,8 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using RecruitmentPlatformAPI.Models.Reference;
+using JobSeekerModel = RecruitmentPlatformAPI.Models.JobSeeker.JobSeeker;
 
 namespace RecruitmentPlatformAPI.Models.Assessment.V2
 {
@@ -50,5 +52,9 @@ namespace RecruitmentPlatformAPI.Models.Assessment.V2
         public DateTime? ScoreExpiresAt { get; set; }
 
         public virtual ICollection<AssessmentAnswerV2> Answers { get; set; } = new List<AssessmentAnswerV2>();
+
+        // Navigation properties
+        public JobSeekerModel? JobSeeker { get; set; }
+        public JobTitle? JobTitle { get; set; }
     }
 }
