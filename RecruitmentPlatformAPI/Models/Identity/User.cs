@@ -61,5 +61,11 @@ namespace RecruitmentPlatformAPI.Models.Identity
         /// 3 = Projects, 4 = Skills and Social and Certificates (Complete)
         /// </summary>
         public int ProfileCompletionStep { get; set; } = 0;
+
+        /// <summary>
+        /// Tracks when the last weekly engagement digest email was sent to this user.
+        /// Used to prevent duplicate sends if the background service restarts on the same Monday.
+        /// </summary>
+        public DateTime? LastWeeklyDigestSentAt { get; set; }
     }
 }

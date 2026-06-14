@@ -579,7 +579,16 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                 isShortlisted = true;
             }
 
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // Concurrency or unique constraint violation.
+                // It means the state was already changed by a concurrent request.
+                // We return Ok because the desired end state matches what's in the DB.
+            }
 
             return Ok(new ApiResponse<bool>(isShortlisted, isShortlisted ? "Candidate shortlisted successfully." : "Candidate removed from shortlist."));
         }

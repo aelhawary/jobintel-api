@@ -41,6 +41,11 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                     existingQuery = existingQuery.Where(pv => pv.ViewerRecruiterId == recruiterId.Value);
                 }
 
+                if (jobId.HasValue)
+                {
+                    existingQuery = existingQuery.Where(pv => pv.JobId == jobId.Value);
+                }
+
                 var existingJobSeekerIds = await existingQuery
                     .Select(pv => pv.JobSeekerId)
                     .Distinct()
@@ -103,38 +108,52 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
         public async Task StoreRecommendationsAsync(int jobId, List<MatchedCandidateDto> candidates)
         {
             // Use a serializable transaction to prevent race conditions when two recruiters
-            // load the same job's candidates simultaneously (delete-then-insert must be atomic).
+            // load the same job's candidates simultaneously
             using var tx = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             try
             {
-                // Remove existing recommendations for this job (idempotent re-run)
                 var existing = await _context.Recommendations
                     .Where(r => r.JobId == jobId)
                     .ToListAsync();
 
-                if (existing.Any())
-                    _context.Recommendations.RemoveRange(existing);
+                var existingMap = existing.ToDictionary(r => r.JobSeekerId);
+                var toInsert = new List<Recommendation>();
 
-                // Insert fresh recommendations from AI results
-                var recommendations = candidates.Select(c => new Recommendation
+                foreach (var c in candidates)
                 {
-                    JobId = jobId,
-                    JobSeekerId = c.JobSeekerId,
-                    MatchScore = c.MatchScore,
-                    AiReasoning = c.AiReasoning,
-                    MatchedSkillsJson = JsonSerializer.Serialize(c.MatchedSkills),
-                    MissingSkillsJson = JsonSerializer.Serialize(c.MissingSkills),
-                    IsViewed = false,
-                    GeneratedAt = DateTime.UtcNow
-                }).ToList();
+                    if (existingMap.TryGetValue(c.JobSeekerId, out var existingRec))
+                    {
+                        existingRec.MatchScore = c.MatchScore;
+                        existingRec.AiReasoning = c.AiReasoning;
+                        existingRec.MatchedSkillsJson = JsonSerializer.Serialize(c.MatchedSkills);
+                        existingRec.MissingSkillsJson = JsonSerializer.Serialize(c.MissingSkills);
+                        existingRec.GeneratedAt = DateTime.UtcNow; // Update timestamp for new activity
+                    }
+                    else
+                    {
+                        toInsert.Add(new Recommendation
+                        {
+                            JobId = jobId,
+                            JobSeekerId = c.JobSeekerId,
+                            MatchScore = c.MatchScore,
+                            AiReasoning = c.AiReasoning,
+                            MatchedSkillsJson = JsonSerializer.Serialize(c.MatchedSkills),
+                            MissingSkillsJson = JsonSerializer.Serialize(c.MissingSkills),
+                            IsViewed = false,
+                            GeneratedAt = DateTime.UtcNow
+                        });
+                    }
+                }
 
-                _context.Recommendations.AddRange(recommendations);
+                if (toInsert.Any())
+                    _context.Recommendations.AddRange(toInsert);
+
                 await _context.SaveChangesAsync();
                 await tx.CommitAsync();
 
                 _logger.LogInformation(
-                    "Stored {Count} recommendations for Job {JobId}",
-                    recommendations.Count, jobId);
+                    "Stored/Updated {Count} recommendations for Job {JobId}",
+                    candidates.Count, jobId);
             }
             catch (Exception ex)
             {

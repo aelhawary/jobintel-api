@@ -656,82 +656,116 @@ namespace RecruitmentPlatformAPI.Services.Auth
             }
         }
 
-        public async Task<bool> SendWeeklyDigestAsync(string email, string firstName, int searchAppearances, int profileViews)
+        public async Task<bool> SendWeeklyDigestAsync(string email, string firstName, int searchAppearances, int profileViews, int recommendations)
         {
-            try
+            const string subject = "Your Weekly Job Intel Profile Stats";
+            var encodedName = System.Net.WebUtility.HtmlEncode(firstName);
+            var dashboardUrl = _emailSettings.ApplicationUrl;
+
+            var innerHtml = $"""
+                <h2 style="color:#1e293b;margin:0 0 20px 0;font-size:22px;text-align:center;font-weight:800;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;mso-line-height-rule:exactly;line-height:1.3;">
+                    Your Weekly Profile Stats
+                </h2>
+                <p style="color:#475569;font-size:15px;line-height:1.6;margin:0 0 12px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                    Hi <strong style="color:#1e293b;">{encodedName}</strong>,
+                </p>
+                <p style="color:#475569;font-size:15px;line-height:1.6;margin:0 0 28px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                    Here's how your profile performed on Job Intel this week. Keep your profile updated to increase your visibility to top recruiters.
+                </p>
+
+                <!-- Stats grid -->
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 28px 0;">
+                <tr>
+                    <td width="31%" style="background-color:#f8f5f2;border:1px solid #e2ddd6;padding:24px 16px;border-radius:12px;text-align:center;">
+                        <span style="display:block;font-size:32px;font-weight:800;color:#fa7b05;margin-bottom:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                            {searchAppearances}
+                        </span>
+                        <span style="display:block;color:#64748b;font-size:13px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                            Search Appearances
+                        </span>
+                    </td>
+                    <td width="3%"></td>
+                    <td width="31%" style="background-color:#f8f5f2;border:1px solid #e2ddd6;padding:24px 16px;border-radius:12px;text-align:center;">
+                        <span style="display:block;font-size:32px;font-weight:800;color:#10b981;margin-bottom:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                            {profileViews}
+                        </span>
+                        <span style="display:block;color:#64748b;font-size:13px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                            Profile Views
+                        </span>
+                    </td>
+                    <td width="3%"></td>
+                    <td width="31%" style="background-color:#f8f5f2;border:1px solid #e2ddd6;padding:24px 16px;border-radius:12px;text-align:center;">
+                        <span style="display:block;font-size:32px;font-weight:800;color:#8b5cf6;margin-bottom:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                            {recommendations}
+                        </span>
+                        <span style="display:block;color:#64748b;font-size:13px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                            AI Recommendations
+                        </span>
+                    </td>
+                </tr>
+                </table>
+
+                {PrimaryButton(dashboardUrl, "View Full Dashboard &rarr;")}
+
+                <p style="color:#64748b;font-size:13px;line-height:1.6;margin:20px 0 0 0;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                    Did you know? Completing your profile and adding new skills can increase your profile views by up to 300%.
+                </p>
+                """;
+
+            var textBody = $"""
+                Your Weekly Job Intel Profile Stats
+
+                Hi {firstName},
+
+                Here's how your profile performed on Job Intel this week:
+                - Search Appearances: {searchAppearances}
+                - Profile Views: {profileViews}
+                - AI Recommendations: {recommendations}
+
+                View your full dashboard: {dashboardUrl}
+
+                Keep your profile updated to increase your visibility to top recruiters.
+
+                Best regards,
+                The Job Intel Team
+                """;
+
+            // Retry up to 2 additional times for transient failures (3 total attempts)
+            for (int attempt = 0; attempt <= 2; attempt++)
             {
-                const string subject = "Your Weekly Job Intel Profile Stats";
-                var encodedName = System.Net.WebUtility.HtmlEncode(firstName);
-                var dashboardUrl = _emailSettings.ApplicationUrl;
+                try
+                {
+                    var sent = await SendEmailAsync(
+                        email, firstName, subject,
+                        GetEmailHtmlWrapper(innerHtml, $"Your profile had {searchAppearances} search appearances, {profileViews} profile views, and {recommendations} AI recommendations this week."),
+                        textBody);
 
-                var innerHtml = $"""
-                    <h2 style="color:#1e293b;margin:0 0 20px 0;font-size:22px;text-align:center;font-weight:800;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;mso-line-height-rule:exactly;line-height:1.3;">
-                        Your Weekly Profile Stats
-                    </h2>
-                    <p style="color:#475569;font-size:15px;line-height:1.6;margin:0 0 12px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-                        Hi <strong style="color:#1e293b;">{encodedName}</strong>,
-                    </p>
-                    <p style="color:#475569;font-size:15px;line-height:1.6;margin:0 0 28px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-                        Here's how your profile performed on Job Intel this week. Keep your profile updated to increase your visibility to top recruiters.
-                    </p>
+                    if (sent) return true;
 
-                    <!-- Stats grid -->
-                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 28px 0;">
-                    <tr>
-                        <td width="48%" style="background-color:#f8f5f2;border:1px solid #e2ddd6;padding:24px 20px;border-radius:12px;text-align:center;">
-                            <span style="display:block;font-size:32px;font-weight:800;color:#fa7b05;margin-bottom:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-                                {searchAppearances}
-                            </span>
-                            <span style="display:block;color:#64748b;font-size:14px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-                                AI Recommendations
-                            </span>
-                        </td>
-                        <td width="4%"></td>
-                        <td width="48%" style="background-color:#f8f5f2;border:1px solid #e2ddd6;padding:24px 20px;border-radius:12px;text-align:center;">
-                            <span style="display:block;font-size:32px;font-weight:800;color:#10b981;margin-bottom:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-                                {profileViews}
-                            </span>
-                            <span style="display:block;color:#64748b;font-size:14px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-                                Profile Views
-                            </span>
-                        </td>
-                    </tr>
-                    </table>
-
-                    {PrimaryButton(dashboardUrl, "View Full Dashboard &rarr;")}
-
-                    <p style="color:#64748b;font-size:13px;line-height:1.6;margin:20px 0 0 0;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-                        Did you know? Completing your profile and adding new skills can increase your profile views by up to 300%.
-                    </p>
-                    """;
-
-                var textBody = $"""
-                    Your Weekly Job Intel Profile Stats
-
-                    Hi {firstName},
-
-                    Here's how your profile performed on Job Intel this week:
-                    - Search Appearances: {searchAppearances}
-                    - Profile Views: {profileViews}
-
-                    View your full dashboard: {dashboardUrl}
-
-                    Keep your profile updated to increase your visibility to top recruiters.
-
-                    Best regards,
-                    The Job Intel Team
-                    """;
-
-                return await SendEmailAsync(
-                    email, firstName, subject,
-                    GetEmailHtmlWrapper(innerHtml, $"You were recommended by AI {searchAppearances} times this week."),
-                    textBody);
+                    if (attempt < 2)
+                    {
+                        _logger.LogWarning(
+                            "Weekly digest email to {Email} failed (attempt {Attempt}/3). Retrying in {Delay}s...",
+                            email, attempt + 1, (attempt + 1) * 2);
+                        await Task.Delay(TimeSpan.FromSeconds((attempt + 1) * 2));
+                    }
+                }
+                catch (Exception ex) when (attempt < 2)
+                {
+                    _logger.LogWarning(ex,
+                        "Weekly digest email to {Email} errored (attempt {Attempt}/3). Retrying...",
+                        email, attempt + 1);
+                    await Task.Delay(TimeSpan.FromSeconds((attempt + 1) * 2));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send weekly digest email to {Email} after 3 attempts", email);
+                    return false;
+                }
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to send weekly digest email to {Email}", email);
-                return false;
-            }
+
+            _logger.LogError("Failed to send weekly digest email to {Email} after 3 attempts", email);
+            return false;
         }
 
         // ────────────────────────────────────────────────────────────────
