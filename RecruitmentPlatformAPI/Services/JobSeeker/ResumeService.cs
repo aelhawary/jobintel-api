@@ -266,15 +266,58 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                 // 1) Personal Info (top-level fields on JobSeeker) — with validation
                 if (extractedData.JobTitleId.HasValue && extractedData.JobTitleId.Value > 0)
                     jobSeeker.JobTitleId = extractedData.JobTitleId;
+                int? calculatedYears = null;
+                if (extractedData.Experiences != null && extractedData.Experiences.Any())
+                {
+                    var intervals = extractedData.Experiences
+                        .Where(e => e.StartDate.HasValue)
+                        .Select(e => new 
+                        { 
+                            Start = e.StartDate!.Value, 
+                            End = e.IsCurrent ? DateTime.UtcNow : (e.EndDate ?? DateTime.UtcNow) 
+                        })
+                        .OrderBy(e => e.Start)
+                        .ToList();
+
+                    if (intervals.Any())
+                    {
+                        var merged = new List<(DateTime Start, DateTime End)>();
+                        var current = (Start: intervals[0].Start, End: intervals[0].End);
+                        
+                        for (int i = 1; i < intervals.Count; i++)
+                        {
+                            if (intervals[i].Start <= current.End)
+                            {
+                                current.End = new DateTime(Math.Max(current.End.Ticks, intervals[i].End.Ticks));
+                            }
+                            else
+                            {
+                                merged.Add(current);
+                                current = (Start: intervals[i].Start, End: intervals[i].End);
+                            }
+                        }
+                        merged.Add(current);
+
+                        double totalDays = merged.Sum(m => (m.End - m.Start).TotalDays);
+                        calculatedYears = (int)Math.Round(totalDays / 365.25);
+                    }
+                }
+
                 if (extractedData.YearsOfExperience.HasValue && extractedData.YearsOfExperience.Value >= 0 && extractedData.YearsOfExperience.Value <= 60)
+                {
                     jobSeeker.YearsOfExperience = extractedData.YearsOfExperience.Value;
+                }
+                else if (calculatedYears.HasValue && calculatedYears.Value >= 0 && calculatedYears.Value <= 60)
+                {
+                    jobSeeker.YearsOfExperience = calculatedYears.Value;
+                }
                 if (extractedData.CountryId.HasValue && extractedData.CountryId.Value > 0)
                     jobSeeker.CountryId = extractedData.CountryId;
                 if (extractedData.CityId.HasValue && extractedData.CityId.Value > 0)
                     jobSeeker.CityId = extractedData.CityId;
                 if (!string.IsNullOrWhiteSpace(extractedData.PhoneNumber))
                 {
-                    var phone = extractedData.PhoneNumber.Trim();
+                    var phone = System.Text.RegularExpressions.Regex.Replace(extractedData.PhoneNumber, @"[^\d+]", "");
                     if (phone.Length <= 20)
                         jobSeeker.PhoneNumber = phone;
                 }
@@ -313,7 +356,7 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                 // 3) Experiences — with validation, no silent drops.
                 // When country/city can't be matched from the LLM text, fall back to the
                 // user's personal country/city since it's usually correct for their career context.
-                if (extractedData.Experiences.Any())
+                if (extractedData.Experiences != null && extractedData.Experiences.Any())
                 {
                     for (int i = 0; i < extractedData.Experiences.Count; i++)
                     {
@@ -336,12 +379,12 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                         var exp = new Experience
                         {
                             JobSeekerId = jobSeeker.Id,
-                            JobTitle = !string.IsNullOrWhiteSpace(aiExp.JobTitle) ? aiExp.JobTitle : "Unknown Title",
-                            CompanyName = !string.IsNullOrWhiteSpace(aiExp.CompanyName) ? aiExp.CompanyName : "Unknown Company",
+                            JobTitle = !string.IsNullOrWhiteSpace(aiExp.JobTitle) ? TruncateString(aiExp.JobTitle, 100) : "Unknown Title",
+                            CompanyName = !string.IsNullOrWhiteSpace(aiExp.CompanyName) ? TruncateString(aiExp.CompanyName, 100) : "Unknown Company",
                             CountryId = finalCountryId,
                             CityId = finalCityId,
                             EmploymentType = aiExp.EmploymentType,
-                            Responsibilities = !string.IsNullOrWhiteSpace(aiExp.Responsibilities) ? aiExp.Responsibilities.Trim() : null,
+                            Responsibilities = !string.IsNullOrWhiteSpace(aiExp.Responsibilities) ? TruncateString(aiExp.Responsibilities.Trim(), 2000) : null,
                             StartDate = startDate,
                             EndDate = endDate,
                             IsCurrent = aiExp.IsCurrent,
@@ -372,11 +415,11 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                         var edu = new Education
                         {
                             JobSeekerId = jobSeeker.Id,
-                            Institution = !string.IsNullOrWhiteSpace(aiEdu.Institution) ? aiEdu.Institution : "Unknown Institution",
+                            Institution = !string.IsNullOrWhiteSpace(aiEdu.Institution) ? TruncateString(aiEdu.Institution, 150) : "Unknown Institution",
                             Degree = degreeEnum,
                             FieldOfStudyId = aiEdu.FieldOfStudyId,
-                            FieldOfStudyName = !string.IsNullOrWhiteSpace(aiEdu.FieldOfStudyName) ? aiEdu.FieldOfStudyName.Trim() : null,
-                            GradeOrGPA = !string.IsNullOrWhiteSpace(aiEdu.GradeOrGpa) ? aiEdu.GradeOrGpa.Trim() : null,
+                            FieldOfStudyName = !string.IsNullOrWhiteSpace(aiEdu.FieldOfStudyName) ? TruncateString(aiEdu.FieldOfStudyName.Trim(), 150) : null,
+                            GradeOrGPA = !string.IsNullOrWhiteSpace(aiEdu.GradeOrGpa) ? TruncateString(aiEdu.GradeOrGpa.Trim(), 50) : null,
                             StartDate = startDate,
                             EndDate = endDate,
                             IsCurrent = aiEdu.IsCurrent,
@@ -397,10 +440,10 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                         var proj = new Project
                         {
                             JobSeekerId = jobSeeker.Id,
-                            Title = !string.IsNullOrWhiteSpace(aiProj.Title) ? aiProj.Title : "Unknown Project",
-                            TechnologiesUsed = aiProj.TechnologiesUsed,
-                            Description = aiProj.Description,
-                            ProjectLink = aiProj.ProjectLink,
+                            Title = !string.IsNullOrWhiteSpace(aiProj.Title) ? TruncateString(aiProj.Title, 150) : "Unknown Project",
+                            TechnologiesUsed = !string.IsNullOrWhiteSpace(aiProj.TechnologiesUsed) ? TruncateString(aiProj.TechnologiesUsed, 300) : null,
+                            Description = !string.IsNullOrWhiteSpace(aiProj.Description) ? TruncateString(aiProj.Description, 1200) : null,
+                            ProjectLink = !string.IsNullOrWhiteSpace(aiProj.ProjectLink) ? TruncateString(aiProj.ProjectLink, 300) : null,
                             DisplayOrder = i,
                             CreatedAt = DateTime.UtcNow,
                             UpdatedAt = DateTime.UtcNow
@@ -434,11 +477,11 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
                     _context.SocialAccounts.Add(new SocialAccount
                     {
                         JobSeekerId = jobSeeker.Id,
-                        LinkedIn = extractedData.SocialAccounts.LinkedIn,
-                        Github = extractedData.SocialAccounts.Github,
-                        Behance = extractedData.SocialAccounts.Behance,
-                        Dribbble = extractedData.SocialAccounts.Dribbble,
-                        PersonalWebsite = extractedData.SocialAccounts.PersonalWebsite,
+                        LinkedIn = !string.IsNullOrWhiteSpace(extractedData.SocialAccounts.LinkedIn) ? TruncateString(extractedData.SocialAccounts.LinkedIn, 300) : null,
+                        Github = !string.IsNullOrWhiteSpace(extractedData.SocialAccounts.Github) ? TruncateString(extractedData.SocialAccounts.Github, 300) : null,
+                        Behance = !string.IsNullOrWhiteSpace(extractedData.SocialAccounts.Behance) ? TruncateString(extractedData.SocialAccounts.Behance, 300) : null,
+                        Dribbble = !string.IsNullOrWhiteSpace(extractedData.SocialAccounts.Dribbble) ? TruncateString(extractedData.SocialAccounts.Dribbble, 300) : null,
+                        PersonalWebsite = !string.IsNullOrWhiteSpace(extractedData.SocialAccounts.PersonalWebsite) ? TruncateString(extractedData.SocialAccounts.PersonalWebsite, 300) : null,
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow
                     });
@@ -482,6 +525,15 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
             }
 
             return truncated.Trim();
+        }
+
+        /// <summary>
+        /// Truncates a string to <paramref name="maxLength"/> characters.
+        /// </summary>
+        private static string TruncateString(string value, int maxLength)
+        {
+            if (string.IsNullOrEmpty(value)) return value;
+            return value.Length <= maxLength ? value : value[..maxLength];
         }
 
         /// <summary>

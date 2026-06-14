@@ -57,8 +57,8 @@ namespace RecruitmentPlatformAPI.Services
             normalized = normalized.Replace("ee", "i");
             normalized = normalized.Replace("oo", "u");
 
-            // Remove non-alphabetic characters (keep only a-z)
-            normalized = Regex.Replace(normalized, "[^a-z]", "");
+            // Remove non-alphanumeric characters (keep only a-z and 0-9)
+            normalized = Regex.Replace(normalized, "[^a-z0-9]", "");
 
             return normalized;
         }

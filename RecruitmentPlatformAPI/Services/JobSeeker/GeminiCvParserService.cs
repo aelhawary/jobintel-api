@@ -49,7 +49,7 @@ SCHEMA (return exactly this shape):
       ""countryName"": """",
       ""cityName"": """",
       ""employmentType"": ""FullTime|PartTime|Contract|Freelance|Internship"",
-      ""responsibilities"": ""comma-separated list of key responsibilities, max 2000 chars"",
+      ""responsibilities"": [""responsibility 1"", ""responsibility 2""],
       ""startDate"": ""YYYY-MM-DD"",
       ""endDate"": ""YYYY-MM-DD or null if current"",
       ""isCurrent"": false
@@ -86,7 +86,7 @@ SCHEMA (return exactly this shape):
 
 CRITICAL RULES:
 1. Output MUST be a raw JSON object. Do not include markdown fences or explanatory text.
-2. yearsOfExperience: Calculate accurately as an integer by summing total unique time worked across all valid work experiences, discounting concurrent/overlapping roles.
+2. yearsOfExperience: Extract the explicit total years of experience if mentioned. If not explicitly stated, return null (do NOT attempt to calculate it).
 3. bio: Write a 2-3 sentence professional summary BASED ONLY ON THE ACTUAL CV CONTENT. Do NOT invent skills, technologies, or qualifications that are not explicitly mentioned.
 4. skills: Extract ONLY specific technology/tool names (e.g. 'C#', 'ASP.NET Core', 'SQL Server', 'React'). Copy each skill name EXACTLY as written in the CV. Do NOT substitute related parent technologies. Do NOT extract: soft skills, conceptual patterns (Clean Architecture), or version numbers. Max 25 skills.
    IMPORTANT: Never hallucinate skills. Only extract a skill if you can point to the EXACT text in the CV that explicitly states it.
@@ -332,7 +332,7 @@ CRITICAL RULES:
                         CompanyName = exp.CompanyName,
                         CountryName = exp.CountryName,
                         CityName = exp.CityName,
-                        Responsibilities = exp.Responsibilities,
+                        Responsibilities = exp.Responsibilities != null ? string.Join("\n", exp.Responsibilities) : null,
                         IsCurrent = exp.IsCurrent ?? false
                     };
 
@@ -508,7 +508,7 @@ CRITICAL RULES:
             public string? CountryName { get; set; }
             public string? CityName { get; set; }
             public string? EmploymentType { get; set; }
-            public string? Responsibilities { get; set; }
+            public List<string>? Responsibilities { get; set; }
             public string? StartDate { get; set; }
             public string? EndDate { get; set; }
             public bool? IsCurrent { get; set; }
