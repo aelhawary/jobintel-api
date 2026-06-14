@@ -20,7 +20,7 @@ namespace RecruitmentPlatformAPI.Data.Seed
         {
             try
             {
-                var filePath = Path.Combine(basePath, "Data", "SeedData", "skills-1-400-with-aliases.json");
+                var filePath = Path.Combine(basePath, "Data", "SeedData", "skills.json");
                 if (!File.Exists(filePath))
                 {
                     logger.LogWarning("Skill seed file not found at {FilePath}", filePath);
