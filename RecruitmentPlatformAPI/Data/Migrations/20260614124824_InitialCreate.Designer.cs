@@ -9,11 +9,11 @@ using RecruitmentPlatformAPI.Data;
 
 #nullable disable
 
-namespace RecruitmentPlatformAPI.Migrations
+namespace RecruitmentPlatformAPI.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260614102735_AddV2AssessmentForeignKeys")]
-    partial class AddV2AssessmentForeignKeys
+    [Migration("20260614124824_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

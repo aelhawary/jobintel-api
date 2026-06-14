@@ -7,6 +7,7 @@ namespace RecruitmentPlatformAPI.Services.Auth
         Task<bool> SendPasswordResetLinkAsync(string email, string firstName, string resetToken);
         Task<bool> SendAccountLockedEmailAsync(string email, string firstName, DateTime lockoutEnd, string resetToken);
         Task<bool> SendWeeklyDigestAsync(string email, string firstName, int searchAppearances, int profileViews, int recommendations);
+        Task<bool> SendContactEmailAsync(string candidateEmail, string candidateFirstName, string recruiterFirstName, string recruiterLastName, string recruiterCompany, string jobTitle, string message);
         string GenerateVerificationCode();
         string GenerateSecureToken();
     }

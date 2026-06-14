@@ -808,5 +808,86 @@ namespace RecruitmentPlatformAPI.Services.Auth
                 .Replace('/', '_')
                 .TrimEnd('=');
         }
+
+        // ────────────────────────────────────────────────────────────────
+        //  Contact Candidate
+        // ────────────────────────────────────────────────────────────────
+
+        public async Task<bool> SendContactEmailAsync(
+            string candidateEmail, string candidateFirstName,
+            string recruiterFirstName, string recruiterLastName,
+            string recruiterCompany, string jobTitle, string message)
+        {
+            try
+            {
+                const string subject = "A Recruiter Wants to Connect with You on Job Intel";
+                var encodedCandidateName = System.Net.WebUtility.HtmlEncode(candidateFirstName);
+                var encodedRecruiterName = System.Net.WebUtility.HtmlEncode($"{recruiterFirstName} {recruiterLastName}");
+                var encodedCompany = System.Net.WebUtility.HtmlEncode(recruiterCompany);
+                var encodedJobTitle = System.Net.WebUtility.HtmlEncode(jobTitle);
+                var encodedMessage = System.Net.WebUtility.HtmlEncode(message);
+                var dashboardUrl = _emailSettings.FrontendUrl;
+
+                var innerHtml = $"""
+                    <p style="text-align:center;font-size:44px;margin:0 0 20px 0;" aria-hidden="true">&#9993;</p>
+                    <h2 style="color:#1e293b;margin:0 0 16px 0;font-size:22px;text-align:center;font-weight:800;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;mso-line-height-rule:exactly;line-height:1.3;">
+                        New Message from a Recruiter
+                    </h2>
+                    <p style="color:#475569;font-size:15px;line-height:1.6;margin:0 0 28px 0;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                        Hi <strong style="color:#1e293b;">{encodedCandidateName}</strong>,
+                    </p>
+                    <p style="color:#475569;font-size:15px;line-height:1.6;margin:0 0 28px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                        <strong style="color:#1e293b;">{encodedRecruiterName}</strong> from
+                        <strong style="color:#1e293b;">{encodedCompany}</strong> is interested in connecting
+                        with you regarding the <strong style="color:#fa7b05;">{encodedJobTitle}</strong> position.
+                    </p>
+
+                    <!-- Recruiter Message -->
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 28px 0;">
+                    <tr>
+                        <td style="background-color:#f8f5f2;border:1px solid #e2ddd6;border-left:4px solid #fa7b05;padding:24px 28px;border-radius:0 12px 12px 0;">
+                            <p style="color:#64748b;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 10px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                                Message from {encodedRecruiterName}
+                            </p>
+                            <p style="color:#1e293b;font-size:15px;line-height:1.65;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;white-space:pre-wrap;">{encodedMessage}</p>
+                        </td>
+                    </tr>
+                    </table>
+
+                    {WarningBox("<strong>Note:</strong>", "This message was sent through Job Intel. The recruiter's personal email is not shared.")}
+
+                    {PrimaryButton(dashboardUrl, "Open Job Intel &rarr;")}
+                    """;
+
+                var textBody = $"""
+                    Hi {candidateFirstName},
+
+                    {recruiterFirstName} {recruiterLastName} from {recruiterCompany} is interested in connecting with you regarding the {jobTitle} position.
+
+                    Message from {recruiterFirstName}:
+                    {message}
+
+                    ---
+                    This message was sent through Job Intel. The recruiter's personal email is not shared.
+
+                    Open Job Intel: {dashboardUrl}
+
+                    Need help? Contact us at {_emailSettings.SenderEmail}
+
+                    Best regards,
+                    The Job Intel Team
+                    """;
+
+                return await SendEmailAsync(
+                    candidateEmail, candidateFirstName, subject,
+                    GetEmailHtmlWrapper(innerHtml, $"{recruiterFirstName} {recruiterLastName} from {recruiterCompany} wants to connect with you about the {jobTitle} role."),
+                    textBody);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send contact email to {Email} from recruiter", candidateEmail);
+                return false;
+            }
+        }
     }
 }

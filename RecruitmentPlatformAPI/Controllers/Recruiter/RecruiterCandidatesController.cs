@@ -8,6 +8,7 @@ using RecruitmentPlatformAPI.DTOs.Common;
 using RecruitmentPlatformAPI.DTOs.Recruiter;
 using RecruitmentPlatformAPI.Services.Recruiter;
 using RecruitmentPlatformAPI.Services.JobSeeker;
+using RecruitmentPlatformAPI.Services.Auth;
 using RecruitmentPlatformAPI.Configuration;
 using Microsoft.Extensions.Options;
 using RecruitmentPlatformAPI.Models.Recruiter;
@@ -31,6 +32,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
 
         private readonly IAIMatchingService _aiMatchingService;
         private readonly IEngagementService _engagementService;
+        private readonly IEmailService _emailService;
         private readonly AppDbContext _context;
         private readonly ILogger<RecruiterCandidatesController> _logger;
         private readonly FileStorageSettings _fileSettings;
@@ -38,12 +40,14 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
         public RecruiterCandidatesController(
             IAIMatchingService aiMatchingService,
             IEngagementService engagementService,
+            IEmailService emailService,
             AppDbContext context,
             ILogger<RecruiterCandidatesController> logger,
             IOptions<FileStorageSettings> fileSettings)
         {
             _aiMatchingService = aiMatchingService;
             _engagementService = engagementService;
+            _emailService = emailService;
             _context = context;
             _logger = logger;
             _fileSettings = fileSettings.Value;
@@ -661,6 +665,71 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
 
             var stream = new FileStream(absolutePath, FileMode.Open, FileAccess.Read);
             return File(stream, resume.ContentType ?? "application/pdf", resume.FileName);
+        }
+
+        /// <summary>
+        /// Send a contact email to a candidate on behalf of the recruiter.
+        /// The email is sent through JobIntel's branded email service — the recruiter's personal email is never exposed.
+        /// </summary>
+        /// <param name="jobId">The job context (must belong to this recruiter)</param>
+        /// <param name="candidateId">The job seeker's ID</param>
+        /// <param name="dto">The message to send</param>
+        [HttpPost("jobs/{jobId}/candidates/{candidateId}/contact")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> ContactCandidate(int jobId, int candidateId, [FromBody] ContactCandidateRequestDto dto)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+                return Unauthorized(new ApiErrorResponse("User not authenticated"));
+
+            var recruiter = await _context.Recruiters
+                .Include(r => r.User)
+                .FirstOrDefaultAsync(r => r.UserId == userId);
+
+            if (recruiter == null)
+                return Forbid();
+
+            var job = await _context.Jobs
+                .FirstOrDefaultAsync(j => j.Id == jobId && j.RecruiterId == recruiter.Id);
+
+            if (job == null)
+                return NotFound(new ApiErrorResponse("Job not found or access denied."));
+
+            var jobSeeker = await _context.JobSeekers
+                .AsNoTracking()
+                .Include(js => js.User)
+                .Include(js => js.JobTitle)
+                .FirstOrDefaultAsync(js => js.Id == candidateId);
+
+            if (jobSeeker == null)
+                return NotFound(new ApiErrorResponse("Candidate not found."));
+
+            if (string.IsNullOrWhiteSpace(jobSeeker.User.Email))
+                return BadRequest(new ApiErrorResponse("Candidate has no email address on file."));
+
+            var jobTitle = job.Title ?? jobSeeker.JobTitle?.TitleEn ?? "the position";
+
+            var sent = await _emailService.SendContactEmailAsync(
+                jobSeeker.User.Email,
+                jobSeeker.User.FirstName,
+                recruiter.User.FirstName,
+                recruiter.User.LastName,
+                recruiter.CompanyName,
+                jobTitle,
+                dto.Message);
+
+            if (!sent)
+            {
+                _logger.LogWarning("Failed to send contact email to candidate {CandidateId} from recruiter {RecruiterId}", candidateId, recruiter.Id);
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiErrorResponse("Failed to send email. Please try again later."));
+            }
+
+            _logger.LogInformation("Recruiter {RecruiterId} contacted candidate {CandidateId} for job {JobId}", recruiter.Id, candidateId, jobId);
+            return Ok(new ApiResponse<bool>(true, "Message sent successfully."));
         }
 
         private static string FormatDateRange(DateTime startDate, DateTime? endDate, bool isCurrent, string lang = "en")

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace RecruitmentPlatformAPI.Migrations
+namespace RecruitmentPlatformAPI.Data.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -13,61 +13,6 @@ namespace RecruitmentPlatformAPI.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
-                name: "AssessmentAttemptsV2",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    JobSeekerId = table.Column<int>(type: "int", nullable: false),
-                    JobTitleId = table.Column<int>(type: "int", nullable: true),
-                    QuestionIdsJson = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ClaimedSkillIdsJson = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    TotalQuestions = table.Column<int>(type: "int", nullable: false),
-                    QuestionsAnswered = table.Column<int>(type: "int", nullable: false),
-                    ResumeCount = table.Column<int>(type: "int", nullable: false),
-                    TechnicalScore = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: false),
-                    SoftSkillsScore = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: false),
-                    OverallScore = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: false),
-                    TimeLimitMinutes = table.Column<int>(type: "int", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    RetakeNumber = table.Column<int>(type: "int", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    StartedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CompletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ScoreExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AssessmentAttemptsV2", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "AssessmentQuestionsV2",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    QuestionText = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Options = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CorrectAnswerIndex = table.Column<int>(type: "int", nullable: false),
-                    Explanation = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    SkillId = table.Column<int>(type: "int", nullable: false),
-                    Difficulty = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Category = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    RoleFamily = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    SeniorityLevel = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    TimePerQuestion = table.Column<int>(type: "int", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AssessmentQuestionsV2", x => x.Id);
-                });
-
             migrationBuilder.CreateTable(
                 name: "Country",
                 columns: table => new
@@ -142,6 +87,7 @@ namespace RecruitmentPlatformAPI.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Aliases = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -172,41 +118,12 @@ namespace RecruitmentPlatformAPI.Migrations
                     LockoutEnd = table.Column<DateTime>(type: "datetime2", nullable: true),
                     LockoutReason = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     LastSuccessfulLoginAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ProfileCompletionStep = table.Column<int>(type: "int", nullable: false)
+                    ProfileCompletionStep = table.Column<int>(type: "int", nullable: false),
+                    LastWeeklyDigestSentAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_User", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "AssessmentAnswersV2",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    AssessmentAttemptId = table.Column<int>(type: "int", nullable: false),
-                    QuestionId = table.Column<int>(type: "int", nullable: false),
-                    SelectedAnswerIndex = table.Column<int>(type: "int", nullable: true),
-                    IsCorrect = table.Column<bool>(type: "bit", nullable: false),
-                    TimeSpentSeconds = table.Column<int>(type: "int", nullable: false),
-                    AnsweredAt = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AssessmentAnswersV2", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_AssessmentAnswersV2_AssessmentAttemptsV2_AssessmentAttemptId",
-                        column: x => x.AssessmentAttemptId,
-                        principalTable: "AssessmentAttemptsV2",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_AssessmentAnswersV2_AssessmentQuestionsV2_QuestionId",
-                        column: x => x.QuestionId,
-                        principalTable: "AssessmentQuestionsV2",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -231,30 +148,30 @@ namespace RecruitmentPlatformAPI.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "AssessmentQuestion",
+                name: "AssessmentQuestionsV2",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    QuestionText = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    Category = table.Column<int>(type: "int", nullable: false),
-                    RoleFamily = table.Column<int>(type: "int", nullable: false),
-                    SkillId = table.Column<int>(type: "int", nullable: false),
-                    Difficulty = table.Column<int>(type: "int", nullable: false),
-                    SeniorityLevel = table.Column<int>(type: "int", nullable: false),
-                    Options = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                    QuestionText = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Options = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CorrectAnswerIndex = table.Column<int>(type: "int", nullable: false),
-                    TimePerQuestion = table.Column<int>(type: "int", nullable: true),
+                    Explanation = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    SkillId = table.Column<int>(type: "int", nullable: false),
+                    Difficulty = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Category = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RoleFamily = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    SeniorityLevel = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    TimePerQuestion = table.Column<int>(type: "int", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Explanation = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true)
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AssessmentQuestion", x => x.Id);
+                    table.PrimaryKey("PK_AssessmentQuestionsV2", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_AssessmentQuestion_Skills_SkillId",
+                        name: "FK_AssessmentQuestionsV2_Skills_SkillId",
                         column: x => x.SkillId,
                         principalTable: "Skills",
                         principalColumn: "Id",
@@ -416,42 +333,41 @@ namespace RecruitmentPlatformAPI.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "AssessmentAttempt",
+                name: "AssessmentAttemptsV2",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     JobSeekerId = table.Column<int>(type: "int", nullable: false),
-                    JobTitleId = table.Column<int>(type: "int", nullable: false),
-                    OverallScore = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: true),
-                    TechnicalScore = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: true),
-                    SoftSkillsScore = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: true),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    StartedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CompletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    TimeLimitMinutes = table.Column<int>(type: "int", nullable: false),
+                    JobTitleId = table.Column<int>(type: "int", nullable: true),
+                    QuestionIdsJson = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ClaimedSkillIdsJson = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     TotalQuestions = table.Column<int>(type: "int", nullable: false),
                     QuestionsAnswered = table.Column<int>(type: "int", nullable: false),
                     ResumeCount = table.Column<int>(type: "int", nullable: false),
-                    ExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ScoreExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    TechnicalScore = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: false),
+                    SoftSkillsScore = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: false),
+                    OverallScore = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: false),
+                    TimeLimitMinutes = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
                     RetakeNumber = table.Column<int>(type: "int", nullable: false),
-                    QuestionIdsJson = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    AlgorithmVersion = table.Column<int>(type: "int", nullable: false, defaultValue: 1),
-                    ClaimedSkillIdsJson = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true)
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    StartedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CompletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ScoreExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AssessmentAttempt", x => x.Id);
+                    table.PrimaryKey("PK_AssessmentAttemptsV2", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_AssessmentAttempt_JobSeekers_JobSeekerId",
+                        name: "FK_AssessmentAttemptsV2_JobSeekers_JobSeekerId",
                         column: x => x.JobSeekerId,
                         principalTable: "JobSeekers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_AssessmentAttempt_JobTitle_JobTitleId",
+                        name: "FK_AssessmentAttemptsV2_JobTitle_JobTitleId",
                         column: x => x.JobTitleId,
                         principalTable: "JobTitle",
                         principalColumn: "Id",
@@ -540,8 +456,8 @@ namespace RecruitmentPlatformAPI.Migrations
                     JobSeekerId = table.Column<int>(type: "int", nullable: false),
                     JobTitle = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     CompanyName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    CountryId = table.Column<int>(type: "int", nullable: false),
-                    CityId = table.Column<int>(type: "int", nullable: false),
+                    CountryId = table.Column<int>(type: "int", nullable: true),
+                    CityId = table.Column<int>(type: "int", nullable: true),
                     EmploymentType = table.Column<int>(type: "int", nullable: false),
                     StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EndDate = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -764,33 +680,33 @@ namespace RecruitmentPlatformAPI.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "AssessmentAnswer",
+                name: "AssessmentAnswersV2",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     AssessmentAttemptId = table.Column<int>(type: "int", nullable: false),
                     QuestionId = table.Column<int>(type: "int", nullable: false),
-                    SelectedAnswerIndex = table.Column<int>(type: "int", nullable: false),
+                    SelectedAnswerIndex = table.Column<int>(type: "int", nullable: true),
                     IsCorrect = table.Column<bool>(type: "bit", nullable: false),
                     TimeSpentSeconds = table.Column<int>(type: "int", nullable: false),
                     AnsweredAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AssessmentAnswer", x => x.Id);
+                    table.PrimaryKey("PK_AssessmentAnswersV2", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_AssessmentAnswer_AssessmentAttempt_AssessmentAttemptId",
+                        name: "FK_AssessmentAnswersV2_AssessmentAttemptsV2_AssessmentAttemptId",
                         column: x => x.AssessmentAttemptId,
-                        principalTable: "AssessmentAttempt",
+                        principalTable: "AssessmentAttemptsV2",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_AssessmentAnswer_AssessmentQuestion_QuestionId",
+                        name: "FK_AssessmentAnswersV2_AssessmentQuestionsV2_QuestionId",
                         column: x => x.QuestionId,
-                        principalTable: "AssessmentQuestion",
+                        principalTable: "AssessmentQuestionsV2",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -849,6 +765,40 @@ namespace RecruitmentPlatformAPI.Migrations
                         principalTable: "Jobs",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ShortlistedCandidate",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    JobId = table.Column<int>(type: "int", nullable: false),
+                    JobSeekerId = table.Column<int>(type: "int", nullable: false),
+                    RecruiterId = table.Column<int>(type: "int", nullable: false),
+                    ShortlistedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ShortlistedCandidate", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ShortlistedCandidate_JobSeekers_JobSeekerId",
+                        column: x => x.JobSeekerId,
+                        principalTable: "JobSeekers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ShortlistedCandidate_Jobs_JobId",
+                        column: x => x.JobId,
+                        principalTable: "Jobs",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ShortlistedCandidate_Recruiters_RecruiterId",
+                        column: x => x.RecruiterId,
+                        principalTable: "Recruiters",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.InsertData(
@@ -1113,17 +1063,6 @@ namespace RecruitmentPlatformAPI.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_AssessmentAnswer_Attempt_Question",
-                table: "AssessmentAnswer",
-                columns: new[] { "AssessmentAttemptId", "QuestionId" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AssessmentAnswer_QuestionId",
-                table: "AssessmentAnswer",
-                column: "QuestionId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_AssessmentAnswersV2_AssessmentAttemptId_QuestionId",
                 table: "AssessmentAnswersV2",
                 columns: new[] { "AssessmentAttemptId", "QuestionId" },
@@ -1135,51 +1074,14 @@ namespace RecruitmentPlatformAPI.Migrations
                 column: "QuestionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_AssessmentAttempt_JobSeeker_Active",
-                table: "AssessmentAttempt",
-                columns: new[] { "JobSeekerId", "IsActive" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AssessmentAttempt_JobSeeker_Status",
-                table: "AssessmentAttempt",
-                columns: new[] { "JobSeekerId", "Status", "StartedAt" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AssessmentAttempt_JobSeeker_Status_Unique",
-                table: "AssessmentAttempt",
-                columns: new[] { "JobSeekerId", "Status" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AssessmentAttempt_JobSeeker_Version_Status",
-                table: "AssessmentAttempt",
-                columns: new[] { "JobSeekerId", "AlgorithmVersion", "Status", "StartedAt" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AssessmentAttempt_JobTitleId",
-                table: "AssessmentAttempt",
-                column: "JobTitleId");
-
-            migrationBuilder.CreateIndex(
-                name: "UX_AssessmentAttempt_JobSeeker_InProgress",
-                table: "AssessmentAttempt",
-                column: "JobSeekerId",
-                unique: true,
-                filter: "[Status] = 1");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_AssessmentAttemptsV2_JobSeekerId_Status_IsActive",
                 table: "AssessmentAttemptsV2",
                 columns: new[] { "JobSeekerId", "Status", "IsActive" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_AssessmentQuestion_Filtering",
-                table: "AssessmentQuestion",
-                columns: new[] { "RoleFamily", "Category", "Difficulty", "SeniorityLevel", "IsActive" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AssessmentQuestion_SkillId",
-                table: "AssessmentQuestion",
-                column: "SkillId");
+                name: "IX_AssessmentAttemptsV2_JobTitleId",
+                table: "AssessmentAttemptsV2",
+                column: "JobTitleId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AssessmentQuestionsV2_SkillId_Difficulty_IsActive",
@@ -1386,6 +1288,22 @@ namespace RecruitmentPlatformAPI.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_ShortlistedCandidate_JobId_JobSeekerId",
+                table: "ShortlistedCandidate",
+                columns: new[] { "JobId", "JobSeekerId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ShortlistedCandidate_JobSeekerId",
+                table: "ShortlistedCandidate",
+                column: "JobSeekerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ShortlistedCandidate_RecruiterId",
+                table: "ShortlistedCandidate",
+                column: "RecruiterId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_SocialAccounts_JobSeekerId",
                 table: "SocialAccounts",
                 column: "JobSeekerId",
@@ -1401,9 +1319,6 @@ namespace RecruitmentPlatformAPI.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "AssessmentAnswer");
-
             migrationBuilder.DropTable(
                 name: "AssessmentAnswersV2");
 
@@ -1441,13 +1356,10 @@ namespace RecruitmentPlatformAPI.Migrations
                 name: "Resumes");
 
             migrationBuilder.DropTable(
+                name: "ShortlistedCandidate");
+
+            migrationBuilder.DropTable(
                 name: "SocialAccounts");
-
-            migrationBuilder.DropTable(
-                name: "AssessmentAttempt");
-
-            migrationBuilder.DropTable(
-                name: "AssessmentQuestion");
 
             migrationBuilder.DropTable(
                 name: "AssessmentAttemptsV2");

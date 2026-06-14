@@ -3,20 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RecruitmentPlatformAPI.Data;
 
 #nullable disable
 
-namespace RecruitmentPlatformAPI.Migrations
+namespace RecruitmentPlatformAPI.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260612193313_AddShortlistedCandidates")]
-    partial class AddShortlistedCandidates
+    partial class AppDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,201 +21,6 @@ namespace RecruitmentPlatformAPI.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("RecruitmentPlatformAPI.Models.Assessment.AssessmentAnswer", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("AnsweredAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("AssessmentAttemptId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsCorrect")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("QuestionId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SelectedAnswerIndex")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TimeSpentSeconds")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("QuestionId");
-
-                    b.HasIndex("AssessmentAttemptId", "QuestionId")
-                        .IsUnique()
-                        .HasDatabaseName("IX_AssessmentAnswer_Attempt_Question");
-
-                    b.ToTable("AssessmentAnswer", (string)null);
-                });
-
-            modelBuilder.Entity("RecruitmentPlatformAPI.Models.Assessment.AssessmentAttempt", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AlgorithmVersion")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(1);
-
-                    b.Property<string>("ClaimedSkillIdsJson")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("JobSeekerId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("JobTitleId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal?>("OverallScore")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
-
-                    b.Property<string>("QuestionIdsJson")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("QuestionsAnswered")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ResumeCount")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RetakeNumber")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("ScoreExpiresAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<decimal?>("SoftSkillsScore")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
-
-                    b.Property<DateTime>("StartedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<decimal?>("TechnicalScore")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
-
-                    b.Property<int>("TimeLimitMinutes")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TotalQuestions")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("JobSeekerId")
-                        .IsUnique()
-                        .HasDatabaseName("UX_AssessmentAttempt_JobSeeker_InProgress")
-                        .HasFilter("[Status] = 1");
-
-                    b.HasIndex("JobTitleId");
-
-                    b.HasIndex("JobSeekerId", "IsActive")
-                        .HasDatabaseName("IX_AssessmentAttempt_JobSeeker_Active");
-
-                    b.HasIndex("JobSeekerId", "Status")
-                        .HasDatabaseName("IX_AssessmentAttempt_JobSeeker_Status_Unique");
-
-                    b.HasIndex("JobSeekerId", "Status", "StartedAt")
-                        .HasDatabaseName("IX_AssessmentAttempt_JobSeeker_Status");
-
-                    b.HasIndex("JobSeekerId", "AlgorithmVersion", "Status", "StartedAt")
-                        .HasDatabaseName("IX_AssessmentAttempt_JobSeeker_Version_Status");
-
-                    b.ToTable("AssessmentAttempt", (string)null);
-                });
-
-            modelBuilder.Entity("RecruitmentPlatformAPI.Models.Assessment.AssessmentQuestion", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Category")
-                        .HasColumnType("int");
-
-                    b.Property<int>("CorrectAnswerIndex")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Difficulty")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Explanation")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Options")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<string>("QuestionText")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("RoleFamily")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SeniorityLevel")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SkillId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("TimePerQuestion")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SkillId");
-
-                    b.HasIndex("RoleFamily", "Category", "Difficulty", "SeniorityLevel", "IsActive")
-                        .HasDatabaseName("IX_AssessmentQuestion_Filtering");
-
-                    b.ToTable("AssessmentQuestion", (string)null);
-                });
 
             modelBuilder.Entity("RecruitmentPlatformAPI.Models.Assessment.V2.AssessmentAnswerV2", b =>
                 {
@@ -324,6 +126,8 @@ namespace RecruitmentPlatformAPI.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("JobTitleId");
 
                     b.HasIndex("JobSeekerId", "Status", "IsActive");
 
@@ -499,6 +303,9 @@ namespace RecruitmentPlatformAPI.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime?>("LastSuccessfulLoginAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LastWeeklyDigestSentAt")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("LockoutEnd")
@@ -4024,55 +3831,6 @@ namespace RecruitmentPlatformAPI.Migrations
                     b.ToTable("Skills");
                 });
 
-            modelBuilder.Entity("RecruitmentPlatformAPI.Models.Assessment.AssessmentAnswer", b =>
-                {
-                    b.HasOne("RecruitmentPlatformAPI.Models.Assessment.AssessmentAttempt", "AssessmentAttempt")
-                        .WithMany("Answers")
-                        .HasForeignKey("AssessmentAttemptId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("RecruitmentPlatformAPI.Models.Assessment.AssessmentQuestion", "Question")
-                        .WithMany()
-                        .HasForeignKey("QuestionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("AssessmentAttempt");
-
-                    b.Navigation("Question");
-                });
-
-            modelBuilder.Entity("RecruitmentPlatformAPI.Models.Assessment.AssessmentAttempt", b =>
-                {
-                    b.HasOne("RecruitmentPlatformAPI.Models.JobSeeker.JobSeeker", "JobSeeker")
-                        .WithMany("AssessmentAttempts")
-                        .HasForeignKey("JobSeekerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("RecruitmentPlatformAPI.Models.Reference.JobTitle", "JobTitle")
-                        .WithMany()
-                        .HasForeignKey("JobTitleId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("JobSeeker");
-
-                    b.Navigation("JobTitle");
-                });
-
-            modelBuilder.Entity("RecruitmentPlatformAPI.Models.Assessment.AssessmentQuestion", b =>
-                {
-                    b.HasOne("RecruitmentPlatformAPI.Models.Reference.Skill", "Skill")
-                        .WithMany()
-                        .HasForeignKey("SkillId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Skill");
-                });
-
             modelBuilder.Entity("RecruitmentPlatformAPI.Models.Assessment.V2.AssessmentAnswerV2", b =>
                 {
                     b.HasOne("RecruitmentPlatformAPI.Models.Assessment.V2.AssessmentAttemptV2", "AssessmentAttempt")
@@ -4090,6 +3848,35 @@ namespace RecruitmentPlatformAPI.Migrations
                     b.Navigation("AssessmentAttempt");
 
                     b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("RecruitmentPlatformAPI.Models.Assessment.V2.AssessmentAttemptV2", b =>
+                {
+                    b.HasOne("RecruitmentPlatformAPI.Models.JobSeeker.JobSeeker", "JobSeeker")
+                        .WithMany()
+                        .HasForeignKey("JobSeekerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RecruitmentPlatformAPI.Models.Reference.JobTitle", "JobTitle")
+                        .WithMany()
+                        .HasForeignKey("JobTitleId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("JobSeeker");
+
+                    b.Navigation("JobTitle");
+                });
+
+            modelBuilder.Entity("RecruitmentPlatformAPI.Models.Assessment.V2.AssessmentQuestionV2", b =>
+                {
+                    b.HasOne("RecruitmentPlatformAPI.Models.Reference.Skill", "Skill")
+                        .WithMany()
+                        .HasForeignKey("SkillId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Skill");
                 });
 
             modelBuilder.Entity("RecruitmentPlatformAPI.Models.Identity.EmailVerification", b =>
@@ -4417,19 +4204,9 @@ namespace RecruitmentPlatformAPI.Migrations
                     b.Navigation("Country");
                 });
 
-            modelBuilder.Entity("RecruitmentPlatformAPI.Models.Assessment.AssessmentAttempt", b =>
-                {
-                    b.Navigation("Answers");
-                });
-
             modelBuilder.Entity("RecruitmentPlatformAPI.Models.Assessment.V2.AssessmentAttemptV2", b =>
                 {
                     b.Navigation("Answers");
-                });
-
-            modelBuilder.Entity("RecruitmentPlatformAPI.Models.JobSeeker.JobSeeker", b =>
-                {
-                    b.Navigation("AssessmentAttempts");
                 });
 
             modelBuilder.Entity("RecruitmentPlatformAPI.Models.Jobs.Job", b =>
