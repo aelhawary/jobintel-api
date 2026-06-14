@@ -52,6 +52,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
         /// <param name="page">Page number (default: 1)</param>
         /// <param name="pageSize">Items per page (default: 10, max: 50)</param>
         /// <param name="isActive">Filter: true = active only, false = inactive only, omit = all</param>
+        /// <param name="search">Free-text search filter for job title or company name</param>
         [HttpGet]
         [ProducesResponseType(typeof(ApiResponse<JobListResponseDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]

@@ -9,7 +9,6 @@ using RecruitmentPlatformAPI.Services;
 using RecruitmentPlatformAPI.Services.Auth;
 using RecruitmentPlatformAPI.Services.JobSeeker;
 using RecruitmentPlatformAPI.Services.Recruiter;
-using RecruitmentPlatformAPI.Services.Assessment;
 using RecruitmentPlatformAPI.Services.Assessment.V2;
 using RecruitmentPlatformAPI.Services.Assessment.LlmGeneration;
 
@@ -158,8 +157,6 @@ builder.Services.AddScoped<ICertificateService, CertificateService>();
 builder.Services.AddScoped<IJobSeekerSkillService, JobSeekerSkillService>();
 builder.Services.AddScoped<IEngagementService, EngagementService>();
 builder.Services.AddScoped<IAIMatchingService, AIMatchingService>();
-builder.Services.AddScoped<IAssessmentService, AssessmentService>();
-
 // Background Services
 builder.Services.AddHostedService<WeeklyEngagementDigestService>();
 

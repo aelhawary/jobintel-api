@@ -5,7 +5,6 @@ using RecruitmentPlatformAPI.Models.JobSeeker;
 using RecruitmentPlatformAPI.Models.Recruiter;
 using RecruitmentPlatformAPI.Models.Reference;
 using RecruitmentPlatformAPI.Models.Jobs;
-using RecruitmentPlatformAPI.Models.Assessment;
 using RecruitmentPlatformAPI.Enums;
 
 using RecruitmentPlatformAPI.Models.Assessment.V2;
@@ -39,11 +38,6 @@ namespace RecruitmentPlatformAPI.Data
         public DbSet<Language> Languages { get; set; }
         public DbSet<FieldOfStudy> FieldsOfStudy { get; set; }
         
-        // Assessment Quiz Models
-        public DbSet<AssessmentQuestion> AssessmentQuestions { get; set; }
-        public DbSet<AssessmentAttempt> AssessmentAttempts { get; set; }
-        public DbSet<AssessmentAnswer> AssessmentAnswers { get; set; }
-
         // Assessment V2 Models
         public DbSet<AssessmentQuestionV2> AssessmentQuestionsV2 { get; set; }
         public DbSet<AssessmentAttemptV2> AssessmentAttemptsV2 { get; set; }
@@ -454,114 +448,6 @@ namespace RecruitmentPlatformAPI.Data
             // Seed reference data using dedicated seed classes
             modelBuilder.Entity<JobTitle>().HasData(JobTitleSeed.GetJobTitles());
 
-            // ============= Assessment Quiz Configuration =============
-            
-            // AssessmentQuestion
-            modelBuilder.Entity<AssessmentQuestion>(b =>
-            {
-                b.ToTable("AssessmentQuestion");
-                b.HasKey(q => q.Id);
-                
-                // Store enums as int in database
-                b.Property(q => q.Category)
-                 .HasConversion<int>();
-                
-                b.Property(q => q.Difficulty)
-                 .HasConversion<int>();
-                
-                b.Property(q => q.SeniorityLevel)
-                 .HasConversion<int>();
-                
-                b.Property(q => q.RoleFamily)
-                 .HasConversion<int>();
-                
-                // Index for efficient question filtering by role family, category, difficulty, seniority
-                b.HasIndex(q => new { q.RoleFamily, q.Category, q.Difficulty, q.SeniorityLevel, q.IsActive })
-                 .HasDatabaseName("IX_AssessmentQuestion_Filtering");
-                
-                // Relationship with Skill (nullable for soft skills)
-                b.HasOne(q => q.Skill)
-                 .WithMany()
-                 .HasForeignKey(q => q.SkillId)
-                 .OnDelete(DeleteBehavior.Restrict);
-            });
-            
-            // AssessmentAttempt
-            modelBuilder.Entity<AssessmentAttempt>(b =>
-            {
-                b.ToTable("AssessmentAttempt");
-                b.HasKey(a => a.Id);
-                
-                // Store enum as int
-                b.Property(a => a.Status)
-                 .HasConversion<int>();
-                
-                // Precision for scores
-                b.Property(a => a.OverallScore).HasPrecision(5, 2);
-                b.Property(a => a.TechnicalScore).HasPrecision(5, 2);
-                b.Property(a => a.SoftSkillsScore).HasPrecision(5, 2);
-
-                b.Property(a => a.AlgorithmVersion)
-                 .HasDefaultValue(1);
-
-                b.Property(a => a.ClaimedSkillIdsJson)
-                 .HasMaxLength(1000);
-                
-                // Relationships
-                b.HasOne(a => a.JobSeeker)
-                 .WithMany(j => j.AssessmentAttempts)
-                 .HasForeignKey(a => a.JobSeekerId)
-                 .OnDelete(DeleteBehavior.Cascade);
-                
-                b.HasOne(a => a.JobTitle)
-                 .WithMany()
-                 .HasForeignKey(a => a.JobTitleId)
-                 .OnDelete(DeleteBehavior.Restrict);
-                
-                // Indexes for efficient queries
-                b.HasIndex(a => new { a.JobSeekerId, a.IsActive })
-                 .HasDatabaseName("IX_AssessmentAttempt_JobSeeker_Active");
-                
-                b.HasIndex(a => new { a.JobSeekerId, a.Status, a.StartedAt })
-                 .HasDatabaseName("IX_AssessmentAttempt_JobSeeker_Status");
-
-                b.HasIndex(a => new { a.JobSeekerId, a.AlgorithmVersion, a.Status, a.StartedAt })
-                 .HasDatabaseName("IX_AssessmentAttempt_JobSeeker_Version_Status");
-
-                // Enforce at most one in-progress attempt per job seeker across all versions.
-                b.HasIndex(a => a.JobSeekerId)
-                 .HasDatabaseName("UX_AssessmentAttempt_JobSeeker_InProgress")
-                 .IsUnique()
-                 .HasFilter($"[{nameof(AssessmentAttempt.Status)}] = {(int)AssessmentStatus.InProgress}");
-                
-                // Ensure only one in-progress assessment per job seeker at a time.
-                // Application logic enforces the in-progress constraint.
-                b.HasIndex(a => new { a.JobSeekerId, a.Status })
-                 .HasDatabaseName("IX_AssessmentAttempt_JobSeeker_Status_Unique");
-            });
-            
-            // AssessmentAnswer
-            modelBuilder.Entity<AssessmentAnswer>(b =>
-            {
-                b.ToTable("AssessmentAnswer");
-                b.HasKey(a => a.Id);
-                
-                // Relationships
-                b.HasOne(a => a.AssessmentAttempt)
-                 .WithMany(at => at.Answers)
-                 .HasForeignKey(a => a.AssessmentAttemptId)
-                 .OnDelete(DeleteBehavior.Cascade);
-                
-                b.HasOne(a => a.Question)
-                 .WithMany()
-                 .HasForeignKey(a => a.QuestionId)
-                 .OnDelete(DeleteBehavior.Restrict);
-                
-                // Ensure one answer per question per attempt
-                b.HasIndex(a => new { a.AssessmentAttemptId, a.QuestionId })
-                 .IsUnique()
-                 .HasDatabaseName("IX_AssessmentAnswer_Attempt_Question");
-            });
             // ============= Assessment V2 Configuration =============
             modelBuilder.Entity<AssessmentQuestionV2>(b =>
             {

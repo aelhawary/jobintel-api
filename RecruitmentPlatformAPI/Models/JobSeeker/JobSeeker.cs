@@ -1,7 +1,6 @@
 using RecruitmentPlatformAPI.Enums;
 using RecruitmentPlatformAPI.Models.Identity;
 using RecruitmentPlatformAPI.Models.Reference;
-using RecruitmentPlatformAPI.Models.Assessment;
 using System.ComponentModel.DataAnnotations;
 
 namespace RecruitmentPlatformAPI.Models.JobSeeker
@@ -64,8 +63,6 @@ namespace RecruitmentPlatformAPI.Models.JobSeeker
         public JobTitle? JobTitle { get; set; }
         public Language? FirstLanguage { get; set; }
         public Language? SecondLanguage { get; set; }
-        public ICollection<AssessmentAttempt> AssessmentAttempts { get; set; } = new List<AssessmentAttempt>();
-        
         // Note: ProfilePictureUrl is now stored in User table only (single source of truth)
     }
 }
