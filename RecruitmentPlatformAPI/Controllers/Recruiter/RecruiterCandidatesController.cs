@@ -11,6 +11,7 @@ using RecruitmentPlatformAPI.Services.JobSeeker;
 using RecruitmentPlatformAPI.Configuration;
 using Microsoft.Extensions.Options;
 using RecruitmentPlatformAPI.Models.Recruiter;
+using RecruitmentPlatformAPI.Models.Reference;
 
 namespace RecruitmentPlatformAPI.Controllers.Recruiter
 {
@@ -68,6 +69,8 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
             var userId = GetCurrentUserId();
             if (userId == 0)
                 return Unauthorized(new ApiErrorResponse("User not authenticated"));
+
+            var lang = GetLanguage(HttpContext);
 
             // Verify the job belongs to this recruiter
             var recruiter = await _context.Recruiters
@@ -149,7 +152,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                 {
                     var js = rec.JobSeeker;
                     recSkills.TryGetValue(js.Id, out var skills);
-                    return MapToMatchedCandidateDto(js, rec, skills, shortlistedIds.Contains(js.Id), _defaultProfilePictureUrl);
+                    return MapToMatchedCandidateDto(js, rec, skills, shortlistedIds.Contains(js.Id), _defaultProfilePictureUrl, lang);
                 }).ToList();
 
                 // Record search appearances for fallback candidates
@@ -214,7 +217,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
 
                 skillsByJobSeekerId.TryGetValue(candidateId, out var skills);
 
-                var dto = MapToMatchedCandidateDto(jobSeeker, null, skills, aiShortlistedIds.Contains(jobSeeker.Id), _defaultProfilePictureUrl);
+                var dto = MapToMatchedCandidateDto(jobSeeker, null, skills, aiShortlistedIds.Contains(jobSeeker.Id), _defaultProfilePictureUrl, lang);
                 
                 // Override match data with AI-computed values
                 var aiScore = result.FinalScore;
@@ -277,6 +280,8 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
             var userId = GetCurrentUserId();
             if (userId == 0)
                 return Unauthorized(new ApiErrorResponse("User not authenticated"));
+
+            var lang = GetLanguage(HttpContext);
 
             var recruiter = await _context.Recruiters
                 .FirstOrDefaultAsync(r => r.UserId == userId);
@@ -363,18 +368,18 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                 Bio = jobSeeker.Bio,
 
                 JobTitleId = jobSeeker.JobTitleId,
-                JobTitle = jobSeeker.JobTitle?.TitleEn,
+                JobTitle = LocalizeTitle(jobSeeker.JobTitle?.TitleEn, jobSeeker.JobTitle?.TitleAr, lang),
                 YearsOfExperience = jobSeeker.YearsOfExperience,
 
                 CountryId = jobSeeker.CountryId,
-                Country = jobSeeker.Country?.NameEn,
+                Country = Localize(jobSeeker.Country?.NameEn, jobSeeker.Country?.NameAr, lang),
                 CountryCode = jobSeeker.Country?.CountryCode,
                 CityId = jobSeeker.CityId,
-                City = jobSeeker.City?.NameEn,
+                City = Localize(jobSeeker.City?.NameEn, jobSeeker.City?.NameAr, lang),
 
-                FirstLanguage = jobSeeker.FirstLanguage?.NameEn,
+                FirstLanguage = Localize(jobSeeker.FirstLanguage?.NameEn, jobSeeker.FirstLanguage?.NameAr, lang),
                 FirstLanguageProficiency = jobSeeker.FirstLanguageProficiency?.ToString(),
-                SecondLanguage = jobSeeker.SecondLanguage?.NameEn,
+                SecondLanguage = Localize(jobSeeker.SecondLanguage?.NameEn, jobSeeker.SecondLanguage?.NameAr, lang),
                 SecondLanguageProficiency = jobSeeker.SecondLanguageProficiency?.ToString(),
 
                 WorkPreferences = jobSeeker.WorkPreferences ?? new(),
@@ -395,14 +400,14 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                     Id = e.Id,
                     JobTitle = e.JobTitle,
                     CompanyName = e.CompanyName,
-                    Country = e.Country?.NameEn,
-                    City = e.City?.NameEn,
+                    Country = Localize(e.Country?.NameEn, e.Country?.NameAr, lang),
+                    City = Localize(e.City?.NameEn, e.City?.NameAr, lang),
                     EmploymentType = e.EmploymentType,
                     StartDate = e.StartDate,
                     EndDate = e.EndDate,
                     IsCurrent = e.IsCurrent,
                     Responsibilities = e.Responsibilities,
-                    DateRange = FormatDateRange(e.StartDate, e.EndDate, e.IsCurrent)
+                    DateRange = FormatDateRange(e.StartDate, e.EndDate, e.IsCurrent, lang)
                 }).ToList(),
 
                 Educations = educations.Select(e => new RecruiterCandidateEducationDto
@@ -410,12 +415,12 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                     Id = e.Id,
                     Institution = e.Institution,
                     Degree = e.Degree,
-                    FieldOfStudy = e.FieldOfStudy?.NameEn ?? e.FieldOfStudyName,
+                    FieldOfStudy = Localize(e.FieldOfStudy?.NameEn, e.FieldOfStudy?.NameAr, lang) ?? e.FieldOfStudyName,
                     GradeOrGPA = e.GradeOrGPA,
                     StartDate = e.StartDate,
                     EndDate = e.EndDate,
                     IsCurrent = e.IsCurrent,
-                    DateRange = FormatDateRange(e.StartDate, e.EndDate, e.IsCurrent)
+                    DateRange = FormatDateRange(e.StartDate, e.EndDate, e.IsCurrent, lang)
                 }).ToList(),
 
                 Projects = projects.Select(p => new RecruiterCandidateProjectDto
@@ -471,6 +476,8 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
             if (userId == 0)
                 return Unauthorized(new ApiErrorResponse("User not authenticated"));
 
+            var lang = GetLanguage(HttpContext);
+
             var recruiter = await _context.Recruiters
                 .FirstOrDefaultAsync(r => r.UserId == userId);
 
@@ -518,7 +525,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
             {
                 skillsByJobSeekerId.TryGetValue(js.Id, out var skills);
                 recommendations.TryGetValue(js.Id, out var rec);
-                matchedCandidates.Add(MapToMatchedCandidateDto(js, rec, skills, isShortlisted: true, _defaultProfilePictureUrl));
+                matchedCandidates.Add(MapToMatchedCandidateDto(js, rec, skills, isShortlisted: true, _defaultProfilePictureUrl, lang));
             }
 
             return Ok(new ApiResponse<List<MatchedCandidateDto>>(matchedCandidates));
@@ -644,21 +651,49 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
             return File(stream, resume.ContentType ?? "application/pdf", resume.FileName);
         }
 
-        private static string FormatDateRange(DateTime startDate, DateTime? endDate, bool isCurrent)
+        private static string FormatDateRange(DateTime startDate, DateTime? endDate, bool isCurrent, string lang = "en")
         {
-            var culture = new System.Globalization.CultureInfo("en-US");
+            var culture = new System.Globalization.CultureInfo(lang == "ar" ? "ar-EG" : "en-US");
+            var present = lang == "ar" ? "الحالي" : "Present";
             var start = startDate.ToString("MMM yyyy", culture);
-            var end = isCurrent ? "Present" : endDate?.ToString("MMM yyyy", culture) ?? "Present";
+            var end = isCurrent ? present : endDate?.ToString("MMM yyyy", culture) ?? present;
             return $"{start} - {end}";
         }
 
-        private static string FormatDateRange(DateTime? startDate, DateTime? endDate, bool isCurrent)
+        private static string FormatDateRange(DateTime? startDate, DateTime? endDate, bool isCurrent, string lang = "en")
         {
+            var culture = new System.Globalization.CultureInfo(lang == "ar" ? "ar-EG" : "en-US");
+            var present = lang == "ar" ? "الحالي" : "Present";
             if (startDate == null && endDate == null && !isCurrent) return "Unknown Date";
-            var culture = new System.Globalization.CultureInfo("en-US");
             var start = startDate?.ToString("MMM yyyy", culture) ?? "Unknown";
-            var end = isCurrent ? "Present" : endDate?.ToString("MMM yyyy", culture) ?? "Unknown";
+            var end = isCurrent ? present : endDate?.ToString("MMM yyyy", culture) ?? "Unknown";
             return $"{start} - {end}";
+        }
+
+        /// <summary>
+        /// Resolves the Accept-Language header to a two-letter language code ("en" or "ar").
+        /// </summary>
+        private static string GetLanguage(HttpContext httpContext)
+        {
+            var lang = httpContext.Request.Headers["Accept-Language"].FirstOrDefault();
+            return string.IsNullOrEmpty(lang) || lang.StartsWith("ar", StringComparison.OrdinalIgnoreCase) ? "ar" : "en";
+        }
+
+        /// <summary>
+        /// Returns the localized name from a reference entity that has NameEn/NameAr columns.
+        /// Falls back to NameEn if NameAr is null or the language is English.
+        /// </summary>
+        private static string? Localize(string? nameEn, string? nameAr, string lang)
+        {
+            return lang == "ar" ? (nameAr ?? nameEn) : nameEn;
+        }
+
+        /// <summary>
+        /// Returns the localized name from a JobTitle entity that has TitleEn/TitleAr columns.
+        /// </summary>
+        private static string? LocalizeTitle(string? titleEn, string? titleAr, string lang)
+        {
+            return lang == "ar" ? (titleAr ?? titleEn) : titleEn;
         }
 
         /// <summary>
@@ -671,7 +706,8 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
             Models.Jobs.Recommendation? rec,
             List<string>? skills,
             bool isShortlisted,
-            string defaultPicUrl)
+            string defaultPicUrl,
+            string lang = "en")
         {
             var matchedSkills = !string.IsNullOrEmpty(rec?.MatchedSkillsJson)
                 ? JsonSerializer.Deserialize<List<string>>(rec!.MatchedSkillsJson) ?? new List<string>()
@@ -686,11 +722,11 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                 JobSeekerId     = js.Id,
                 FullName        = $"{js.User.FirstName} {js.User.LastName}",
                 ProfilePictureUrl = js.User.ProfilePictureUrl ?? defaultPicUrl,
-                JobTitle        = js.JobTitle?.TitleEn,
+                JobTitle        = LocalizeTitle(js.JobTitle?.TitleEn, js.JobTitle?.TitleAr, lang),
                 Bio             = js.Bio,
                 YearsOfExperience = js.YearsOfExperience,
-                CountryName     = js.Country?.NameEn,
-                CityName        = js.City?.NameEn,
+                CountryName     = Localize(js.Country?.NameEn, js.Country?.NameAr, lang),
+                CityName        = Localize(js.City?.NameEn, js.City?.NameAr, lang),
                 AssessmentScore = js.CurrentAssessmentScore,
                 IsAssessed      = js.CurrentAssessmentScore.HasValue,
                 Skills          = skills ?? new List<string>(),
