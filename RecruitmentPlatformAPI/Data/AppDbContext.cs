@@ -5,6 +5,7 @@ using RecruitmentPlatformAPI.Models.JobSeeker;
 using RecruitmentPlatformAPI.Models.Recruiter;
 using RecruitmentPlatformAPI.Models.Reference;
 using RecruitmentPlatformAPI.Models.Jobs;
+using RecruitmentPlatformAPI.Models.Notification;
 using RecruitmentPlatformAPI.Enums;
 
 using RecruitmentPlatformAPI.Models.Assessment.V2;
@@ -45,6 +46,9 @@ namespace RecruitmentPlatformAPI.Data
 
         // Engagement Analytics
         public DbSet<ProfileView> ProfileViews { get; set; }
+
+        // Notifications
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -511,6 +515,35 @@ namespace RecruitmentPlatformAPI.Data
                 // Index for deduplication checks (same recruiter viewing same profile)
                 b.HasIndex(pv => new { pv.JobSeekerId, pv.ViewerRecruiterId, pv.ViewType, pv.ViewedAt })
                  .HasDatabaseName("IX_ProfileView_Dedup");
+            });
+
+            // Notification
+            modelBuilder.Entity<Notification>(b =>
+            {
+                b.ToTable("Notifications");
+                b.HasKey(n => n.Id);
+
+                b.HasOne(n => n.User)
+                 .WithMany()
+                 .HasForeignKey(n => n.UserId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                b.Property(n => n.Type).IsRequired().HasMaxLength(50);
+                b.Property(n => n.Title).IsRequired().HasMaxLength(200);
+                b.Property(n => n.Message).IsRequired().HasMaxLength(1000);
+                b.Property(n => n.RelatedEntityType).HasMaxLength(50);
+                b.Property(n => n.SenderName).HasMaxLength(150);
+                b.Property(n => n.SenderPictureUrl).HasMaxLength(300);
+
+                // Primary query: get notifications for a user, sorted by newest
+                b.HasIndex(n => new { n.UserId, n.IsRead, n.CreatedAt })
+                 .HasDatabaseName("IX_Notification_User_Read_Date")
+                 .IsDescending(false, false, true);
+
+                // Full history query
+                b.HasIndex(n => new { n.UserId, n.CreatedAt })
+                 .HasDatabaseName("IX_Notification_User_Date")
+                 .IsDescending(false, true);
             });
         }
     }

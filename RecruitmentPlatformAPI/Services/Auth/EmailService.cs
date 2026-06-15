@@ -183,6 +183,16 @@ namespace RecruitmentPlatformAPI.Services.Auth
             // Sanitise: never let untrusted data break the interpolation
             var safePreheader = System.Net.WebUtility.HtmlEncode(preheaderText);
 
+            const string responsiveCss = @"
+                .stat-row { display:table; width:100%; margin:0 0 28px 0; }
+                .stat-box { display:table-cell; width:48%; background-color:#f8f5f2; border:1px solid #e2ddd6; padding:24px 16px; border-radius:12px; text-align:center; vertical-align:top; }
+                .stat-spacer { display:table-cell; width:4%; }
+                @media only screen and (max-width:480px) {
+                    .stat-row { display:block; width:100%; }
+                    .stat-box { display:block; width:100%; margin-bottom:12px; }
+                    .stat-spacer { display:none; }
+                }";
+
             return $"""
                 <!DOCTYPE html>
                 <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
@@ -202,6 +212,9 @@ namespace RecruitmentPlatformAPI.Services.Auth
                         </xml>
                     </noscript>
                     <![endif]-->
+                    <style type="text/css">
+                        {responsiveCss}
+                    </style>
                 </head>
                 <body style="margin:0;padding:0;word-spacing:normal;background-color:#f0ece6;">
 
@@ -701,36 +714,25 @@ namespace RecruitmentPlatformAPI.Services.Auth
                 </p>
 
                 <!-- Stats grid -->
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 28px 0;">
-                <tr>
-                    <td width="31%" style="background-color:#f8f5f2;border:1px solid #e2ddd6;padding:24px 16px;border-radius:12px;text-align:center;">
+                <div class="stat-row">
+                    <div class="stat-box">
                         <span style="display:block;font-size:32px;font-weight:800;color:#fa7b05;margin-bottom:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
                             {searchAppearances}
                         </span>
                         <span style="display:block;color:#64748b;font-size:13px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
                             Search Appearances
                         </span>
-                    </td>
-                    <td width="3%"></td>
-                    <td width="31%" style="background-color:#f8f5f2;border:1px solid #e2ddd6;padding:24px 16px;border-radius:12px;text-align:center;">
+                    </div>
+                    <div class="stat-spacer"></div>
+                    <div class="stat-box">
                         <span style="display:block;font-size:32px;font-weight:800;color:#10b981;margin-bottom:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
                             {profileViews}
                         </span>
                         <span style="display:block;color:#64748b;font-size:13px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
                             Profile Views
                         </span>
-                    </td>
-                    <td width="3%"></td>
-                    <td width="31%" style="background-color:#f8f5f2;border:1px solid #e2ddd6;padding:24px 16px;border-radius:12px;text-align:center;">
-                        <span style="display:block;font-size:32px;font-weight:800;color:#8b5cf6;margin-bottom:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-                            {recommendations}
-                        </span>
-                        <span style="display:block;color:#64748b;font-size:13px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-                            AI Recommendations
-                        </span>
-                    </td>
-                </tr>
-                </table>
+                    </div>
+                </div>
 
                 {PrimaryButton(dashboardUrl, "View Full Dashboard &rarr;")}
 
@@ -747,7 +749,6 @@ namespace RecruitmentPlatformAPI.Services.Auth
                 Here's how your profile performed on Job Intel this week:
                 - Search Appearances: {searchAppearances}
                 - Profile Views: {profileViews}
-                - AI Recommendations: {recommendations}
 
                 View your full dashboard: {dashboardUrl}
 
@@ -764,7 +765,7 @@ namespace RecruitmentPlatformAPI.Services.Auth
                 {
                     var sent = await SendEmailAsync(
                         email, firstName, subject,
-                        GetEmailHtmlWrapper(innerHtml, $"Your profile had {searchAppearances} search appearances, {profileViews} profile views, and {recommendations} AI recommendations this week."),
+                        GetEmailHtmlWrapper(innerHtml, $"Your profile had {searchAppearances} search appearances and {profileViews} profile views this week."),
                         textBody);
 
                     if (sent) return true;
@@ -891,9 +892,9 @@ namespace RecruitmentPlatformAPI.Services.Auth
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:8px 0 0 0;">
                     <tr>
                         <td align="center">
-                            <a href="{_emailSettings.FrontendUrl}/employee?contact=1&amp;recruiter={encodedRecruiterName}&amp;company={encodedCompany}&amp;job={encodedJobTitle}"
+                            <a href="{_emailSettings.FrontendUrl}/employee/notifications"
                                style="color:#64748b;font-size:13px;font-weight:500;text-decoration:underline;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-                                Or view your dashboard
+                                View all notifications
                             </a>
                         </td>
                     </tr>

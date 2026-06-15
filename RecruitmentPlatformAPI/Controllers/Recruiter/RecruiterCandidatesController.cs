@@ -9,10 +9,12 @@ using RecruitmentPlatformAPI.DTOs.Recruiter;
 using RecruitmentPlatformAPI.Services.Recruiter;
 using RecruitmentPlatformAPI.Services.JobSeeker;
 using RecruitmentPlatformAPI.Services.Auth;
+using RecruitmentPlatformAPI.Services.Notification;
 using RecruitmentPlatformAPI.Configuration;
 using Microsoft.Extensions.Options;
 using RecruitmentPlatformAPI.Models.Recruiter;
 using RecruitmentPlatformAPI.Models.Reference;
+using RecruitmentPlatformAPI.Enums;
 
 namespace RecruitmentPlatformAPI.Controllers.Recruiter
 {
@@ -33,6 +35,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
         private readonly IAIMatchingService _aiMatchingService;
         private readonly IEngagementService _engagementService;
         private readonly IEmailService _emailService;
+        private readonly INotificationService _notificationService;
         private readonly AppDbContext _context;
         private readonly ILogger<RecruiterCandidatesController> _logger;
         private readonly FileStorageSettings _fileSettings;
@@ -41,6 +44,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
             IAIMatchingService aiMatchingService,
             IEngagementService engagementService,
             IEmailService emailService,
+            INotificationService notificationService,
             AppDbContext context,
             ILogger<RecruiterCandidatesController> logger,
             IOptions<FileStorageSettings> fileSettings)
@@ -48,6 +52,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
             _aiMatchingService = aiMatchingService;
             _engagementService = engagementService;
             _emailService = emailService;
+            _notificationService = notificationService;
             _context = context;
             _logger = logger;
             _fileSettings = fileSettings.Value;
@@ -727,6 +732,24 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
                 _logger.LogWarning("Failed to send contact email to candidate {CandidateId} from recruiter {RecruiterId}", candidateId, recruiter.Id);
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     new ApiErrorResponse("Failed to send email. Please try again later."));
+            }
+
+            var recruiterFullName = $"{recruiter.User.FirstName} {recruiter.User.LastName}";
+            try
+            {
+                await _notificationService.CreateNotificationAsync(
+                    jobSeeker.UserId,
+                    NotificationType.RecruiterContact,
+                    title: "New Message from a Recruiter",
+                    message: $"{recruiterFullName} from {recruiter.CompanyName} contacted you regarding the {jobTitle} position. Please check your email for more details and respond if you are interested.",
+                    relatedEntityId: jobId,
+                    relatedEntityType: "Job",
+                    senderName: recruiterFullName,
+                    senderPictureUrl: recruiter.User.ProfilePictureUrl);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to create notification for candidate {CandidateId} after contact email", candidateId);
             }
 
             _logger.LogInformation("Recruiter {RecruiterId} contacted candidate {CandidateId} for job {JobId}", recruiter.Id, candidateId, jobId);

@@ -11,6 +11,7 @@ using RecruitmentPlatformAPI.Services.JobSeeker;
 using RecruitmentPlatformAPI.Services.Recruiter;
 using RecruitmentPlatformAPI.Services.Assessment.V2;
 using RecruitmentPlatformAPI.Services.Assessment.LlmGeneration;
+using RecruitmentPlatformAPI.Services.Notification;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -157,6 +158,7 @@ builder.Services.AddScoped<ICertificateService, CertificateService>();
 builder.Services.AddScoped<IJobSeekerSkillService, JobSeekerSkillService>();
 builder.Services.AddScoped<IEngagementService, EngagementService>();
 builder.Services.AddScoped<IAIMatchingService, AIMatchingService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 // Background Services
 builder.Services.AddHostedService<WeeklyEngagementDigestService>();
 
