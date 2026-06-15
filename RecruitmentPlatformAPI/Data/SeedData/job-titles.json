@@ -1,2288 +1,2288 @@
 [
-  {
-    "Id": 1,
-    "TitleEn": "Backend Developer",
-    "TitleAr": "مطور واجهات خلفية",
-    "Category": "Technology",
-    "RoleFamily": 2,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 2,
-    "TitleEn": "Frontend Developer",
-    "TitleAr": "مطور واجهات أمامية (Front-End Developer)",
-    "Category": "Technology",
-    "RoleFamily": 1,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 3,
-    "TitleEn": "Full Stack Developer",
-    "TitleAr": "مطور مكدس كامل (Full-Stack Developer)",
-    "Category": "Technology",
-    "RoleFamily": 3,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 4,
-    "TitleEn": "Mobile Developer",
-    "TitleAr": "مطور تطبيقات الجوال",
-    "Category": "Technology",
-    "RoleFamily": 4,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 5,
-    "TitleEn": "iOS Developer",
-    "TitleAr": "مطور تطبيقات iOS",
-    "Category": "Technology",
-    "RoleFamily": 4,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 6,
-    "TitleEn": "Android Developer",
-    "TitleAr": "مطور تطبيقات أندرويد",
-    "Category": "Technology",
-    "RoleFamily": 4,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 7,
-    "TitleEn": "DevOps Engineer",
-    "TitleAr": "مهندس DevOps",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 8,
-    "TitleEn": "Data Scientist",
-    "TitleAr": "عالم بيانات",
-    "Category": "Technology",
-    "RoleFamily": 5,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 9,
-    "TitleEn": "Data Engineer",
-    "TitleAr": "مهندس بيانات",
-    "Category": "Technology",
-    "RoleFamily": 5,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 10,
-    "TitleEn": "Machine Learning Engineer",
-    "TitleAr": "مهندس تعلم آلي",
-    "Category": "Technology",
-    "RoleFamily": 5,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 11,
-    "TitleEn": "AI Engineer",
-    "TitleAr": "مهندس ذكاء اصطناعي",
-    "Category": "Technology",
-    "RoleFamily": 5,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 12,
-    "TitleEn": "Software Engineer",
-    "TitleAr": "مهندس برمجيات",
-    "Category": "Technology",
-    "RoleFamily": 3,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 13,
-    "TitleEn": "QA Engineer",
-    "TitleAr": "مهندس ضمان الجودة",
-    "Category": "Technology",
-    "RoleFamily": 7,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 14,
-    "TitleEn": "Test Automation Engineer",
-    "TitleAr": "مهندس أتمتة الاختبار",
-    "Category": "Technology",
-    "RoleFamily": 7,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 15,
-    "TitleEn": "Cloud Engineer",
-    "TitleAr": "مهندس الحوسبة السحابية",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 16,
-    "TitleEn": "Security Engineer",
-    "TitleAr": "مهندس أمن المعلومات",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 17,
-    "TitleEn": "Cybersecurity Analyst",
-    "TitleAr": "محلل أمن سيبراني",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 18,
-    "TitleEn": "Network Engineer",
-    "TitleAr": "مهندس شبكات",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 19,
-    "TitleEn": "Systems Administrator",
-    "TitleAr": "مدير أنظمة",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 20,
-    "TitleEn": "Database Administrator",
-    "TitleAr": "مدير قواعد البيانات",
-    "Category": "Technology",
-    "RoleFamily": 2,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 21,
-    "TitleEn": "Solutions Architect",
-    "TitleAr": "مهندس حلول معمارية",
-    "Category": "Technology",
-    "RoleFamily": 3,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 22,
-    "TitleEn": "Technical Architect",
-    "TitleAr": "مهندس معماري تقني",
-    "Category": "Technology",
-    "RoleFamily": 3,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 23,
-    "TitleEn": "Site Reliability Engineer",
-    "TitleAr": "مهندس موثوقية الموقع (SRE)",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 24,
-    "TitleEn": "Embedded Systems Engineer",
-    "TitleAr": "مهندس أنظمة مدمجة",
-    "Category": "Technology",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 25,
-    "TitleEn": "Game Developer",
-    "TitleAr": "مطور ألعاب",
-    "Category": "Technology",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 26,
-    "TitleEn": "Blockchain Developer",
-    "TitleAr": "مطور بلوك تشين (Blockchain Developer)",
-    "Category": "Technology",
-    "RoleFamily": 2,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 27,
-    "TitleEn": "IoT Engineer",
-    "TitleAr": "مهندس إنترنت الأشياء (IoT)",
-    "Category": "Technology",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 28,
-    "TitleEn": "Computer Vision Engineer",
-    "TitleAr": "مهندس رؤية حاسوبية",
-    "Category": "Technology",
-    "RoleFamily": 5,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 29,
-    "TitleEn": "NLP Engineer",
-    "TitleAr": "مهندس معالجة اللغات الطبيعية (NLP)",
-    "Category": "Technology",
-    "RoleFamily": 5,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 30,
-    "TitleEn": "Business Intelligence Analyst",
-    "TitleAr": "محلل ذكاء الأعمال",
-    "Category": "Technology",
-    "RoleFamily": 5,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 31,
-    "TitleEn": "Data Analyst",
-    "TitleAr": "محلل بيانات",
-    "Category": "Technology",
-    "RoleFamily": 5,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 32,
-    "TitleEn": "IT Support Specialist",
-    "TitleAr": "أخصائي دعم تقنية المعلومات",
-    "Category": "Technology",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 33,
-    "TitleEn": "Technical Support Engineer",
-    "TitleAr": "مهندس الدعم الفني",
-    "Category": "Technology",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 34,
-    "TitleEn": "IT Manager",
-    "TitleAr": "مدير تقنية المعلومات",
-    "Category": "Technology",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 35,
-    "TitleEn": "CTO",
-    "TitleAr": "المدير التنفيذي للتكنولوجيا (CTO)",
-    "Category": "Technology",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 36,
-    "TitleEn": "Engineering Manager",
-    "TitleAr": "مدير هندسة",
-    "Category": "Technology",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 37,
-    "TitleEn": "Technical Lead",
-    "TitleAr": "القائد التقني",
-    "Category": "Technology",
-    "RoleFamily": 3,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 38,
-    "TitleEn": "Scrum Master",
-    "TitleAr": "سكرم ماستر (Scrum Master)",
-    "Category": "Technology",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 39,
-    "TitleEn": "Product Manager",
-    "TitleAr": "مدير منتج",
-    "Category": "Product Management",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 40,
-    "TitleEn": "Technical Product Manager",
-    "TitleAr": "مدير منتج تقني",
-    "Category": "Product Management",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 41,
-    "TitleEn": "UX Designer",
-    "TitleAr": "مصمم تجربة المستخدم",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 42,
-    "TitleEn": "UI Designer",
-    "TitleAr": "مصمم واجهة المستخدم",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 43,
-    "TitleEn": "UX/UI Designer",
-    "TitleAr": "مصمم تجربة وواجهة المستخدم",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 44,
-    "TitleEn": "Graphic Designer",
-    "TitleAr": "مصمم جرافيك",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 45,
-    "TitleEn": "Web Designer",
-    "TitleAr": "مصمم مواقع ويب",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 46,
-    "TitleEn": "Visual Designer",
-    "TitleAr": "مصمم بصري",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 47,
-    "TitleEn": "Product Designer",
-    "TitleAr": "مصمم منتجات",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 48,
-    "TitleEn": "Interaction Designer",
-    "TitleAr": "مصمم التفاعل",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 49,
-    "TitleEn": "Motion Designer",
-    "TitleAr": "مصمم الحركة والمؤثرات",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 50,
-    "TitleEn": "3D Designer",
-    "TitleAr": "مصمم ثلاثي الأبعاد",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 51,
-    "TitleEn": "Game Designer",
-    "TitleAr": "مصمم ألعاب",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 52,
-    "TitleEn": "UX Researcher",
-    "TitleAr": "باحث تجربة المستخدم",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 53,
-    "TitleEn": "Creative Director",
-    "TitleAr": "المدير الإبداعي",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 54,
-    "TitleEn": "Art Director",
-    "TitleAr": "المدير الفني",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 55,
-    "TitleEn": "Brand Designer",
-    "TitleAr": "مصمم الهوية البصرية",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 56,
-    "TitleEn": "Digital Marketing Specialist",
-    "TitleAr": "أخصائي تسويق رقمي",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 57,
-    "TitleEn": "SEO Specialist",
-    "TitleAr": "أخصائي تحسين محركات البحث (SEO)",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 58,
-    "TitleEn": "Content Marketing Manager",
-    "TitleAr": "مدير تسويق المحتوى",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 59,
-    "TitleEn": "Social Media Manager",
-    "TitleAr": "مدير وسائل التواصل الاجتماعي",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 60,
-    "TitleEn": "Marketing Manager",
-    "TitleAr": "مدير تسويق",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 61,
-    "TitleEn": "Brand Manager",
-    "TitleAr": "مدير العلامة التجارية",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 62,
-    "TitleEn": "Growth Manager",
-    "TitleAr": "مدير النمو",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 63,
-    "TitleEn": "Email Marketing Specialist",
-    "TitleAr": "أخصائي التسويق عبر البريد الإلكتروني",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 64,
-    "TitleEn": "Marketing Analyst",
-    "TitleAr": "محلل تسويق",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 65,
-    "TitleEn": "Content Writer",
-    "TitleAr": "كاتب محتوى",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 66,
-    "TitleEn": "Sales Representative",
-    "TitleAr": "مندوب مبيعات",
-    "Category": "Sales",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 67,
-    "TitleEn": "Account Executive",
-    "TitleAr": "مسؤول تنفيذي للحسابات",
-    "Category": "Sales",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 68,
-    "TitleEn": "Sales Manager",
-    "TitleAr": "مدير مبيعات",
-    "Category": "Sales",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 69,
-    "TitleEn": "Business Development Manager",
-    "TitleAr": "مدير تطوير الأعمال",
-    "Category": "Sales",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 70,
-    "TitleEn": "Customer Success Manager",
-    "TitleAr": "مدير نجاح العملاء",
-    "Category": "Sales",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 71,
-    "TitleEn": "Accountant",
-    "TitleAr": "محاسب",
-    "Category": "Finance",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 72,
-    "TitleEn": "Financial Analyst",
-    "TitleAr": "محلل مالي",
-    "Category": "Finance",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 73,
-    "TitleEn": "Finance Manager",
-    "TitleAr": "مدير مالي",
-    "Category": "Finance",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 74,
-    "TitleEn": "CFO",
-    "TitleAr": "المدير المالي التنفيذي (CFO)",
-    "Category": "Finance",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 75,
-    "TitleEn": "Investment Analyst",
-    "TitleAr": "محلل استثماري",
-    "Category": "Finance",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 76,
-    "TitleEn": "HR Manager",
-    "TitleAr": "مدير الموارد البشرية",
-    "Category": "Human Resources",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 77,
-    "TitleEn": "Recruiter",
-    "TitleAr": "أخصائي توظيف",
-    "Category": "Human Resources",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 78,
-    "TitleEn": "Talent Acquisition Specialist",
-    "TitleAr": "أخصائي اكتساب المواهب",
-    "Category": "Human Resources",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 79,
-    "TitleEn": "HR Business Partner",
-    "TitleAr": "شريك أعمال الموارد البشرية",
-    "Category": "Human Resources",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 80,
-    "TitleEn": "People Operations Manager",
-    "TitleAr": "مدير عمليات الأفراد",
-    "Category": "Human Resources",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 81,
-    "TitleEn": "Operations Manager",
-    "TitleAr": "مدير العمليات",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 82,
-    "TitleEn": "Project Manager",
-    "TitleAr": "مدير مشروع",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 83,
-    "TitleEn": "Program Manager",
-    "TitleAr": "مدير برنامج",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 84,
-    "TitleEn": "Supply Chain Manager",
-    "TitleAr": "مدير سلسلة التوريد",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 85,
-    "TitleEn": "Logistics Coordinator",
-    "TitleAr": "منسق لوجستيات",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 86,
-    "TitleEn": "CEO",
-    "TitleAr": "الرئيس التنفيذي (CEO)",
-    "Category": "Executive",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 87,
-    "TitleEn": "COO",
-    "TitleAr": "المدير التنفيذي للعمليات (COO)",
-    "Category": "Executive",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 88,
-    "TitleEn": "VP of Engineering",
-    "TitleAr": "نائب رئيس الهندسة",
-    "Category": "Executive",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 89,
-    "TitleEn": "VP of Product",
-    "TitleAr": "نائب رئيس المنتج",
-    "Category": "Executive",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 90,
-    "TitleEn": "VP of Sales",
-    "TitleAr": "نائب رئيس المبيعات",
-    "Category": "Executive",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 91,
-    "TitleEn": "Platform Engineer",
-    "TitleAr": "مهندس منصة",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 92,
-    "TitleEn": "Infrastructure Engineer",
-    "TitleAr": "مهندس بنية تحتية",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 93,
-    "TitleEn": "Cloud Architect",
-    "TitleAr": "مهندس معماري سحابي",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 94,
-    "TitleEn": "Security Architect",
-    "TitleAr": "مهندس معماري أمن المعلومات",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 95,
-    "TitleEn": "Penetration Tester",
-    "TitleAr": "مختبر اختراق",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 96,
-    "TitleEn": "SOC Analyst",
-    "TitleAr": "محلل عمليات أمن المعلومات (SOC)",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 97,
-    "TitleEn": "MLOps Engineer",
-    "TitleAr": "مهندس عمليات تعلم آلي (MLOps)",
-    "Category": "Technology",
-    "RoleFamily": 5,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 98,
-    "TitleEn": "Data Architect",
-    "TitleAr": "مهندس معماري البيانات",
-    "Category": "Technology",
-    "RoleFamily": 5,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 99,
-    "TitleEn": "Analytics Engineer",
-    "TitleAr": "مهندس تحليلات",
-    "Category": "Technology",
-    "RoleFamily": 5,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 100,
-    "TitleEn": "Prompt Engineer",
-    "TitleAr": "مهندس مطالبات الذكاء الاصطناعي (Prompt Engineer)",
-    "Category": "Technology",
-    "RoleFamily": 5,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 101,
-    "TitleEn": "AR/VR Developer",
-    "TitleAr": "مطور الواقع المعزز والافتراضي (AR/VR Developer)",
-    "Category": "Technology",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 102,
-    "TitleEn": "Firmware Engineer",
-    "TitleAr": "مهندس البرامج الثابتة",
-    "Category": "Technology",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 103,
-    "TitleEn": "RPA Developer",
-    "TitleAr": "مطور أتمتة العمليات الروبوتية (RPA Developer)",
-    "Category": "Technology",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 104,
-    "TitleEn": "Staff Engineer",
-    "TitleAr": "مهندس متخصص أول",
-    "Category": "Technology",
-    "RoleFamily": 3,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 105,
-    "TitleEn": "Principal Engineer",
-    "TitleAr": "مهندس رئيسي",
-    "Category": "Technology",
-    "RoleFamily": 3,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 106,
-    "TitleEn": "Software Architect",
-    "TitleAr": "مهندس معماري برمجيات",
-    "Category": "Technology",
-    "RoleFamily": 3,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 107,
-    "TitleEn": "Integration Engineer",
-    "TitleAr": "مهندس تكامل الأنظمة",
-    "Category": "Technology",
-    "RoleFamily": 2,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 108,
-    "TitleEn": "Salesforce Developer",
-    "TitleAr": "مطور سيلزفورس (Salesforce Developer)",
-    "Category": "Technology",
-    "RoleFamily": 2,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 109,
-    "TitleEn": "ERP Developer",
-    "TitleAr": "مطور أنظمة تخطيط الموارد (ERP)",
-    "Category": "Technology",
-    "RoleFamily": 2,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 110,
-    "TitleEn": "SharePoint Developer",
-    "TitleAr": "مطور شيربوينت (SharePoint Developer)",
-    "Category": "Technology",
-    "RoleFamily": 2,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 111,
-    "TitleEn": "API Engineer",
-    "TitleAr": "مهندس واجهات برمجية (API)",
-    "Category": "Technology",
-    "RoleFamily": 2,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 112,
-    "TitleEn": "Microservices Architect",
-    "TitleAr": "مهندس معماري الخدمات المصغرة (Microservices)",
-    "Category": "Technology",
-    "RoleFamily": 2,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 113,
-    "TitleEn": "Database Engineer",
-    "TitleAr": "مهندس قواعد بيانات",
-    "Category": "Technology",
-    "RoleFamily": 2,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 114,
-    "TitleEn": "Web3 Developer",
-    "TitleAr": "مطور ويب 3 (Web3 Developer)",
-    "Category": "Technology",
-    "RoleFamily": 2,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 115,
-    "TitleEn": "Platform Architect",
-    "TitleAr": "مهندس معماري المنصات",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 116,
-    "TitleEn": "AWS Solutions Architect",
-    "TitleAr": "مهندس حلول AWS",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 117,
-    "TitleEn": "Build & Release Engineer",
-    "TitleAr": "مهندس البناء والإصدار",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 118,
-    "TitleEn": "Release Manager",
-    "TitleAr": "مدير الإصدارات",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 119,
-    "TitleEn": "Observability Engineer",
-    "TitleAr": "مهندس مراقبة الأنظمة",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 120,
-    "TitleEn": "Performance Engineer",
-    "TitleAr": "مهندس الأداء",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 121,
-    "TitleEn": "Automation Engineer",
-    "TitleAr": "مهندس الأتمتة",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 122,
-    "TitleEn": "AI Research Scientist",
-    "TitleAr": "عالم أبحاث الذكاء الاصطناعي",
-    "Category": "Technology",
-    "RoleFamily": 5,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 123,
-    "TitleEn": "Research Engineer",
-    "TitleAr": "مهندس أبحاث",
-    "Category": "Technology",
-    "RoleFamily": 5,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 124,
-    "TitleEn": "Threat Intelligence Analyst",
-    "TitleAr": "محلل استخبارات التهديدات",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 125,
-    "TitleEn": "Digital Forensics Analyst",
-    "TitleAr": "محلل الجنائيات الرقمية",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 126,
-    "TitleEn": "Incident Response Analyst",
-    "TitleAr": "محلل الاستجابة للحوادث",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 127,
-    "TitleEn": "Vulnerability Researcher",
-    "TitleAr": "باحث الثغرات الأمنية",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 128,
-    "TitleEn": "Security Operations Manager",
-    "TitleAr": "مدير عمليات أمن المعلومات",
-    "Category": "Technology",
-    "RoleFamily": 6,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 129,
-    "TitleEn": "Low-Code/No-Code Developer",
-    "TitleAr": "مطور منخفض الكود أو بدون كود (Low-Code/No-Code Developer)",
-    "Category": "Technology",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 130,
-    "TitleEn": "Technical Program Manager",
-    "TitleAr": "مدير برامج تقنية",
-    "Category": "Technology",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 131,
-    "TitleEn": "UX Writer",
-    "TitleAr": "كاتب تجربة المستخدم",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 132,
-    "TitleEn": "Design Systems Lead",
-    "TitleAr": "قائد أنظمة التصميم",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 133,
-    "TitleEn": "Illustrator",
-    "TitleAr": "رسام توضيحي",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 134,
-    "TitleEn": "Video Editor",
-    "TitleAr": "مونتير فيديو",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 135,
-    "TitleEn": "Multimedia Designer",
-    "TitleAr": "مصمم وسائط متعددة",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 136,
-    "TitleEn": "Print Designer",
-    "TitleAr": "مصمم مطبوعات",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 137,
-    "TitleEn": "Packaging Designer",
-    "TitleAr": "مصمم تغليف",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 138,
-    "TitleEn": "Accessibility Designer",
-    "TitleAr": "مصمم إمكانية الوصول",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 139,
-    "TitleEn": "Design Director",
-    "TitleAr": "مدير التصميم",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 140,
-    "TitleEn": "UI Engineer",
-    "TitleAr": "مهندس واجهات المستخدم",
-    "Category": "Technology",
-    "RoleFamily": 1,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 141,
-    "TitleEn": "Typographer",
-    "TitleAr": "خطاط رقمي ومصمم طباعي",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 142,
-    "TitleEn": "Performance Marketing Manager",
-    "TitleAr": "مدير التسويق بالأداء",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 143,
-    "TitleEn": "Demand Generation Manager",
-    "TitleAr": "مدير توليد الطلب",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 144,
-    "TitleEn": "VP of Marketing",
-    "TitleAr": "نائب رئيس التسويق",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 145,
-    "TitleEn": "Influencer Marketing Manager",
-    "TitleAr": "مدير التسويق عبر المؤثرين",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 146,
-    "TitleEn": "Affiliate Marketing Manager",
-    "TitleAr": "مدير التسويق بالعمولة",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 147,
-    "TitleEn": "PR Manager",
-    "TitleAr": "مدير العلاقات العامة",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 148,
-    "TitleEn": "Campaign Manager",
-    "TitleAr": "مدير الحملات التسويقية",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 149,
-    "TitleEn": "Marketing Operations Manager",
-    "TitleAr": "مدير عمليات التسويق",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 150,
-    "TitleEn": "Community Manager",
-    "TitleAr": "مدير المجتمع",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 151,
-    "TitleEn": "Growth Marketing Manager",
-    "TitleAr": "مدير تسويق النمو",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 152,
-    "TitleEn": "Sales Development Representative (SDR)",
-    "TitleAr": "ممثل تطوير المبيعات (SDR)",
-    "Category": "Sales",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 153,
-    "TitleEn": "Business Development Representative (BDR)",
-    "TitleAr": "ممثل تطوير الأعمال (BDR)",
-    "Category": "Sales",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 154,
-    "TitleEn": "Enterprise Account Executive",
-    "TitleAr": "مسؤول حسابات المؤسسات",
-    "Category": "Sales",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 155,
-    "TitleEn": "Key Account Manager",
-    "TitleAr": "مدير الحسابات الرئيسية",
-    "Category": "Sales",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 156,
-    "TitleEn": "Channel Sales Manager",
-    "TitleAr": "مدير المبيعات عبر القنوات",
-    "Category": "Sales",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 157,
-    "TitleEn": "Sales Operations Manager",
-    "TitleAr": "مدير عمليات المبيعات",
-    "Category": "Sales",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 158,
-    "TitleEn": "Inside Sales Representative",
-    "TitleAr": "ممثل مبيعات داخلية",
-    "Category": "Sales",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 159,
-    "TitleEn": "Pre-Sales Engineer",
-    "TitleAr": "مهندس ما قبل البيع",
-    "Category": "Sales",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 160,
-    "TitleEn": "Solutions Engineer",
-    "TitleAr": "مهندس الحلول",
-    "Category": "Sales",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 161,
-    "TitleEn": "Revenue Manager",
-    "TitleAr": "مدير الإيرادات",
-    "Category": "Sales",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 162,
-    "TitleEn": "Financial Controller",
-    "TitleAr": "مراقب مالي",
-    "Category": "Finance",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 163,
-    "TitleEn": "Treasury Manager",
-    "TitleAr": "مدير الخزينة",
-    "Category": "Finance",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 164,
-    "TitleEn": "Tax Specialist",
-    "TitleAr": "أخصائي الضرائب",
-    "Category": "Finance",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 165,
-    "TitleEn": "Auditor",
-    "TitleAr": "مدقق حسابات",
-    "Category": "Finance",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 166,
-    "TitleEn": "Risk Analyst",
-    "TitleAr": "محلل مخاطر",
-    "Category": "Finance",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 167,
-    "TitleEn": "Compliance Officer",
-    "TitleAr": "مسؤول الامتثال",
-    "Category": "Finance",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 168,
-    "TitleEn": "Payroll Specialist",
-    "TitleAr": "أخصائي الرواتب",
-    "Category": "Finance",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 169,
-    "TitleEn": "Budget Analyst",
-    "TitleAr": "محلل الميزانية",
-    "Category": "Finance",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 170,
-    "TitleEn": "Quantitative Analyst",
-    "TitleAr": "محلل كمي",
-    "Category": "Finance",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 171,
-    "TitleEn": "FP&A Manager",
-    "TitleAr": "مدير التخطيط المالي والتحليل (FP&A)",
-    "Category": "Finance",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 172,
-    "TitleEn": "Learning & Development Manager",
-    "TitleAr": "مدير التعلم والتطوير",
-    "Category": "Human Resources",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 173,
-    "TitleEn": "Compensation & Benefits Manager",
-    "TitleAr": "مدير التعويضات والمزايا",
-    "Category": "Human Resources",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 174,
-    "TitleEn": "Employee Relations Manager",
-    "TitleAr": "مدير علاقات الموظفين",
-    "Category": "Human Resources",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 175,
-    "TitleEn": "HR Generalist",
-    "TitleAr": "أخصائي موارد بشرية عام",
-    "Category": "Human Resources",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 176,
-    "TitleEn": "Workforce Analyst",
-    "TitleAr": "محلل القوى العاملة",
-    "Category": "Human Resources",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 177,
-    "TitleEn": "Onboarding Specialist",
-    "TitleAr": "أخصائي الاستيعاب الوظيفي",
-    "Category": "Human Resources",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 178,
-    "TitleEn": "HR Director",
-    "TitleAr": "مدير الموارد البشرية التنفيذي",
-    "Category": "Human Resources",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 179,
-    "TitleEn": "Chief People Officer",
-    "TitleAr": "كبير مسؤولي الأفراد",
-    "Category": "Human Resources",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 180,
-    "TitleEn": "Culture & Engagement Manager",
-    "TitleAr": "مدير الثقافة والتفاعل المؤسسي",
-    "Category": "Human Resources",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 181,
-    "TitleEn": "Organizational Development Specialist",
-    "TitleAr": "أخصائي التطوير التنظيمي",
-    "Category": "Human Resources",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 182,
-    "TitleEn": "Business Analyst",
-    "TitleAr": "محلل أعمال",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 183,
-    "TitleEn": "Process Improvement Manager",
-    "TitleAr": "مدير تحسين العمليات",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 184,
-    "TitleEn": "Procurement Manager",
-    "TitleAr": "مدير المشتريات",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 185,
-    "TitleEn": "Vendor Manager",
-    "TitleAr": "مدير الموردين",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 186,
-    "TitleEn": "Customer Support Manager",
-    "TitleAr": "مدير دعم العملاء",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 187,
-    "TitleEn": "Customer Support Specialist",
-    "TitleAr": "أخصائي دعم العملاء",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 188,
-    "TitleEn": "Administrative Manager",
-    "TitleAr": "مدير إداري",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 189,
-    "TitleEn": "Chief of Staff",
-    "TitleAr": "رئيس موظفي الإدارة",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 190,
-    "TitleEn": "Strategy Manager",
-    "TitleAr": "مدير الاستراتيجية",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 191,
-    "TitleEn": "ERP Manager",
-    "TitleAr": "مدير أنظمة تخطيط الموارد (ERP)",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 192,
-    "TitleEn": "Revenue Operations Manager",
-    "TitleAr": "مدير عمليات الإيرادات",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 193,
-    "TitleEn": "IT Operations Manager",
-    "TitleAr": "مدير عمليات تقنية المعلومات",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 194,
-    "TitleEn": "Transformation Manager",
-    "TitleAr": "مدير التحول المؤسسي",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 195,
-    "TitleEn": "Office Manager",
-    "TitleAr": "مدير مكتب",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 196,
-    "TitleEn": "Facilities Manager",
-    "TitleAr": "مدير المرافق والخدمات",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 197,
-    "TitleEn": "Senior Product Manager",
-    "TitleAr": "مدير منتج أول",
-    "Category": "Product Management",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 198,
-    "TitleEn": "Principal Product Manager",
-    "TitleAr": "مدير منتج رئيسي",
-    "Category": "Product Management",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 199,
-    "TitleEn": "Group Product Manager",
-    "TitleAr": "مدير مجموعة منتجات",
-    "Category": "Product Management",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 200,
-    "TitleEn": "Director of Product Management",
-    "TitleAr": "مدير إدارة المنتجات",
-    "Category": "Product Management",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 201,
-    "TitleEn": "Head of Product",
-    "TitleAr": "رئيس قسم المنتج",
-    "Category": "Product Management",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 202,
-    "TitleEn": "Product Owner",
-    "TitleAr": "مالك المنتج",
-    "Category": "Product Management",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 203,
-    "TitleEn": "Associate Product Manager",
-    "TitleAr": "مساعد مدير منتج",
-    "Category": "Product Management",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 204,
-    "TitleEn": "Product Operations Manager",
-    "TitleAr": "مدير عمليات المنتج",
-    "Category": "Product Management",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 205,
-    "TitleEn": "Platform Product Manager",
-    "TitleAr": "مدير منتج المنصة",
-    "Category": "Product Management",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 206,
-    "TitleEn": "Growth Product Manager",
-    "TitleAr": "مدير منتج النمو",
-    "Category": "Product Management",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 207,
-    "TitleEn": "AI Product Manager",
-    "TitleAr": "مدير منتج الذكاء الاصطناعي",
-    "Category": "Product Management",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 208,
-    "TitleEn": "Product Analyst",
-    "TitleAr": "محلل منتجات",
-    "Category": "Product Management",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 209,
-    "TitleEn": "Technical Product Owner",
-    "TitleAr": "مالك منتج تقني",
-    "Category": "Product Management",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 210,
-    "TitleEn": "Content Creator",
-    "TitleAr": "منشئ محتوى",
-    "Category": "Content & Creative",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 211,
-    "TitleEn": "Copywriter",
-    "TitleAr": "كاتب إعلاني",
-    "Category": "Content & Creative",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 212,
-    "TitleEn": "Technical Writer",
-    "TitleAr": "كاتب تقني",
-    "Category": "Content & Creative",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 213,
-    "TitleEn": "Videographer",
-    "TitleAr": "مصور فيديو",
-    "Category": "Content & Creative",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 214,
-    "TitleEn": "Podcast Producer",
-    "TitleAr": "منتج بودكاست (Podcast Producer)",
-    "Category": "Content & Creative",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 215,
-    "TitleEn": "Social Media Content Creator",
-    "TitleAr": "منشئ محتوى وسائل التواصل الاجتماعي",
-    "Category": "Content & Creative",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 216,
-    "TitleEn": "Video Producer",
-    "TitleAr": "منتج فيديو",
-    "Category": "Content & Creative",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 217,
-    "TitleEn": "Scriptwriter",
-    "TitleAr": "كاتب سيناريو",
-    "Category": "Content & Creative",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 218,
-    "TitleEn": "Content Strategist",
-    "TitleAr": "استراتيجي المحتوى",
-    "Category": "Content & Creative",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 219,
-    "TitleEn": "Editor",
-    "TitleAr": "محرر",
-    "Category": "Content & Creative",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 220,
-    "TitleEn": "Journalist",
-    "TitleAr": "صحفي",
-    "Category": "Content & Creative",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 221,
-    "TitleEn": "Communications Manager",
-    "TitleAr": "مدير الاتصالات",
-    "Category": "Content & Creative",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 222,
-    "TitleEn": "Documentation Specialist",
-    "TitleAr": "أخصائي التوثيق",
-    "Category": "Content & Creative",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 223,
-    "TitleEn": "Grant Writer",
-    "TitleAr": "كاتب مقترحات التمويل",
-    "Category": "Content & Creative",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 224,
-    "TitleEn": "Translator",
-    "TitleAr": "مترجم",
-    "Category": "Content & Creative",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 225,
-    "TitleEn": "Chief Marketing Officer (CMO)",
-    "TitleAr": "كبير مسؤولي التسويق (CMO)",
-    "Category": "Executive",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 226,
-    "TitleEn": "Chief Revenue Officer (CRO)",
-    "TitleAr": "كبير مسؤولي الإيرادات (CRO)",
-    "Category": "Executive",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 227,
-    "TitleEn": "Chief Product Officer (CPO)",
-    "TitleAr": "كبير مسؤولي المنتجات (CPO)",
-    "Category": "Executive",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 228,
-    "TitleEn": "Chief Information Officer (CIO)",
-    "TitleAr": "كبير مسؤولي تقنية المعلومات (CIO)",
-    "Category": "Executive",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 229,
-    "TitleEn": "Chief Data Officer (CDO)",
-    "TitleAr": "كبير مسؤولي البيانات (CDO)",
-    "Category": "Executive",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 230,
-    "TitleEn": "Chief Security Officer (CSO)",
-    "TitleAr": "كبير مسؤولي أمن المعلومات (CSO)",
-    "Category": "Executive",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 231,
-    "TitleEn": "Chief AI Officer (CAIO)",
-    "TitleAr": "كبير مسؤولي الذكاء الاصطناعي (CAIO)",
-    "Category": "Executive",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 232,
-    "TitleEn": "Managing Director",
-    "TitleAr": "المدير التنفيذي",
-    "Category": "Executive",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 233,
-    "TitleEn": "General Manager",
-    "TitleAr": "مدير عام",
-    "Category": "Executive",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 234,
-    "TitleEn": "Head of Engineering",
-    "TitleAr": "رئيس قسم الهندسة",
-    "Category": "Executive",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 235,
-    "TitleEn": "Flutter Developer",
-    "TitleAr": "مطور Flutter",
-    "Category": "Technology",
-    "RoleFamily": 4,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 236,
-    "TitleEn": "React Native Developer",
-    "TitleAr": "مطور React Native",
-    "Category": "Technology",
-    "RoleFamily": 4,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 237,
-    "TitleEn": "Senior Software Engineer",
-    "TitleAr": "مهندس برمجيات أول",
-    "Category": "Technology",
-    "RoleFamily": 3,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 238,
-    "TitleEn": "Chief Accountant",
-    "TitleAr": "محاسب رئيسي",
-    "Category": "Finance",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 239,
-    "TitleEn": "Senior Accountant",
-    "TitleAr": "محاسب أول",
-    "Category": "Finance",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 240,
-    "TitleEn": "Internal Auditor",
-    "TitleAr": "مدقق داخلي",
-    "Category": "Finance",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 241,
-    "TitleEn": "Credit Analyst",
-    "TitleAr": "محلل ائتمان",
-    "Category": "Finance",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 242,
-    "TitleEn": "Head of Finance",
-    "TitleAr": "رئيس قسم المالية",
-    "Category": "Finance",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 243,
-    "TitleEn": "Technical Recruiter",
-    "TitleAr": "أخصائي توظيف تقني",
-    "Category": "Human Resources",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 244,
-    "TitleEn": "HRIS Specialist",
-    "TitleAr": "أخصائي أنظمة معلومات الموارد البشرية (HRIS)",
-    "Category": "Human Resources",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 245,
-    "TitleEn": "Regional Sales Manager",
-    "TitleAr": "مدير مبيعات إقليمي",
-    "Category": "Sales",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 246,
-    "TitleEn": "Head of Sales",
-    "TitleAr": "رئيس قسم المبيعات",
-    "Category": "Sales",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 247,
-    "TitleEn": "Presales Consultant",
-    "TitleAr": "مستشار ما قبل البيع",
-    "Category": "Sales",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 248,
-    "TitleEn": "Operations Director",
-    "TitleAr": "مدير العمليات التنفيذي",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 249,
-    "TitleEn": "Warehouse Manager",
-    "TitleAr": "مدير المستودع",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 250,
-    "TitleEn": "Fleet Manager",
-    "TitleAr": "مدير الأسطول",
-    "Category": "Operations",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 251,
-    "TitleEn": "Head of Marketing",
-    "TitleAr": "رئيس قسم التسويق",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 252,
-    "TitleEn": "PPC Specialist",
-    "TitleAr": "أخصائي إعلانات الدفع مقابل النقر (PPC)",
-    "Category": "Marketing",
-    "RoleFamily": 9,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 253,
-    "TitleEn": "Head of Design",
-    "TitleAr": "رئيس قسم التصميم",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  },
-  {
-    "Id": 254,
-    "TitleEn": "User Researcher",
-    "TitleAr": "باحث المستخدمين",
-    "Category": "Design",
-    "RoleFamily": 8,
-    "IsActive": true,
-    "CreatedAt": "2025-01-01T00:00:00Z"
-  }
+    {
+        "Id": 1,
+        "TitleEn": "Backend Developer",
+        "TitleAr": "مطور واجهات خلفية",
+        "Category": "Technology",
+        "RoleFamily": 2,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 2,
+        "TitleEn": "Frontend Developer",
+        "TitleAr": "مطور واجهات أمامية",
+        "Category": "Technology",
+        "RoleFamily": 1,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 3,
+        "TitleEn": "Full Stack Developer",
+        "TitleAr": "مطور شامل",
+        "Category": "Technology",
+        "RoleFamily": 3,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 4,
+        "TitleEn": "Mobile Developer",
+        "TitleAr": "مطور تطبيقات الجوال",
+        "Category": "Technology",
+        "RoleFamily": 4,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 5,
+        "TitleEn": "iOS Developer",
+        "TitleAr": "مطور iOS",
+        "Category": "Technology",
+        "RoleFamily": 4,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 6,
+        "TitleEn": "Android Developer",
+        "TitleAr": "مطور أندرويد",
+        "Category": "Technology",
+        "RoleFamily": 4,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 7,
+        "TitleEn": "DevOps Engineer",
+        "TitleAr": "مهندس DevOps",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 8,
+        "TitleEn": "Data Scientist",
+        "TitleAr": "عالم بيانات",
+        "Category": "Technology",
+        "RoleFamily": 5,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 9,
+        "TitleEn": "Data Engineer",
+        "TitleAr": "مهندس بيانات",
+        "Category": "Technology",
+        "RoleFamily": 5,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 10,
+        "TitleEn": "Machine Learning Engineer",
+        "TitleAr": "مهندس تعلم الآلة",
+        "Category": "Technology",
+        "RoleFamily": 5,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 11,
+        "TitleEn": "AI Engineer",
+        "TitleAr": "مهندس ذكاء اصطناعي",
+        "Category": "Technology",
+        "RoleFamily": 5,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 12,
+        "TitleEn": "Software Engineer",
+        "TitleAr": "مهندس برمجيات",
+        "Category": "Technology",
+        "RoleFamily": 3,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 13,
+        "TitleEn": "QA Engineer",
+        "TitleAr": "مهندس ضمان الجودة",
+        "Category": "Technology",
+        "RoleFamily": 7,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 14,
+        "TitleEn": "Test Automation Engineer",
+        "TitleAr": "مهندس أتمتة الاختبارات",
+        "Category": "Technology",
+        "RoleFamily": 7,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 15,
+        "TitleEn": "Cloud Engineer",
+        "TitleAr": "مهندس حوسبة سحابية",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 16,
+        "TitleEn": "Security Engineer",
+        "TitleAr": "مهندس أمن المعلومات",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 17,
+        "TitleEn": "Cybersecurity Analyst",
+        "TitleAr": "محلل أمن سيبراني",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 18,
+        "TitleEn": "Network Engineer",
+        "TitleAr": "مهندس شبكات",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 19,
+        "TitleEn": "Systems Administrator",
+        "TitleAr": "مسؤول أنظمة",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 20,
+        "TitleEn": "Database Administrator",
+        "TitleAr": "مسؤول قواعد بيانات",
+        "Category": "Technology",
+        "RoleFamily": 2,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 21,
+        "TitleEn": "Solutions Architect",
+        "TitleAr": "مهندس حلول",
+        "Category": "Technology",
+        "RoleFamily": 3,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 22,
+        "TitleEn": "Technical Architect",
+        "TitleAr": "مهندس بنية تقنية",
+        "Category": "Technology",
+        "RoleFamily": 3,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 23,
+        "TitleEn": "Site Reliability Engineer",
+        "TitleAr": "مهندس موثوقية الموقع",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 24,
+        "TitleEn": "Embedded Systems Engineer",
+        "TitleAr": "مهندس أنظمة مدمجة",
+        "Category": "Technology",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 25,
+        "TitleEn": "Game Developer",
+        "TitleAr": "مطور ألعاب",
+        "Category": "Technology",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 26,
+        "TitleEn": "Blockchain Developer",
+        "TitleAr": "مطور بلوك تشين",
+        "Category": "Technology",
+        "RoleFamily": 2,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 27,
+        "TitleEn": "IoT Engineer",
+        "TitleAr": "مهندس إنترنت الأشياء",
+        "Category": "Technology",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 28,
+        "TitleEn": "Computer Vision Engineer",
+        "TitleAr": "مهندس رؤية حاسوبية",
+        "Category": "Technology",
+        "RoleFamily": 5,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 29,
+        "TitleEn": "NLP Engineer",
+        "TitleAr": "مهندس معالجة اللغات الطبيعية",
+        "Category": "Technology",
+        "RoleFamily": 5,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 30,
+        "TitleEn": "Business Intelligence Analyst",
+        "TitleAr": "محلل ذكاء الأعمال",
+        "Category": "Technology",
+        "RoleFamily": 5,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 31,
+        "TitleEn": "Data Analyst",
+        "TitleAr": "محلل بيانات",
+        "Category": "Technology",
+        "RoleFamily": 5,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 32,
+        "TitleEn": "IT Support Specialist",
+        "TitleAr": "أخصائي دعم تقنية المعلومات",
+        "Category": "Technology",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 33,
+        "TitleEn": "Technical Support Engineer",
+        "TitleAr": "مهندس دعم فني",
+        "Category": "Technology",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 34,
+        "TitleEn": "IT Manager",
+        "TitleAr": "مدير تقنية المعلومات",
+        "Category": "Technology",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 35,
+        "TitleEn": "CTO",
+        "TitleAr": "الرئيس التنفيذي للتكنولوجيا (CTO)",
+        "Category": "Technology",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 36,
+        "TitleEn": "Engineering Manager",
+        "TitleAr": "مدير هندسي",
+        "Category": "Technology",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 37,
+        "TitleEn": "Technical Lead",
+        "TitleAr": "قائد تقني",
+        "Category": "Technology",
+        "RoleFamily": 3,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 38,
+        "TitleEn": "Scrum Master",
+        "TitleAr": "سكرم ماستر",
+        "Category": "Technology",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 39,
+        "TitleEn": "Product Manager",
+        "TitleAr": "مدير منتج",
+        "Category": "Product Management",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 40,
+        "TitleEn": "Technical Product Manager",
+        "TitleAr": "مدير منتج تقني",
+        "Category": "Product Management",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 41,
+        "TitleEn": "UX Designer",
+        "TitleAr": "مصمم تجربة المستخدم",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 42,
+        "TitleEn": "UI Designer",
+        "TitleAr": "مصمم واجهة المستخدم",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 43,
+        "TitleEn": "UX/UI Designer",
+        "TitleAr": "مصمم UI/UX",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 44,
+        "TitleEn": "Graphic Designer",
+        "TitleAr": "مصمم جرافيك",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 45,
+        "TitleEn": "Web Designer",
+        "TitleAr": "مصمم ويب",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 46,
+        "TitleEn": "Visual Designer",
+        "TitleAr": "مصمم مرئي",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 47,
+        "TitleEn": "Product Designer",
+        "TitleAr": "مصمم منتجات",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 48,
+        "TitleEn": "Interaction Designer",
+        "TitleAr": "مصمم تفاعلي",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 49,
+        "TitleEn": "Motion Designer",
+        "TitleAr": "مصمم موشن جرافيك",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 50,
+        "TitleEn": "3D Designer",
+        "TitleAr": "مصمم ثلاثي الأبعاد",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 51,
+        "TitleEn": "Game Designer",
+        "TitleAr": "مصمم ألعاب",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 52,
+        "TitleEn": "UX Researcher",
+        "TitleAr": "باحث تجربة المستخدم",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 53,
+        "TitleEn": "Creative Director",
+        "TitleAr": "مدير إبداعي",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 54,
+        "TitleEn": "Art Director",
+        "TitleAr": "مدير فني",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 55,
+        "TitleEn": "Brand Designer",
+        "TitleAr": "مصمم هوية بصرية",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 56,
+        "TitleEn": "Digital Marketing Specialist",
+        "TitleAr": "أخصائي تسويق رقمي",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 57,
+        "TitleEn": "SEO Specialist",
+        "TitleAr": "أخصائي SEO",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 58,
+        "TitleEn": "Content Marketing Manager",
+        "TitleAr": "مدير تسويق بالمحتوى",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 59,
+        "TitleEn": "Social Media Manager",
+        "TitleAr": "مدير وسائل التواصل الاجتماعي",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 60,
+        "TitleEn": "Marketing Manager",
+        "TitleAr": "مدير تسويق",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 61,
+        "TitleEn": "Brand Manager",
+        "TitleAr": "مدير علامة تجارية",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 62,
+        "TitleEn": "Growth Manager",
+        "TitleAr": "مدير نمو",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 63,
+        "TitleEn": "Email Marketing Specialist",
+        "TitleAr": "أخصائي تسويق عبر البريد الإلكتروني",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 64,
+        "TitleEn": "Marketing Analyst",
+        "TitleAr": "محلل تسويق",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 65,
+        "TitleEn": "Content Writer",
+        "TitleAr": "كاتب محتوى",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 66,
+        "TitleEn": "Sales Representative",
+        "TitleAr": "مندوب مبيعات",
+        "Category": "Sales",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 67,
+        "TitleEn": "Account Executive",
+        "TitleAr": "مسؤول حسابات تنفيذي",
+        "Category": "Sales",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 68,
+        "TitleEn": "Sales Manager",
+        "TitleAr": "مدير مبيعات",
+        "Category": "Sales",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 69,
+        "TitleEn": "Business Development Manager",
+        "TitleAr": "مدير تطوير أعمال",
+        "Category": "Sales",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 70,
+        "TitleEn": "Customer Success Manager",
+        "TitleAr": "مدير نجاح عملاء",
+        "Category": "Sales",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 71,
+        "TitleEn": "Accountant",
+        "TitleAr": "محاسب",
+        "Category": "Finance",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 72,
+        "TitleEn": "Financial Analyst",
+        "TitleAr": "محلل مالي",
+        "Category": "Finance",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 73,
+        "TitleEn": "Finance Manager",
+        "TitleAr": "مدير مالي",
+        "Category": "Finance",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 74,
+        "TitleEn": "CFO",
+        "TitleAr": "الرئيس التنفيذي للمالية (CFO)",
+        "Category": "Finance",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 75,
+        "TitleEn": "Investment Analyst",
+        "TitleAr": "محلل استثمار",
+        "Category": "Finance",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 76,
+        "TitleEn": "HR Manager",
+        "TitleAr": "مدير موارد بشرية",
+        "Category": "Human Resources",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 77,
+        "TitleEn": "Recruiter",
+        "TitleAr": "أخصائي توظيف",
+        "Category": "Human Resources",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 78,
+        "TitleEn": "Talent Acquisition Specialist",
+        "TitleAr": "أخصائي استقطاب مواهب",
+        "Category": "Human Resources",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 79,
+        "TitleEn": "HR Business Partner",
+        "TitleAr": "شريك أعمال موارد بشرية",
+        "Category": "Human Resources",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 80,
+        "TitleEn": "People Operations Manager",
+        "TitleAr": "مدير عمليات الأفراد",
+        "Category": "Human Resources",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 81,
+        "TitleEn": "Operations Manager",
+        "TitleAr": "مدير عمليات",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 82,
+        "TitleEn": "Project Manager",
+        "TitleAr": "مدير مشروع",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 83,
+        "TitleEn": "Program Manager",
+        "TitleAr": "مدير برنامج",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 84,
+        "TitleEn": "Supply Chain Manager",
+        "TitleAr": "مدير سلاسل الإمداد",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 85,
+        "TitleEn": "Logistics Coordinator",
+        "TitleAr": "منسق لوجستي",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 86,
+        "TitleEn": "CEO",
+        "TitleAr": "الرئيس التنفيذي (CEO)",
+        "Category": "Executive",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 87,
+        "TitleEn": "COO",
+        "TitleAr": "الرئيس التنفيذي للعمليات (COO)",
+        "Category": "Executive",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 88,
+        "TitleEn": "VP of Engineering",
+        "TitleAr": "نائب رئيس الهندسة",
+        "Category": "Executive",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 89,
+        "TitleEn": "VP of Product",
+        "TitleAr": "نائب رئيس المنتجات",
+        "Category": "Executive",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 90,
+        "TitleEn": "VP of Sales",
+        "TitleAr": "نائب رئيس المبيعات",
+        "Category": "Executive",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 91,
+        "TitleEn": "Platform Engineer",
+        "TitleAr": "مهندس منصات",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 92,
+        "TitleEn": "Infrastructure Engineer",
+        "TitleAr": "مهندس بنية تحتية",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 93,
+        "TitleEn": "Cloud Architect",
+        "TitleAr": "معماري سحابي",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 94,
+        "TitleEn": "Security Architect",
+        "TitleAr": "معماري أمن معلومات",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 95,
+        "TitleEn": "Penetration Tester",
+        "TitleAr": "مختبر اختراق",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 96,
+        "TitleEn": "SOC Analyst",
+        "TitleAr": "محلل SOC",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 97,
+        "TitleEn": "MLOps Engineer",
+        "TitleAr": "مهندس MLOps",
+        "Category": "Technology",
+        "RoleFamily": 5,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 98,
+        "TitleEn": "Data Architect",
+        "TitleAr": "معماري بيانات",
+        "Category": "Technology",
+        "RoleFamily": 5,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 99,
+        "TitleEn": "Analytics Engineer",
+        "TitleAr": "مهندس تحليلات",
+        "Category": "Technology",
+        "RoleFamily": 5,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 100,
+        "TitleEn": "Prompt Engineer",
+        "TitleAr": "مهندس أوامر (Prompt Engineer)",
+        "Category": "Technology",
+        "RoleFamily": 5,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 101,
+        "TitleEn": "AR/VR Developer",
+        "TitleAr": "مطور AR/VR",
+        "Category": "Technology",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 102,
+        "TitleEn": "Firmware Engineer",
+        "TitleAr": "مهندس برامج ثابتة",
+        "Category": "Technology",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 103,
+        "TitleEn": "RPA Developer",
+        "TitleAr": "مطور RPA",
+        "Category": "Technology",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 104,
+        "TitleEn": "Staff Engineer",
+        "TitleAr": "مهندس Staff",
+        "Category": "Technology",
+        "RoleFamily": 3,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 105,
+        "TitleEn": "Principal Engineer",
+        "TitleAr": "مهندس رئيسي",
+        "Category": "Technology",
+        "RoleFamily": 3,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 106,
+        "TitleEn": "Software Architect",
+        "TitleAr": "معماري برمجيات",
+        "Category": "Technology",
+        "RoleFamily": 3,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 107,
+        "TitleEn": "Integration Engineer",
+        "TitleAr": "مهندس تكامل أنظمة",
+        "Category": "Technology",
+        "RoleFamily": 2,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 108,
+        "TitleEn": "Salesforce Developer",
+        "TitleAr": "مطور Salesforce",
+        "Category": "Technology",
+        "RoleFamily": 2,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 109,
+        "TitleEn": "ERP Developer",
+        "TitleAr": "مطور ERP",
+        "Category": "Technology",
+        "RoleFamily": 2,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 110,
+        "TitleEn": "SharePoint Developer",
+        "TitleAr": "مطور SharePoint",
+        "Category": "Technology",
+        "RoleFamily": 2,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 111,
+        "TitleEn": "API Engineer",
+        "TitleAr": "مهندس API",
+        "Category": "Technology",
+        "RoleFamily": 2,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 112,
+        "TitleEn": "Microservices Architect",
+        "TitleAr": "معماري خدمات مصغرة",
+        "Category": "Technology",
+        "RoleFamily": 2,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 113,
+        "TitleEn": "Database Engineer",
+        "TitleAr": "مهندس قواعد بيانات",
+        "Category": "Technology",
+        "RoleFamily": 2,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 114,
+        "TitleEn": "Web3 Developer",
+        "TitleAr": "مطور Web3",
+        "Category": "Technology",
+        "RoleFamily": 2,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 115,
+        "TitleEn": "Platform Architect",
+        "TitleAr": "معماري منصات",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 116,
+        "TitleEn": "AWS Solutions Architect",
+        "TitleAr": "معماري حلول AWS",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 117,
+        "TitleEn": "Build & Release Engineer",
+        "TitleAr": "مهندس بناء وإصدار",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 118,
+        "TitleEn": "Release Manager",
+        "TitleAr": "مدير إصدارات",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 119,
+        "TitleEn": "Observability Engineer",
+        "TitleAr": "مهندس مراقبة أنظمة",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 120,
+        "TitleEn": "Performance Engineer",
+        "TitleAr": "مهندس أداء",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 121,
+        "TitleEn": "Automation Engineer",
+        "TitleAr": "مهندس أتمتة",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 122,
+        "TitleEn": "AI Research Scientist",
+        "TitleAr": "عالم أبحاث ذكاء اصطناعي",
+        "Category": "Technology",
+        "RoleFamily": 5,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 123,
+        "TitleEn": "Research Engineer",
+        "TitleAr": "مهندس أبحاث",
+        "Category": "Technology",
+        "RoleFamily": 5,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 124,
+        "TitleEn": "Threat Intelligence Analyst",
+        "TitleAr": "محلل استخبارات التهديدات",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 125,
+        "TitleEn": "Digital Forensics Analyst",
+        "TitleAr": "محلل أدلة جنائية رقمية",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 126,
+        "TitleEn": "Incident Response Analyst",
+        "TitleAr": "محلل استجابة للحوادث",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 127,
+        "TitleEn": "Vulnerability Researcher",
+        "TitleAr": "باحث ثغرات أمنية",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 128,
+        "TitleEn": "Security Operations Manager",
+        "TitleAr": "مدير عمليات أمنية",
+        "Category": "Technology",
+        "RoleFamily": 6,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 129,
+        "TitleEn": "Low-Code/No-Code Developer",
+        "TitleAr": "مطور Low-Code/No-Code",
+        "Category": "Technology",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 130,
+        "TitleEn": "Technical Program Manager",
+        "TitleAr": "مدير برنامج تقني",
+        "Category": "Technology",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 131,
+        "TitleEn": "UX Writer",
+        "TitleAr": "كاتب تجربة مستخدم",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 132,
+        "TitleEn": "Design Systems Lead",
+        "TitleAr": "قائد أنظمة تصميم",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 133,
+        "TitleEn": "Illustrator",
+        "TitleAr": "رسام توضيحي",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 134,
+        "TitleEn": "Video Editor",
+        "TitleAr": "محرر فيديو",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 135,
+        "TitleEn": "Multimedia Designer",
+        "TitleAr": "مصمم وسائط متعددة",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 136,
+        "TitleEn": "Print Designer",
+        "TitleAr": "مصمم مطبوعات",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 137,
+        "TitleEn": "Packaging Designer",
+        "TitleAr": "مصمم تغليف",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 138,
+        "TitleEn": "Accessibility Designer",
+        "TitleAr": "مصمم إمكانية الوصول",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 139,
+        "TitleEn": "Design Director",
+        "TitleAr": "مدير تصميم",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 140,
+        "TitleEn": "UI Engineer",
+        "TitleAr": "مهندس UI",
+        "Category": "Technology",
+        "RoleFamily": 1,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 141,
+        "TitleEn": "Typographer",
+        "TitleAr": "مصمم تايبوجرافي",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 142,
+        "TitleEn": "Performance Marketing Manager",
+        "TitleAr": "مدير تسويق بالأداء",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 143,
+        "TitleEn": "Demand Generation Manager",
+        "TitleAr": "مدير توليد الطلب",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 144,
+        "TitleEn": "VP of Marketing",
+        "TitleAr": "نائب رئيس التسويق",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 145,
+        "TitleEn": "Influencer Marketing Manager",
+        "TitleAr": "مدير تسويق عبر المؤثرين",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 146,
+        "TitleEn": "Affiliate Marketing Manager",
+        "TitleAr": "مدير تسويق بالعمولة",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 147,
+        "TitleEn": "PR Manager",
+        "TitleAr": "مدير علاقات عامة",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 148,
+        "TitleEn": "Campaign Manager",
+        "TitleAr": "مدير حملات تسويقية",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 149,
+        "TitleEn": "Marketing Operations Manager",
+        "TitleAr": "مدير عمليات تسويق",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 150,
+        "TitleEn": "Community Manager",
+        "TitleAr": "مدير مجتمع",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 151,
+        "TitleEn": "Growth Marketing Manager",
+        "TitleAr": "مدير تسويق نمو",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 152,
+        "TitleEn": "Sales Development Representative (SDR)",
+        "TitleAr": "ممثل تطوير مبيعات (SDR)",
+        "Category": "Sales",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 153,
+        "TitleEn": "Business Development Representative (BDR)",
+        "TitleAr": "ممثل تطوير أعمال (BDR)",
+        "Category": "Sales",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 154,
+        "TitleEn": "Enterprise Account Executive",
+        "TitleAr": "مسؤول حسابات مؤسسية",
+        "Category": "Sales",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 155,
+        "TitleEn": "Key Account Manager",
+        "TitleAr": "مدير حسابات رئيسية",
+        "Category": "Sales",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 156,
+        "TitleEn": "Channel Sales Manager",
+        "TitleAr": "مدير مبيعات قنوات",
+        "Category": "Sales",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 157,
+        "TitleEn": "Sales Operations Manager",
+        "TitleAr": "مدير عمليات مبيعات",
+        "Category": "Sales",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 158,
+        "TitleEn": "Inside Sales Representative",
+        "TitleAr": "ممثل مبيعات داخلية",
+        "Category": "Sales",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 159,
+        "TitleEn": "Pre-Sales Engineer",
+        "TitleAr": "مهندس ما قبل البيع",
+        "Category": "Sales",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 160,
+        "TitleEn": "Solutions Engineer",
+        "TitleAr": "مهندس حلول",
+        "Category": "Sales",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 161,
+        "TitleEn": "Revenue Manager",
+        "TitleAr": "مدير إيرادات",
+        "Category": "Sales",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 162,
+        "TitleEn": "Financial Controller",
+        "TitleAr": "مراقب مالي",
+        "Category": "Finance",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 163,
+        "TitleEn": "Treasury Manager",
+        "TitleAr": "مدير خزينة",
+        "Category": "Finance",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 164,
+        "TitleEn": "Tax Specialist",
+        "TitleAr": "أخصائي ضرائب",
+        "Category": "Finance",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 165,
+        "TitleEn": "Auditor",
+        "TitleAr": "مدقق حسابات",
+        "Category": "Finance",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 166,
+        "TitleEn": "Risk Analyst",
+        "TitleAr": "محلل مخاطر",
+        "Category": "Finance",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 167,
+        "TitleEn": "Compliance Officer",
+        "TitleAr": "مسؤول امتثال",
+        "Category": "Finance",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 168,
+        "TitleEn": "Payroll Specialist",
+        "TitleAr": "أخصائي رواتب",
+        "Category": "Finance",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 169,
+        "TitleEn": "Budget Analyst",
+        "TitleAr": "محلل ميزانية",
+        "Category": "Finance",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 170,
+        "TitleEn": "Quantitative Analyst",
+        "TitleAr": "محلل كمي",
+        "Category": "Finance",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 171,
+        "TitleEn": "FP&A Manager",
+        "TitleAr": "مدير تخطيط وتحليل مالي (FP&A)",
+        "Category": "Finance",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 172,
+        "TitleEn": "Learning & Development Manager",
+        "TitleAr": "مدير تعلم وتطوير",
+        "Category": "Human Resources",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 173,
+        "TitleEn": "Compensation & Benefits Manager",
+        "TitleAr": "مدير تعويضات ومزايا",
+        "Category": "Human Resources",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 174,
+        "TitleEn": "Employee Relations Manager",
+        "TitleAr": "مدير علاقات موظفين",
+        "Category": "Human Resources",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 175,
+        "TitleEn": "HR Generalist",
+        "TitleAr": "أخصائي موارد بشرية عام",
+        "Category": "Human Resources",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 176,
+        "TitleEn": "Workforce Analyst",
+        "TitleAr": "محلل قوى عاملة",
+        "Category": "Human Resources",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 177,
+        "TitleEn": "Onboarding Specialist",
+        "TitleAr": "أخصائي تهيئة موظفين",
+        "Category": "Human Resources",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 178,
+        "TitleEn": "HR Director",
+        "TitleAr": "مدير إدارة موارد بشرية",
+        "Category": "Human Resources",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 179,
+        "TitleEn": "Chief People Officer",
+        "TitleAr": "الرئيس التنفيذي للموارد البشرية (CPO)",
+        "Category": "Human Resources",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 180,
+        "TitleEn": "Culture & Engagement Manager",
+        "TitleAr": "مدير ثقافة وتفاعل مؤسسي",
+        "Category": "Human Resources",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 181,
+        "TitleEn": "Organizational Development Specialist",
+        "TitleAr": "أخصائي تطوير تنظيمي",
+        "Category": "Human Resources",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 182,
+        "TitleEn": "Business Analyst",
+        "TitleAr": "محلل أعمال",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 183,
+        "TitleEn": "Process Improvement Manager",
+        "TitleAr": "مدير تحسين عمليات",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 184,
+        "TitleEn": "Procurement Manager",
+        "TitleAr": "مدير مشتريات",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 185,
+        "TitleEn": "Vendor Manager",
+        "TitleAr": "مدير موردين",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 186,
+        "TitleEn": "Customer Support Manager",
+        "TitleAr": "مدير دعم عملاء",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 187,
+        "TitleEn": "Customer Support Specialist",
+        "TitleAr": "أخصائي دعم عملاء",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 188,
+        "TitleEn": "Administrative Manager",
+        "TitleAr": "مدير إداري",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 189,
+        "TitleEn": "Chief of Staff",
+        "TitleAr": "كبير موظفين (Chief of Staff)",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 190,
+        "TitleEn": "Strategy Manager",
+        "TitleAr": "مدير استراتيجية",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 191,
+        "TitleEn": "ERP Manager",
+        "TitleAr": "مدير ERP",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 192,
+        "TitleEn": "Revenue Operations Manager",
+        "TitleAr": "مدير عمليات إيرادات",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 193,
+        "TitleEn": "IT Operations Manager",
+        "TitleAr": "مدير عمليات تقنية المعلومات",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 194,
+        "TitleEn": "Transformation Manager",
+        "TitleAr": "مدير تحول مؤسسي",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 195,
+        "TitleEn": "Office Manager",
+        "TitleAr": "مدير مكتب",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 196,
+        "TitleEn": "Facilities Manager",
+        "TitleAr": "مدير مرافق",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 197,
+        "TitleEn": "Senior Product Manager",
+        "TitleAr": "مدير منتج أول",
+        "Category": "Product Management",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 198,
+        "TitleEn": "Principal Product Manager",
+        "TitleAr": "مدير منتج رئيسي",
+        "Category": "Product Management",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 199,
+        "TitleEn": "Group Product Manager",
+        "TitleAr": "مدير مجموعة منتجات",
+        "Category": "Product Management",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 200,
+        "TitleEn": "Director of Product Management",
+        "TitleAr": "مدير إدارة منتجات",
+        "Category": "Product Management",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 201,
+        "TitleEn": "Head of Product",
+        "TitleAr": "رئيس قسم المنتجات",
+        "Category": "Product Management",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 202,
+        "TitleEn": "Product Owner",
+        "TitleAr": "مالك منتج",
+        "Category": "Product Management",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 203,
+        "TitleEn": "Associate Product Manager",
+        "TitleAr": "مساعد مدير منتج",
+        "Category": "Product Management",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 204,
+        "TitleEn": "Product Operations Manager",
+        "TitleAr": "مدير عمليات المنتجات",
+        "Category": "Product Management",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 205,
+        "TitleEn": "Platform Product Manager",
+        "TitleAr": "مدير منتج منصة",
+        "Category": "Product Management",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 206,
+        "TitleEn": "Growth Product Manager",
+        "TitleAr": "مدير منتج نمو",
+        "Category": "Product Management",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 207,
+        "TitleEn": "AI Product Manager",
+        "TitleAr": "مدير منتج ذكاء اصطناعي",
+        "Category": "Product Management",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 208,
+        "TitleEn": "Product Analyst",
+        "TitleAr": "محلل منتجات",
+        "Category": "Product Management",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 209,
+        "TitleEn": "Technical Product Owner",
+        "TitleAr": "مالك منتج تقني",
+        "Category": "Product Management",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 210,
+        "TitleEn": "Content Creator",
+        "TitleAr": "صانع محتوى",
+        "Category": "Content & Creative",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 211,
+        "TitleEn": "Copywriter",
+        "TitleAr": "كاتب إعلانات",
+        "Category": "Content & Creative",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 212,
+        "TitleEn": "Technical Writer",
+        "TitleAr": "كاتب تقني",
+        "Category": "Content & Creative",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 213,
+        "TitleEn": "Videographer",
+        "TitleAr": "مصور فيديو",
+        "Category": "Content & Creative",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 214,
+        "TitleEn": "Podcast Producer",
+        "TitleAr": "منتج بودكاست",
+        "Category": "Content & Creative",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 215,
+        "TitleEn": "Social Media Content Creator",
+        "TitleAr": "صانع محتوى تواصل اجتماعي",
+        "Category": "Content & Creative",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 216,
+        "TitleEn": "Video Producer",
+        "TitleAr": "منتج فيديو",
+        "Category": "Content & Creative",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 217,
+        "TitleEn": "Scriptwriter",
+        "TitleAr": "كاتب سيناريو",
+        "Category": "Content & Creative",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 218,
+        "TitleEn": "Content Strategist",
+        "TitleAr": "استراتيجي محتوى",
+        "Category": "Content & Creative",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 219,
+        "TitleEn": "Editor",
+        "TitleAr": "محرر",
+        "Category": "Content & Creative",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 220,
+        "TitleEn": "Journalist",
+        "TitleAr": "صحفي",
+        "Category": "Content & Creative",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 221,
+        "TitleEn": "Communications Manager",
+        "TitleAr": "مدير اتصالات",
+        "Category": "Content & Creative",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 222,
+        "TitleEn": "Documentation Specialist",
+        "TitleAr": "أخصائي توثيق",
+        "Category": "Content & Creative",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 223,
+        "TitleEn": "Grant Writer",
+        "TitleAr": "كاتب مقترحات تمويل",
+        "Category": "Content & Creative",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 224,
+        "TitleEn": "Translator",
+        "TitleAr": "مترجم",
+        "Category": "Content & Creative",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 225,
+        "TitleEn": "Chief Marketing Officer (CMO)",
+        "TitleAr": "الرئيس التنفيذي للتسويق (CMO)",
+        "Category": "Executive",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 226,
+        "TitleEn": "Chief Revenue Officer (CRO)",
+        "TitleAr": "الرئيس التنفيذي للإيرادات (CRO)",
+        "Category": "Executive",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 227,
+        "TitleEn": "Chief Product Officer (CPO)",
+        "TitleAr": "الرئيس التنفيذي للمنتجات (CPO)",
+        "Category": "Executive",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 228,
+        "TitleEn": "Chief Information Officer (CIO)",
+        "TitleAr": "الرئيس التنفيذي لتقنية المعلومات (CIO)",
+        "Category": "Executive",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 229,
+        "TitleEn": "Chief Data Officer (CDO)",
+        "TitleAr": "الرئيس التنفيذي للبيانات (CDO)",
+        "Category": "Executive",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 230,
+        "TitleEn": "Chief Security Officer (CSO)",
+        "TitleAr": "الرئيس التنفيذي لأمن المعلومات (CSO)",
+        "Category": "Executive",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 231,
+        "TitleEn": "Chief AI Officer (CAIO)",
+        "TitleAr": "الرئيس التنفيذي للذكاء الاصطناعي (CAIO)",
+        "Category": "Executive",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 232,
+        "TitleEn": "Managing Director",
+        "TitleAr": "مدير تنفيذي",
+        "Category": "Executive",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 233,
+        "TitleEn": "General Manager",
+        "TitleAr": "مدير عام",
+        "Category": "Executive",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 234,
+        "TitleEn": "Head of Engineering",
+        "TitleAr": "رئيس قسم الهندسة",
+        "Category": "Executive",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 235,
+        "TitleEn": "Flutter Developer",
+        "TitleAr": "مطور Flutter",
+        "Category": "Technology",
+        "RoleFamily": 4,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 236,
+        "TitleEn": "React Native Developer",
+        "TitleAr": "مطور React Native",
+        "Category": "Technology",
+        "RoleFamily": 4,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 237,
+        "TitleEn": "Senior Software Engineer",
+        "TitleAr": "مهندس برمجيات أول",
+        "Category": "Technology",
+        "RoleFamily": 3,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 238,
+        "TitleEn": "Chief Accountant",
+        "TitleAr": "رئيس حسابات",
+        "Category": "Finance",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 239,
+        "TitleEn": "Senior Accountant",
+        "TitleAr": "محاسب أول",
+        "Category": "Finance",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 240,
+        "TitleEn": "Internal Auditor",
+        "TitleAr": "مدقق داخلي",
+        "Category": "Finance",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 241,
+        "TitleEn": "Credit Analyst",
+        "TitleAr": "محلل ائتمان",
+        "Category": "Finance",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 242,
+        "TitleEn": "Head of Finance",
+        "TitleAr": "رئيس القسم المالي",
+        "Category": "Finance",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 243,
+        "TitleEn": "Technical Recruiter",
+        "TitleAr": "أخصائي توظيف تقني",
+        "Category": "Human Resources",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 244,
+        "TitleEn": "HRIS Specialist",
+        "TitleAr": "أخصائي أنظمة موارد بشرية (HRIS)",
+        "Category": "Human Resources",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 245,
+        "TitleEn": "Regional Sales Manager",
+        "TitleAr": "مدير مبيعات إقليمي",
+        "Category": "Sales",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 246,
+        "TitleEn": "Head of Sales",
+        "TitleAr": "رئيس قسم المبيعات",
+        "Category": "Sales",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 247,
+        "TitleEn": "Presales Consultant",
+        "TitleAr": "مستشار ما قبل البيع",
+        "Category": "Sales",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 248,
+        "TitleEn": "Operations Director",
+        "TitleAr": "مدير إدارة العمليات",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 249,
+        "TitleEn": "Warehouse Manager",
+        "TitleAr": "مدير مستودع",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 250,
+        "TitleEn": "Fleet Manager",
+        "TitleAr": "مدير أسطول",
+        "Category": "Operations",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 251,
+        "TitleEn": "Head of Marketing",
+        "TitleAr": "رئيس قسم التسويق",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 252,
+        "TitleEn": "PPC Specialist",
+        "TitleAr": "أخصائي PPC",
+        "Category": "Marketing",
+        "RoleFamily": 9,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 253,
+        "TitleEn": "Head of Design",
+        "TitleAr": "رئيس قسم التصميم",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+        "Id": 254,
+        "TitleEn": "User Researcher",
+        "TitleAr": "باحث مستخدمين",
+        "Category": "Design",
+        "RoleFamily": 8,
+        "IsActive": true,
+        "CreatedAt": "2025-01-01T00:00:00Z"
+    }
 ]
