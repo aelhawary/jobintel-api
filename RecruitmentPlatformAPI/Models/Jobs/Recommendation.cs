@@ -33,11 +33,6 @@ namespace RecruitmentPlatformAPI.Models.Jobs
         [MaxLength(2000)]
         public string? MissingSkillsJson { get; set; }
 
-        /// <summary>
-        /// Whether this recommendation has been viewed by the recruiter.
-        /// </summary>
-        public bool IsViewed { get; set; } = false;
-
         public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation properties

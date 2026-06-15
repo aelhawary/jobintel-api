@@ -235,7 +235,7 @@ INSERT INTO JobSkills (JobId, SkillId) VALUES
 -- ─────────────────────────────────────────────
 -- 12. Seed Recommendation (AI match result)
 -- ─────────────────────────────────────────────
-INSERT INTO Recommendations (JobId, JobSeekerId, MatchScore, AiReasoning, MatchedSkillsJson, MissingSkillsJson, IsViewed, GeneratedAt)
+INSERT INTO Recommendations (JobId, JobSeekerId, MatchScore, AiReasoning, MatchedSkillsJson, MissingSkillsJson, GeneratedAt)
 VALUES (
     @JobId,
     @CandidateId,
@@ -243,7 +243,6 @@ VALUES (
     'Strong match: Candidate has extensive frontend experience with React, TypeScript, and modern CSS frameworks. Assessment score of 88.5% demonstrates solid technical proficiency. Work history shows progressive growth from junior to mid-level frontend developer.',
     '["JavaScript","TypeScript","React","HTML/CSS"]',
     '[]',
-    0,
     GETUTCDATE()
 );
 

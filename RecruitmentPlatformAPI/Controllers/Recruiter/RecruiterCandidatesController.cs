@@ -110,6 +110,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
 
                 var recommendations = await _context.Recommendations
                     .Where(r => r.JobId == jobId)
+                    .AsNoTracking()
                     .Include(r => r.JobSeeker)
                         .ThenInclude(js => js.User)
                     .Include(r => r.JobSeeker)

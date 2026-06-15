@@ -107,58 +107,78 @@ namespace RecruitmentPlatformAPI.Services.JobSeeker
 
         public async Task StoreRecommendationsAsync(int jobId, List<MatchedCandidateDto> candidates)
         {
-            // Use a serializable transaction to prevent race conditions when two recruiters
-            // load the same job's candidates simultaneously
-            using var tx = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
-            try
+            const int maxRetries = 1;
+            int attempt = 0;
+
+            while (true)
             {
-                var existing = await _context.Recommendations
-                    .Where(r => r.JobId == jobId)
-                    .ToListAsync();
-
-                var existingMap = existing.ToDictionary(r => r.JobSeekerId);
-                var toInsert = new List<Recommendation>();
-
-                foreach (var c in candidates)
+                try
                 {
-                    if (existingMap.TryGetValue(c.JobSeekerId, out var existingRec))
+                    var existing = await _context.Recommendations
+                        .Where(r => r.JobId == jobId)
+                        .ToListAsync();
+
+                    var existingMap = existing.ToDictionary(r => r.JobSeekerId);
+                    var incomingIds = new HashSet<int>(candidates.Select(c => c.JobSeekerId));
+                    var toInsert = new List<Recommendation>();
+
+                    foreach (var c in candidates)
                     {
-                        existingRec.MatchScore = c.MatchScore;
-                        existingRec.AiReasoning = c.AiReasoning;
-                        existingRec.MatchedSkillsJson = JsonSerializer.Serialize(c.MatchedSkills);
-                        existingRec.MissingSkillsJson = JsonSerializer.Serialize(c.MissingSkills);
-                        existingRec.GeneratedAt = DateTime.UtcNow; // Update timestamp for new activity
-                    }
-                    else
-                    {
-                        toInsert.Add(new Recommendation
+                        if (existingMap.TryGetValue(c.JobSeekerId, out var existingRec))
                         {
-                            JobId = jobId,
-                            JobSeekerId = c.JobSeekerId,
-                            MatchScore = c.MatchScore,
-                            AiReasoning = c.AiReasoning,
-                            MatchedSkillsJson = JsonSerializer.Serialize(c.MatchedSkills),
-                            MissingSkillsJson = JsonSerializer.Serialize(c.MissingSkills),
-                            IsViewed = false,
-                            GeneratedAt = DateTime.UtcNow
-                        });
+                            existingRec.MatchScore = c.MatchScore;
+                            existingRec.AiReasoning = c.AiReasoning;
+                            existingRec.MatchedSkillsJson = JsonSerializer.Serialize(c.MatchedSkills);
+                            existingRec.MissingSkillsJson = JsonSerializer.Serialize(c.MissingSkills);
+                            existingRec.GeneratedAt = DateTime.UtcNow;
+                        }
+                        else
+                        {
+                            toInsert.Add(new Recommendation
+                            {
+                                JobId = jobId,
+                                JobSeekerId = c.JobSeekerId,
+                                MatchScore = c.MatchScore,
+                                AiReasoning = c.AiReasoning,
+                                MatchedSkillsJson = JsonSerializer.Serialize(c.MatchedSkills),
+                                MissingSkillsJson = JsonSerializer.Serialize(c.MissingSkills),
+                                GeneratedAt = DateTime.UtcNow
+                            });
+                        }
                     }
+
+                    // Delete stale recommendations (candidates no longer in the AI result)
+                    var stale = existing.Where(r => !incomingIds.Contains(r.JobSeekerId)).ToList();
+                    if (stale.Any())
+                        _context.Recommendations.RemoveRange(stale);
+
+                    if (toInsert.Any())
+                        _context.Recommendations.AddRange(toInsert);
+
+                    await _context.SaveChangesAsync();
+
+                    _logger.LogInformation(
+                        "Stored/Updated {Count} recommendations for Job {JobId} (inserted {Inserted}, updated {Updated}, removed {Removed})",
+                        candidates.Count, jobId, toInsert.Count, existing.Count - stale.Count, stale.Count);
+
+                    return;
                 }
+                catch (Exception ex) when (attempt < maxRetries && ex is DbUpdateException)
+                {
+                    attempt++;
+                    _logger.LogWarning(ex,
+                        "Race condition storing recommendations for Job {JobId}, retrying (attempt {Attempt}/{MaxRetries})",
+                        jobId, attempt, maxRetries);
 
-                if (toInsert.Any())
-                    _context.Recommendations.AddRange(toInsert);
-
-                await _context.SaveChangesAsync();
-                await tx.CommitAsync();
-
-                _logger.LogInformation(
-                    "Stored/Updated {Count} recommendations for Job {JobId}",
-                    candidates.Count, jobId);
-            }
-            catch (Exception ex)
-            {
-                await tx.RollbackAsync();
-                _logger.LogError(ex, "Failed to store recommendations for Job {JobId}", jobId);
+                    // Detach all tracked entities to get a clean state for retry
+                    foreach (var entry in _context.ChangeTracker.Entries().ToList())
+                        entry.State = EntityState.Detached;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to store recommendations for Job {JobId}", jobId);
+                    throw;
+                }
             }
         }
 
