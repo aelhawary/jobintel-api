@@ -887,6 +887,17 @@ namespace RecruitmentPlatformAPI.Services.Auth
                     </p>
 
                     {PrimaryButton(mailtoLink, "Reply to Recruiter")}
+
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:8px 0 0 0;">
+                    <tr>
+                        <td align="center">
+                            <a href="{_emailSettings.FrontendUrl}/employee?contact=1&amp;recruiter={encodedRecruiterName}&amp;company={encodedCompany}&amp;job={encodedJobTitle}"
+                               style="color:#64748b;font-size:13px;font-weight:500;text-decoration:underline;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                                Or view your dashboard
+                            </a>
+                        </td>
+                    </tr>
+                    </table>
                     """;
 
                 var textBody = $"""
@@ -900,6 +911,8 @@ namespace RecruitmentPlatformAPI.Services.Auth
                     ---
                     You can reply directly to this email to get in touch with the recruiter, or use the following email address:
                     {recruiterEmail}
+
+                    Or view your dashboard: {_emailSettings.FrontendUrl}/employee
 
                     Need help? Contact us at {_emailSettings.SenderEmail}
 
