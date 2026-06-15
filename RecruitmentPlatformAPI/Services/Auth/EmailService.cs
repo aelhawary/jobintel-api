@@ -33,11 +33,12 @@ namespace RecruitmentPlatformAPI.Services.Auth
         /// </summary>
         private async Task<bool> SendEmailAsync(
             string toEmail, string toName,
-            string subject, string htmlBody, string textBody)
+            string subject, string htmlBody, string textBody,
+            string? replyToEmail = null, string? replyToName = null)
         {
             return _emailSettings.UseHttpApi
-                ? await SendViaHttpApiAsync(toEmail, toName, subject, htmlBody, textBody)
-                : await SendViaSmtpAsync(toEmail, toName, subject, htmlBody, textBody);
+                ? await SendViaHttpApiAsync(toEmail, toName, subject, htmlBody, textBody, replyToEmail, replyToName)
+                : await SendViaSmtpAsync(toEmail, toName, subject, htmlBody, textBody, replyToEmail, replyToName);
         }
 
         // ────────────────────────────────────────────────────────────────
@@ -46,7 +47,8 @@ namespace RecruitmentPlatformAPI.Services.Auth
 
         private async Task<bool> SendViaHttpApiAsync(
             string toEmail, string toName,
-            string subject, string htmlBody, string textBody)
+            string subject, string htmlBody, string textBody,
+            string? replyToEmail = null, string? replyToName = null)
         {
             try
             {
@@ -54,17 +56,35 @@ namespace RecruitmentPlatformAPI.Services.Auth
 
                 var client = _httpClientFactory.CreateClient();
 
-                var requestBody = new
+                string jsonContent;
+                if (!string.IsNullOrEmpty(replyToEmail))
                 {
-                    sender  = new { name = _emailSettings.SenderName, email = _emailSettings.SenderEmail },
-                    to      = new[] { new { email = toEmail, name = toName } },
-                    subject,
-                    htmlContent = htmlBody,
-                    textContent = textBody
-                };
+                    var requestBodyWithReplyTo = new
+                    {
+                        sender = new { name = _emailSettings.SenderName, email = _emailSettings.SenderEmail },
+                        to = new[] { new { email = toEmail, name = toName } },
+                        replyTo = new { email = replyToEmail, name = replyToName ?? replyToEmail },
+                        subject,
+                        htmlContent = htmlBody,
+                        textContent = textBody
+                    };
+                    jsonContent = JsonSerializer.Serialize(requestBodyWithReplyTo);
+                }
+                else
+                {
+                    var requestBody = new
+                    {
+                        sender = new { name = _emailSettings.SenderName, email = _emailSettings.SenderEmail },
+                        to = new[] { new { email = toEmail, name = toName } },
+                        subject,
+                        htmlContent = htmlBody,
+                        textContent = textBody
+                    };
+                    jsonContent = JsonSerializer.Serialize(requestBody);
+                }
 
                 var content = new StringContent(
-                    JsonSerializer.Serialize(requestBody),
+                    jsonContent,
                     Encoding.UTF8,
                     "application/json");
 
@@ -96,13 +116,20 @@ namespace RecruitmentPlatformAPI.Services.Auth
 
         private async Task<bool> SendViaSmtpAsync(
             string toEmail, string toName,
-            string subject, string htmlBody, string textBody)
+            string subject, string htmlBody, string textBody,
+            string? replyToEmail = null, string? replyToName = null)
         {
             try
             {
                 var message = new MimeMessage();
                 message.From.Add(new MailboxAddress(_emailSettings.SenderName, _emailSettings.SenderEmail));
                 message.To.Add(new MailboxAddress(toName, toEmail));
+                
+                if (!string.IsNullOrEmpty(replyToEmail))
+                {
+                    message.ReplyTo.Add(new MailboxAddress(replyToName ?? replyToEmail, replyToEmail));
+                }
+                
                 message.Subject = subject;
                 message.Body   = new BodyBuilder { HtmlBody = htmlBody, TextBody = textBody }.ToMessageBody();
 
@@ -815,7 +842,7 @@ namespace RecruitmentPlatformAPI.Services.Auth
 
         public async Task<bool> SendContactEmailAsync(
             string candidateEmail, string candidateFirstName,
-            string recruiterFirstName, string recruiterLastName,
+            string recruiterEmail, string recruiterFirstName, string recruiterLastName,
             string recruiterCompany, string jobTitle, string message)
         {
             try
@@ -826,7 +853,8 @@ namespace RecruitmentPlatformAPI.Services.Auth
                 var encodedCompany = System.Net.WebUtility.HtmlEncode(recruiterCompany);
                 var encodedJobTitle = System.Net.WebUtility.HtmlEncode(jobTitle);
                 var encodedMessage = System.Net.WebUtility.HtmlEncode(message);
-                var dashboardUrl = _emailSettings.FrontendUrl;
+                
+                var mailtoLink = $"mailto:{recruiterEmail}?subject={System.Uri.EscapeDataString($"Re: {jobTitle} at {recruiterCompany}")}";
 
                 var innerHtml = $"""
                     <p style="text-align:center;font-size:44px;margin:0 0 20px 0;" aria-hidden="true">&#9993;</p>
@@ -854,9 +882,11 @@ namespace RecruitmentPlatformAPI.Services.Auth
                     </tr>
                     </table>
 
-                    {WarningBox("<strong>Note:</strong>", "This message was sent through Job Intel. The recruiter's personal email is not shared.")}
+                    <p style="color:#475569;font-size:15px;line-height:1.6;margin:0 0 28px 0;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                        You can reply directly to this email to get in touch with the recruiter, or click the button below.
+                    </p>
 
-                    {PrimaryButton(dashboardUrl, "Open Job Intel &rarr;")}
+                    {PrimaryButton(mailtoLink, "Reply to Recruiter")}
                     """;
 
                 var textBody = $"""
@@ -868,9 +898,8 @@ namespace RecruitmentPlatformAPI.Services.Auth
                     {message}
 
                     ---
-                    This message was sent through Job Intel. The recruiter's personal email is not shared.
-
-                    Open Job Intel: {dashboardUrl}
+                    You can reply directly to this email to get in touch with the recruiter, or use the following email address:
+                    {recruiterEmail}
 
                     Need help? Contact us at {_emailSettings.SenderEmail}
 
@@ -881,7 +910,8 @@ namespace RecruitmentPlatformAPI.Services.Auth
                 return await SendEmailAsync(
                     candidateEmail, candidateFirstName, subject,
                     GetEmailHtmlWrapper(innerHtml, $"{recruiterFirstName} {recruiterLastName} from {recruiterCompany} wants to connect with you about the {jobTitle} role."),
-                    textBody);
+                    textBody,
+                    recruiterEmail, $"{recruiterFirstName} {recruiterLastName}");
             }
             catch (Exception ex)
             {

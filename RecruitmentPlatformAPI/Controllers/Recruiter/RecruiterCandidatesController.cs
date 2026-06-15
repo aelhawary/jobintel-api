@@ -715,6 +715,7 @@ namespace RecruitmentPlatformAPI.Controllers.Recruiter
             var sent = await _emailService.SendContactEmailAsync(
                 jobSeeker.User.Email,
                 jobSeeker.User.FirstName,
+                recruiter.User.Email,
                 recruiter.User.FirstName,
                 recruiter.User.LastName,
                 recruiter.CompanyName,
